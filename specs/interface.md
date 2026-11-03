@@ -106,7 +106,7 @@ flowchart LR
 
 ## 6. Références visuelles
 
-Florian n'a fourni **aucun visuel**. Aucune image externe n'a été intégrée : les photos des fiches Amazon sont protégées et ne doivent pas être réutilisées. Visuels à constituer, à déposer dans [`assets/references/`](../assets/references/README.md) :
+Des **illustrations générées** (statut : proposition) présentent le concept dans le [README](../README.md) ; leur fiche est dans [`assets/illustrations/`](../assets/illustrations/README.md). Florian n'a fourni **aucun visuel** réel. Aucune image externe n'a été intégrée : les photos des fiches Amazon sont protégées et ne doivent pas être réutilisées. Visuels à constituer, à déposer dans [`assets/references/`](../assets/references/README.md) :
 
 | Visuel à ajouter | Type | Illustre | Statut attendu |
 |------------------|------|----------|----------------|

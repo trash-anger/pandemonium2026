@@ -135,3 +135,11 @@ Les questions sont regroupées en **lots par priorité**. Chacune indique la **c
 
 ### Q-033
 **Quelles limites précises pour le NSFW soft ? Faut-il une version familiale ?**
+
+## Lot 5 : ajouts après la première version
+
+### Q-034
+**Que retient-on du jeu du Loup-garou ?** Le README présente le concept « comme au Loup-garou » : des rôles secrets, et personne ne sait qui est qui.
+*Conséquence :* simple analogie de présentation, ou vraies mécaniques à spécifier.
+*Options :* (a) **analogie seulement** : les rôles cachés existent déjà (jumeaux, triplés, chats noirs) ; (b) révélation des rôles à la fin de la soirée ; (c) mécaniques supplémentaires (phase « nuit » déclenchée par le MJ, vote, rôle d'enquêteur…), qui demandent une nouvelle FEAT.
+*Affecte :* [FEAT-007](fonctionnalites/jumeaux.md), [FEAT-008](fonctionnalites/chat-noir.md), [FEAT-011](fonctionnalites/factions.md).

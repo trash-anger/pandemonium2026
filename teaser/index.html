@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Déjà vu ! Ouverture des soldes · Pandémonium 2026</title>
+<meta name="description" content="Ouverture des soldes. Samedi 7 novembre, Pandémonium, Montréal. Le responsable des rayons vêtements vous attend. On s'y est déjà vu.">
+<meta name="theme-color" content="#0b0a0f">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://pandemonium2026.uyt.re/">
+<link rel="alternate" hreflang="fr-CA" href="https://pandemonium2026.uyt.re/">
+<link rel="alternate" hreflang="en-CA" href="https://pandemonium2026.uyt.re/">
+
+<!-- Aperçu de lien (Open Graph) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pandémonium 2026 · Déjà vu !">
+<meta property="og:title" content="Déjà vu ! Ouverture des soldes">
+<meta property="og:description" content="Tout doit disparaître, même les souvenirs. Samedi 7 novembre · Pandémonium · Montréal.">
+<meta property="og:url" content="https://pandemonium2026.uyt.re/">
+<meta property="og:image" content="https://pandemonium2026.uyt.re/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DÉJÀ VU ! Ouverture des soldes, −70 % sur la réalité. Samedi 7 novembre, Montréal.">
+<meta property="og:locale" content="fr_CA">
+<meta property="og:locale:alternate" content="en_CA">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Déjà vu ! Ouverture des soldes">
+<meta name="twitter:description" content="Tout doit disparaître, même les souvenirs. Samedi 7 novembre · Montréal.">
+<meta name="twitter:image" content="https://pandemonium2026.uyt.re/og.png">
+<meta name="twitter:image:alt" content="DÉJÀ VU ! Ouverture des soldes, −70 % sur la réalité.">
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0a0f'/%3E%3Cpath d='M14 8h36v44l-4-3-4 3-4-3-4 3-4-3-4 3-4-3-4 3z' fill='%23f1ece2'/%3E%3Cpath d='M20 18h24M20 25h16M20 32h24M20 39h12' stroke='%230b0a0f' stroke-width='3'/%3E%3Cpath d='M20 18h24M20 25h16' stroke='%23ff4f8b' stroke-width='3' transform='translate(2 1)' opacity='.7'/%3E%3C/svg%3E">
+
+<style>
+:root{
+  --bg:#0b0a0f; --bg2:#15131c; --fg:#efe9df; --muted:#aaa4b6;
+  --pink:#ff4f8b; --green:#3dff8a;
+  --paper:#f1ece2; --ink:#18161d; --ink2:#4a4652; --red:#a80036;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono","Courier New",monospace;
+  --sans:system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --display:"Arial Black","Helvetica Neue",Impact,system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  margin:0;min-height:100vh;background:var(--bg);color:var(--fg);
+  font:16px/1.5 var(--sans);overflow-x:hidden;
+  background-image:
+    radial-gradient(ellipse at 50% -10%,rgba(255,79,139,.16),transparent 60%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px);
+}
+a{color:inherit}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Barre du haut */
+.top{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;max-width:60rem;margin:0 auto}
+.brand{font:700 .75rem/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.lang{display:flex;border:1px solid #3a3644;border-radius:999px;padding:2px}
+.lang button{font:700 .8rem/1 var(--mono);color:var(--muted);background:none;border:0;border-radius:999px;padding:8px 12px;min-width:44px;min-height:36px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.lang button:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+
+/* Bandeau défilant */
+.ticker{position:relative;z-index:2;overflow:hidden;background:var(--pink);color:#140810;font:800 .8rem/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;transform:rotate(-1.2deg);margin:0 -12px;border-block:2px solid #140810}
+.bande{position:relative;z-index:2;overflow:hidden;padding:10px 0 6px}
+.ticker-in{display:flex;width:max-content;animation:defile 38s linear infinite}
+.ticker span{padding:10px 0;white-space:nowrap}
+
+/* Contenu */
+main{position:relative;z-index:1;max-width:40rem;margin:0 auto;padding:28px 16px 40px}
+.kicker{display:inline-block;font:800 .8rem/1.2 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pink);border:1px solid var(--pink);padding:6px 10px;margin:0 0 14px}
+h1{
+  font:900 clamp(4.2rem,25vw,10.5rem)/.84 var(--display);
+  letter-spacing:-.04em;text-transform:uppercase;margin:0 0 18px;padding-top:.14em;
+  text-shadow:.06em .045em 0 rgba(239,233,223,.08);
+}
+h1 span{display:block}
+.lead{font-size:clamp(1.15rem,4.6vw,1.45rem);line-height:1.35;font-weight:600;margin:0 0 28px;max-width:32rem}
+
+/* Ticket de caisse */
+.receipt{
+  position:relative;background:var(--paper);color:var(--ink);font:500 .82rem/1.45 var(--mono);
+  max-width:23rem;margin:0 auto 36px;padding:22px 18px 18px;transform:rotate(-1.4deg);
+  box-shadow:0 18px 40px rgba(0,0,0,.55);
+}
+.receipt::before,.receipt::after{content:"";position:absolute;left:0;right:0;height:10px;
+  background:linear-gradient(-45deg,transparent 7px,var(--paper) 0),linear-gradient(45deg,transparent 7px,var(--paper) 0);
+  background-size:12px 12px;background-repeat:repeat-x}
+.receipt::before{top:-10px;background-position:left top;transform:scaleY(-1)}
+.receipt::after{bottom:-10px;background-position:left bottom}
+.r-c{text-align:center}
+.r-store{font-weight:800;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.r-hr{border:0;border-top:1px dashed var(--ink2);margin:10px 0}
+.r-row{display:flex;justify-content:space-between;gap:10px}
+.r-row span:first-child{white-space:pre-wrap}
+.r-sub{color:var(--ink2)}
+.r-total{font-weight:800;font-size:1rem}
+.r-dup{font-weight:800;letter-spacing:.2em}
+.t-label{text-align:center;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin:2px 0 8px}
+.timer{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.timer.no-d{grid-template-columns:repeat(3,1fr)}
+.timer.no-d .c-d{display:none}
+.cell b{display:block;font:800 clamp(1.6rem,8vw,2.1rem)/1.1 var(--mono);background:var(--ink);color:var(--paper);padding:6px 0;border-radius:3px;font-variant-numeric:tabular-nums}
+.cell small{display:block;font-size:.72rem;color:var(--ink2);margin-top:3px;text-transform:uppercase}
+.barcode{height:46px;margin:12px 8px 4px;background:
+  repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 9px,var(--ink) 9px 12px,transparent 12px 13px,var(--ink) 13px 14px,transparent 14px 17px)}
+.r-code{text-align:center;letter-spacing:.3em;font-size:.75rem}
+.stamp{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%) rotate(-14deg);
+  border:4px double var(--red);color:var(--red);font:900 2.1rem/1 var(--display);text-transform:uppercase;
+  padding:8px 14px;letter-spacing:.06em;background:rgba(241,236,226,.82);white-space:nowrap}
+
+/* Responsable */
+.boss{border-left:4px solid var(--pink);padding:4px 0 4px 16px;margin:0 0 28px}
+.boss h2{font:900 clamp(1.5rem,6.4vw,2.2rem)/1.1 var(--sans);margin:0 0 10px;letter-spacing:-.01em}
+.boss p{margin:0;color:var(--fg);font-size:1.05rem}
+.extra{color:var(--muted);font-style:italic;margin:0 0 24px}
+
+/* Écho */
+.echo{font:700 .95rem/1.5 var(--mono);margin:0 0 28px}
+.echo span{display:block}
+.echo span:nth-child(2){opacity:.6;padding-left:.6em}
+.echo span:nth-child(3){opacity:.35;padding-left:1.2em}
+
+/* Murmure de la Matrice */
+.whisper{font:600 .95rem/1.5 var(--mono);color:var(--green);margin:0 0 28px}
+.whisper::before{content:"> "}
+.whisper::after{content:"_";animation:clignote 1.1s steps(1) infinite}
+
+/* Infos */
+.info{display:grid;gap:4px;font:700 1rem/1.4 var(--mono);margin:0 0 30px;padding:14px 16px;background:var(--bg2);border:1px solid #2b2833}
+.info a{text-decoration-color:var(--pink);text-underline-offset:3px}
+.outro{font:900 clamp(1.5rem,7vw,2.4rem)/1.15 var(--sans);margin:0 0 40px;letter-spacing:-.01em}
+.fine{font-size:.78rem;line-height:1.55;color:var(--muted);border-top:1px solid #2b2833;padding-top:16px;margin:0}
+.fine p{margin:0 0 8px}
+
+/* Rechargement : le grand Déjà vu */
+/* Rechargement : « Déjà vu ! » prend la place du nom dans l'entête, puis s'efface */
+.brand-slot{display:inline-grid;align-items:center}
+.brand-slot>*{grid-area:1/1}
+.deja{font:800 .75rem/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--pink);white-space:nowrap;opacity:0;
+  text-shadow:-.12em 0 rgba(61,255,138,.55),.12em 0 rgba(255,79,139,.35)}
+.brand-slot.rv .brand{animation:sort 7s ease-in-out forwards}
+.brand-slot.rv .deja{animation:entre 7s ease-in-out forwards}
+.brand-slot.fixe .brand{opacity:0}
+.brand-slot.fixe .deja{opacity:1}
+
+[hidden]{display:none!important}
+
+/* Glitchs */
+.glitch{animation:rgb .36s steps(2,end)}
+@keyframes rgb{
+  0%{text-shadow:-.04em 0 var(--pink),.04em 0 var(--green);transform:translateX(.02em)}
+  50%{text-shadow:.03em 0 var(--pink),-.03em 0 var(--green),.12em .08em 0 rgba(239,233,223,.14);transform:translateX(-.015em) skewX(-4deg)}
+  100%{text-shadow:.06em .045em 0 rgba(239,233,223,.08);transform:none}
+}
+.timer.glitch{animation:secoue .5s steps(3,end)}
+h1{position:relative}
+h1 .tr{display:none;position:absolute;inset:0;padding-top:inherit;pointer-events:none;text-shadow:none;mix-blend-mode:screen}
+h1 .tr span{display:block}
+h1.casse .tr{display:block}
+.tr1{color:var(--pink);opacity:.85}
+.tr2{color:var(--green);opacity:.55}
+h1.casse{text-shadow:-.035em 0 rgba(255,79,139,.8),.035em 0 rgba(61,255,138,.6)}
+.begaie{text-shadow:-.06em 0 rgba(255,79,139,.75),.06em 0 rgba(61,255,138,.5)}
+main .glitch{animation:secoue .36s steps(3,end)}
+main{overflow-x:clip}
+@keyframes secoue{0%{transform:translateX(-3px);filter:hue-rotate(90deg)}50%{transform:translateX(3px)}100%{transform:none;filter:none}}
+@keyframes defile{to{transform:translateX(-50%)}}
+@keyframes clignote{50%{opacity:0}}
+@keyframes entre{0%{opacity:0;transform:translateY(-.6em)}7%{opacity:1;transform:none}55%{opacity:1}100%{opacity:0}}
+@keyframes sort{0%{opacity:1}7%{opacity:0}55%{opacity:0}100%{opacity:1}}
+
+/* Caméra de surveillance : en fond du titre sur mobile, sur le côté sur grand écran */
+.hero{position:relative;isolation:isolate}
+.cam{position:absolute;z-index:-1;top:-30px;bottom:-14px;left:-16px;right:-16px;margin:0;pointer-events:none}
+.cam-ecran{position:absolute;inset:0;overflow:hidden;
+  -webkit-mask-image:linear-gradient(transparent,#000 22%,#000 68%,transparent);mask-image:linear-gradient(transparent,#000 22%,#000 68%,transparent)}
+.cam video{display:block;width:100%;height:100%;object-fit:cover;opacity:.22;filter:grayscale(1) contrast(1.35) brightness(.8)}
+.cam-ecran::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.35) 0 1px,transparent 1px 3px)}
+.cam-hud{position:absolute;top:8px;right:16px;font:700 .62rem/1 var(--mono);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rec{display:inline-block;width:.7em;height:.7em;border-radius:50%;background:#ff3b3b;margin-right:5px;vertical-align:-1px;animation:clignote 1.1s steps(1) infinite}
+.cam figcaption{display:none}
+.cam-ecran.glitch{animation:secoue .45s steps(3,end)}
+
+@media (min-width:1100px){
+  .cam{position:fixed;z-index:3;top:50%;bottom:auto;left:24px;right:auto;width:min(240px,calc((100vw - 40rem) / 2 - 56px));transform:translateY(-50%) rotate(-2.5deg)}
+  .cam-ecran{position:relative;aspect-ratio:400/224;border:2px solid #2b2833;box-shadow:0 14px 36px rgba(0,0,0,.55);-webkit-mask-image:none;mask-image:none}
+  .cam video{opacity:.6;filter:grayscale(.85) contrast(1.2)}
+  .cam-hud{top:8px;left:8px;right:auto;color:#fff;text-shadow:0 0 3px #000,0 0 6px #000;z-index:1}
+  .cam figcaption{display:block;font:600 .72rem/1.45 var(--mono);color:var(--muted);margin-top:10px}
+}
+
+@media (min-width:720px){
+  main{padding-top:44px}
+  .receipt{float:right;margin:0 0 30px 30px;width:21rem}
+  .boss,.extra,.whisper{max-width:17rem}
+  .boss h2{font-size:1.75rem}
+  .echo,.info,.outro,.fine{clear:both}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .ticker-in{flex-wrap:wrap;width:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <span class="brand-slot" id="slot"><span class="brand" data-k="brand"></span><span class="deja" aria-hidden="true">Déjà vu !</span></span>
+  <div class="lang" id="lang">
+    <button type="button" data-lang="fr" aria-label="Français" lang="fr">FR</button>
+    <button type="button" data-lang="en" aria-label="English" lang="en">EN</button>
+  </div>
+</header>
+
+<div class="bande" aria-hidden="true"><div class="ticker"><div class="ticker-in" id="ticker"></div></div></div>
+
+<main>
+  <div class="hero">
+  <p class="kicker" data-k="kicker"></p>
+  <h1 id="titre" aria-label="Déjà vu !"><span class="l1">Déjà</span><span class="l2">vu&nbsp;!</span><span class="tr tr1" aria-hidden="true"><span>Déjà</span><span>vu&nbsp;!</span></span><span class="tr tr2" aria-hidden="true"><span>Déjà</span><span>vu&nbsp;!</span></span></h1>
+  <p class="lead" data-k="lead"></p>
+
+  <figure class="cam">
+    <div class="cam-ecran" aria-hidden="true">
+      <video id="ruee" src="ruee.mp4" poster="ruee-fixe.webp" muted loop playsinline preload="auto" width="400" height="224"></video>
+    </div>
+    <span class="cam-hud" aria-hidden="true"><i class="rec"></i>Rec · Cam 07 · <span id="cam-heure">21:00:00.00</span></span>
+    <figcaption><span class="sr" data-k="camAlt"></span><span data-k="camCap"></span></figcaption>
+  </figure>
+  </div>
+
+  <section class="receipt" id="ticket" aria-labelledby="t-label">
+    <div class="r-c r-store" data-k="store"></div>
+    <div class="r-c" data-k="addr"></div>
+    <hr class="r-hr">
+    <div class="r-row"><span class="r-dup" data-k="dup"></span><span data-k="till"></span></div>
+    <div class="r-row"><span data-k="when"></span></div>
+    <hr class="r-hr">
+    <div id="items"></div>
+    <hr class="r-hr">
+    <div class="r-row r-total"><span data-k="totalL"></span><span data-k="totalV"></span></div>
+    <div class="r-sub" data-k="paid"></div>
+    <hr class="r-hr">
+    <div id="minuterie">
+      <div class="t-label" id="t-label" data-k="timerLabel"></div>
+      <div class="timer" id="timer" aria-hidden="true">
+        <div class="cell c-d"><b id="cd">00</b><small data-u="0"></small></div>
+        <div class="cell"><b id="ch">00</b><small data-u="1"></small></div>
+        <div class="cell"><b id="cm">00</b><small data-u="2"></small></div>
+        <div class="cell"><b id="cs">00</b><small data-u="3"></small></div>
+      </div>
+      <p class="sr" data-k="timerSr"></p>
+    </div>
+    <div class="barcode" aria-hidden="true"></div>
+    <div class="r-code" aria-hidden="true">7 091119 970 070</div>
+    <div class="stamp" data-k="stamp" aria-hidden="true"></div>
+  </section>
+
+  <section class="boss">
+    <h2 data-k="head"></h2>
+    <p data-k="body"></p>
+  </section>
+
+  <p class="extra" data-k="extra"></p>
+
+  <p class="echo" id="echo"></p>
+
+  <p class="whisper" id="whisper" hidden></p>
+
+  <div class="info">
+    <span data-k="infoWhen"></span>
+    <a id="lieu" href="https://www.google.com/maps/search/?api=1&amp;query=2875+Rue+Hochelaga+Montr%C3%A9al+QC+H2K+1K7" rel="noopener noreferrer" target="_blank" data-k="infoWhere"></a>
+  </div>
+
+  <p class="outro" data-k="outro"></p>
+
+  <footer class="fine">
+    <p data-k="fine"></p>
+  </footer>
+
+  <noscript>
+    <p class="lead">Ouverture des soldes. Samedi 7 novembre, 21 h · 2875, rue Hochelaga, Montréal.<br>
+    Grand opening sale. Saturday, November 7, 9 PM · 2875 Hochelaga St., Montreal.</p>
+  </noscript>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============================================================
+     RÉGLAGES : dates en heure de Montréal (année, mois, jour, heure, minute)
+     ============================================================ */
+  var TZ = "America/Toronto";
+  var DEBUT = [2026, 11, 7, 21, 0];  // samedi 7 novembre 2026, 21 h
+  var FIN   = [2026, 11, 8, 6, 0];   // dimanche 8 novembre 2026, 6 h
+
+  /* ============================================================
+     DICTIONNAIRE : tous les textes, FR et EN.
+     "commun" sert de valeur par défaut ; chaque phase peut la remplacer.
+     Une valeur null masque l'élément.
+     ============================================================ */
+  var T = {
+    fr: {
+      commun: {
+        title: "Déjà vu ! Ouverture des soldes · Pandémonium 2026",
+        brand: "Pandémonium 2026",
+        ticker: ["Ouverture exceptionnelle", "−70 % sur la réalité", "Tout doit disparaître", "Dernière démarque", "Ni repris ni échangé", "Lavage à 90 °C", "Cabines d'essayage ouvertes toute la nuit", "Dernière démarque"],
+        store: "Grand magasin de la Matrice",
+        addr: "2875, rue Hochelaga, Montréal",
+        dup: "DUPLICATA",
+        till: "Caisse 07",
+        when: "SAM 07-11-2026 · 21:00",
+        items: [["1 × Réalité", "79,99"], ["   Soldes −70 %", "−55,99"], ["1 × Souvenirs", "0,00"], ["   non retournables", ""], ["Jet de sauvegarde contre l'oubli", "1"], ["   échec critique", ""]],
+        totalL: "TOTAL",
+        totalV: "23,99 $",
+        paid: "Payé en souvenirs",
+        units: ["jours", "h", "min", "s"],
+        timerSr: "Ouverture le samedi 7 novembre à 21 h, heure de Montréal.",
+        stamp: null,
+        echo: "Cet article a déjà été vu.",
+        infoWhen: "Samedi 7 novembre · dès 21 h",
+        infoWhere: "2875, rue Hochelaga, Montréal",
+        camAlt: "Images de surveillance : une foule se rue dans un magasin.",
+        camCap: "Caméra 07, entrée principale. Images de la soirée d'ouverture. Elles sont datées de samedi.",
+        fine: "Ni repris ni échangé. Lavage à 90 °C. Ne pas repasser le même moment. Offre valable dans cette timeline seulement, dans la limite des souvenirs disponibles. Lire l'étiquette avant de vous perdre.",
+        whisper: "Tu étais déjà ici. Tu ne t'en souviens pas, c'est normal.",
+        whisperN: "Tu étais déjà ici. Visite n° {n}. Ou n° {m} ?"
+      },
+      avant: {
+        kicker: "Ouverture exceptionnelle",
+        lead: "Ouverture des soldes. Tout doit disparaître, même vos souvenirs.",
+        timerLabel: "Ouverture des portes dans",
+        head: "Le responsable des rayons vêtements vous attend.",
+        body: "Seul le responsable connaît le passage vers le monde parallèle. Il faudra absolument le rencontrer. Personne ne vous dira où chercher.",
+        extra: "Cabines d'essayage ouvertes toute la nuit. Ça fit ou pas?",
+        outro: "À samedi. On s'y est déjà vu."
+      },
+      pendant: {
+        kicker: "En ce moment · Ouverture exceptionnelle",
+        lead: "C'est ouvert. Les soldes ont commencé. La Matrice bugue déjà.",
+        timerLabel: "Temps passé dans la boucle",
+        timerSr: "Les soldes sont en cours, jusqu'à 6 h du matin.",
+        head: "Trouve le responsable des rayons vêtements.",
+        body: "C'est le seul passage vers le monde parallèle. Ne demande pas à quoi ça ressemble. Cherche.",
+        extra: "Si tu as l'impression d'avoir déjà lu cette phrase, c'est normal.",
+        infoWhen: "Ce soir · jusqu'à 6 h",
+        camCap: "Caméra 07, en direct de l'entrée principale. Enfin, presque.",
+        outro: "Tu es déjà là. Tu l'as toujours été."
+      },
+      apres: {
+        kicker: "Dernière démarque",
+        lead: "Déjà vu. Tu étais là hier soir. Ou pas ?",
+        timerLabel: null,
+        timerSr: null,
+        stamp: "Épuisé",
+        head: "Merci d'avoir fait les soldes avec nous.",
+        body: "Le responsable des rayons vêtements est retourné en réserve. Les souvenirs ne sont ni repris ni échangés, mais vous pouvez les garder.",
+        extra: "Si vous ne vous souvenez de rien, c'est que ça a marché.",
+        infoWhen: "C'était le samedi 7 novembre. Normalement.",
+        camCap: "Caméra 07, images d'hier soir. Tu es peut-être dessus.",
+        outro: "Prochain arrivage : bientôt. Vous l'avez déjà vu."
+      }
+    },
+    en: {
+      commun: {
+        title: "Déjà vu! Grand opening sale · Pandémonium 2026",
+        brand: "Pandémonium 2026",
+        ticker: ["Grand opening", "70% off reality", "Everything must go", "Final markdown", "No returns, no exchanges", "Wash at 90 °C", "Fitting rooms open all night", "Final markdown"],
+        store: "The Matrix Department Store",
+        addr: "2875 Hochelaga St., Montreal",
+        dup: "DUPLICATE",
+        till: "Till 07",
+        when: "SAT 2026-11-07 · 9:00 PM",
+        items: [["1 × Reality", "79.99"], ["   Sale −70%", "−55.99"], ["1 × Memories", "0.00"], ["   non-refundable", ""], ["Saving throw vs. forgetting", "1"], ["   critical fail", ""]],
+        totalL: "TOTAL",
+        totalV: "$23.99",
+        paid: "Paid in memories",
+        units: ["days", "h", "min", "s"],
+        timerSr: "Opens Saturday, November 7 at 9 PM, Montreal time.",
+        stamp: null,
+        echo: "This item has already been seen.",
+        infoWhen: "Saturday, November 7 · from 9 PM",
+        infoWhere: "2875 Hochelaga St., Montreal",
+        camAlt: "Security footage: a crowd rushes into a store.",
+        camCap: "Camera 07, main entrance. Footage from opening night. It's dated Saturday.",
+        fine: "No returns, no exchanges. Wash at 90 °C. Do not iron the same moment twice. Valid in this timeline only, while memories last. Read the label before you get lost.",
+        whisper: "You've been here before. You don't remember. That's normal.",
+        whisperN: "You've been here before. Visit #{n}. Or #{m}?"
+      },
+      avant: {
+        kicker: "Grand opening",
+        lead: "Grand opening sale. Everything must go, even your memories.",
+        timerLabel: "Doors open in",
+        head: "The head of the clothing department is waiting for you.",
+        body: "Only the head of the clothing department knows the way into the parallel world. You absolutely must meet them. Nobody will tell you where to look.",
+        extra: "Fitting rooms open all night. Will it fit?",
+        outro: "See you Saturday. We've met there before."
+      },
+      pendant: {
+        kicker: "Right now · Grand opening",
+        lead: "We're open. The sale has started. The Matrix is already glitching.",
+        timerLabel: "Time spent in the loop",
+        timerSr: "The sale is on, until 6 AM.",
+        head: "Find the head of the clothing department.",
+        body: "It's the only way into the parallel world. Don't ask what to look for. Just look.",
+        extra: "If you feel like you've read this sentence before, that's normal.",
+        infoWhen: "Tonight · until 6 AM",
+        camCap: "Camera 07, live from the main entrance. Almost.",
+        outro: "You're already here. You always were."
+      },
+      apres: {
+        kicker: "Final markdown",
+        lead: "Déjà vu. You were there last night. Or were you?",
+        timerLabel: null,
+        timerSr: null,
+        stamp: "Sold out",
+        head: "Thanks for shopping the sale with us.",
+        body: "The head of the clothing department has gone back to the stockroom. Memories cannot be returned or exchanged, but you may keep them.",
+        extra: "If you don't remember a thing, it worked.",
+        infoWhen: "That was Saturday, November 7. Probably.",
+        camCap: "Camera 07, footage from last night. You might be in it.",
+        outro: "New arrivals: soon. You've seen them before."
+      }
+    }
+  };
+
+  /* ---------- Stockage local, toujours facultatif ---------- */
+  function lire(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+  function ecrire(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* navigation privée */ } }
+
+  /* ---------- Fuseau : heure de Montréal vers instant UTC ---------- */
+  function decalage(ms) {
+    try {
+      var p = {};
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: TZ, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit"
+      }).formatToParts(new Date(ms)).forEach(function (x) { p[x.type] = x.value; });
+      return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second) - Math.floor(ms / 1000) * 1000;
+    } catch (e) {
+      return -5 * 3600 * 1000; // repli : heure normale de l'Est
+    }
+  }
+  function heureMtl(y, mo, d, h, mi) {
+    var g = Date.UTC(y, mo - 1, d, h || 0, mi || 0);
+    var t = g - decalage(g);
+    var t2 = g - decalage(t);
+    return t2 !== t ? t2 : t;
+  }
+  function depuis(a) { return heureMtl(a[0], a[1], a[2], a[3], a[4]); }
+  var T_DEBUT = depuis(DEBUT);
+  var T_FIN = depuis(FIN);
+
+  /* ---------- Paramètres de test : ?phase=avant|pendant|apres  ?now=2026-11-07T22:30 ---------- */
+  var q = new URLSearchParams(location.search);
+  var force = q.get("phase");
+  if (["avant", "pendant", "apres"].indexOf(force) < 0) force = null;
+  var avance = 0;
+  var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(q.get("now") || "");
+  if (m) avance = heureMtl(+m[1], +m[2], +m[3], +m[4], +m[5]) - Date.now();
+  function maintenant() { return Date.now() + avance; }
+  function phaseA(t) { return force || (t < T_DEBUT ? "avant" : t < T_FIN ? "pendant" : "apres"); }
+
+  /* ---------- Préférences ---------- */
+  var mouvementReduit = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var langue = lire("dv-langue");
+  if (langue !== "fr" && langue !== "en") {
+    langue = /^fr/i.test(navigator.language || "") ? "fr" : "en";
+  }
+  var phase = phaseA(maintenant());
+
+  function txt(k) {
+    var d = T[langue], v = d[phase] && Object.prototype.hasOwnProperty.call(d[phase], k) ? d[phase][k] : d.commun[k];
+    return v === undefined ? null : v;
+  }
+  function $(s) { return document.querySelector(s); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  /* ---------- Affichage des textes ---------- */
+  function afficher() {
+    document.documentElement.lang = langue === "fr" ? "fr-CA" : "en-CA";
+    document.title = txt("title");
+
+    document.querySelectorAll("[data-k]").forEach(function (el) {
+      var v = txt(el.getAttribute("data-k"));
+      el.hidden = v === null || v === "";
+      el.textContent = v || "";
+    });
+    $("#minuterie").hidden = txt("timerLabel") === null;
+
+    var u = txt("units");
+    document.querySelectorAll("[data-u]").forEach(function (el) { el.textContent = u[+el.getAttribute("data-u")]; });
+
+    $("#items").innerHTML = txt("items").map(function (r) {
+      var sous = /^\s/.test(r[0]);
+      return '<div class="r-row' + (sous ? " r-sub" : "") + '"><span>' + esc(r[0]) + "</span><span>" + esc(r[1]) + "</span></div>";
+    }).join("");
+
+    var l = txt("ticker").map(function (s) { return "<span>" + esc(s) + "&nbsp;&nbsp;✦&nbsp;&nbsp;</span>"; }).join("");
+    $("#ticker").innerHTML = l + l;
+
+    var e = esc(txt("echo"));
+    $("#echo").innerHTML = "<span>" + e + "</span><span aria-hidden=\"true\">" + e + "</span><span aria-hidden=\"true\">" + e + "</span>";
+
+    if (visites > 1) {
+      var w = $("#whisper");
+      w.hidden = false;
+      w.textContent = visites > 2 ? txt("whisperN").replace("{n}", visites).replace("{m}", visites + 1) : txt("whisper");
+    }
+
+    document.querySelectorAll("#lang button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-lang") === langue));
+    });
+    $("#timer").classList.toggle("no-d", phase === "pendant");
+  }
+
+  /* ---------- Minuterie ---------- */
+  function deux(n) { return (n < 10 ? "0" : "") + n; }
+  function montrer(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    $("#cd").textContent = deux(Math.floor(sec / 86400));
+    $("#ch").textContent = deux(Math.floor(sec % 86400 / 3600) + (phase === "pendant" ? Math.floor(sec / 86400) * 24 : 0));
+    $("#cm").textContent = deux(Math.floor(sec % 3600 / 60));
+    $("#cs").textContent = deux(sec % 60);
+  }
+  var chargement = maintenant();
+  function secondes(t) {
+    if (phase === "avant") return Math.ceil((T_DEBUT - t) / 1000);
+    // Phase forcée avant l'heure : le chronomètre part du chargement de la page.
+    return Math.floor((t - (t < T_DEBUT ? chargement : T_DEBUT)) / 1000);
+  }
+
+  var prochainRecul = maintenant() + hasard(6, 20) * 1000;
+  function hasard(a, b) { return a + Math.random() * (b - a); }
+
+  function glitch(el, ms) {
+    if (mouvementReduit || !el) return;
+    el.classList.remove("glitch");
+    void el.offsetWidth;
+    el.classList.add("glitch");
+    setTimeout(function () { el.classList.remove("glitch"); }, ms || 400);
+  }
+
+  function battement() {
+    var t = maintenant();
+    var p = phaseA(t);
+    if (p !== phase) { phase = p; afficher(); }
+
+    if (phase !== "apres") {
+      var s = secondes(t);
+      montrer(s);
+      // Effet déjà vu : la minuterie recule d'une à trois secondes, à intervalles irréguliers, puis reprend.
+      if (t >= prochainRecul && s > 3) {
+        prochainRecul = t + (Math.random() < 0.3 ? hasard(4, 9) : hasard(10, 32)) * 1000;
+        var n = Math.random() < 0.45 ? 1 : Math.random() < 0.7 ? 2 : 3, sens = phase === "avant" ? 1 : -1;
+        for (var i = 1; i <= n; i++) {
+          (function (k) { setTimeout(function () { montrer(s + sens * k); if (k === n) glitch($("#timer"), 500); }, k * 280); })(i);
+        }
+      }
+    }
+    setTimeout(battement, 1000 - (maintenant() % 1000) + 5);
+  }
+
+  /* ---------- Glitchs : irréguliers, parfois en rafale ----------
+     Chaque effet dure au plus ~0,6 s et deux effets sont espacés d'au moins 0,55 s :
+     jamais plus de 2 changements brusques par seconde. Rien avec prefers-reduced-motion. */
+  var titre = $("#titre"), L1 = "Déjà", L2 = "vu\u00a0!";
+  var calques = titre.querySelectorAll(".tr");
+  var BRUIT = "█▓▒░#%&@$01ÉÀ<>/|";
+
+  function pas(n, ms, fn, fin) {
+    var i = 0;
+    (function f() { if (i++ < n) { fn(i); setTimeout(f, ms + hasard(-15, 30)); } else if (fin) fin(); })();
+  }
+  function trancher(c, dy) {
+    var h = hasard(0, 75), e = hasard(5, 32);
+    c.style.clipPath = "inset(" + h.toFixed(1) + "% 0 " + Math.max(0, 100 - h - e).toFixed(1) + "% 0)";
+    c.style.transform = "translate(" + hasard(-0.2, 0.2).toFixed(3) + "em," + ((dy || 0) + hasard(-0.03, 0.03)).toFixed(3) + "em)";
+  }
+  function abimer(s, p) {
+    return s.split("").map(function (c) {
+      return c !== "\u00a0" && Math.random() < p ? BRUIT.charAt(Math.floor(Math.random() * BRUIT.length)) : c;
+    }).join("");
+  }
+  function reparer() {
+    titre.classList.remove("casse");
+    titre.style.transform = "";
+    calques.forEach(function (c) { c.style.clipPath = ""; c.style.transform = ""; });
+  }
+
+  var effets = {
+    // Le titre se découpe en tranches décalées.
+    tranche: function () {
+      titre.classList.add("casse");
+      pas(Math.round(hasard(3, 6)), 75, function () {
+        calques.forEach(function (c) { trancher(c); });
+        titre.style.transform = "skewX(" + hasard(-9, 9).toFixed(1) + "deg) translateX(" + hasard(-0.05, 0.05).toFixed(3) + "em)";
+      }, reparer);
+    },
+    // Les lettres se corrompent.
+    brouille: function () {
+      var a = titre.querySelector(".l1"), b = titre.querySelector(".l2");
+      pas(Math.round(hasard(3, 6)), 80, function () {
+        a.textContent = abimer(L1, 0.45);
+        b.textContent = abimer(L2, 0.45);
+      }, function () { a.textContent = L1; b.textContent = L2; });
+    },
+    // Une ligne du titre se répète par-dessus l'autre.
+    echo: function () {
+      titre.classList.add("casse");
+      var bas = Math.random() < 0.5;
+      pas(Math.round(hasard(2, 4)), 120, function () {
+        trancher(calques[0], bas ? 0.84 : -0.84);
+        trancher(calques[1], bas ? 0.84 : -0.84);
+      }, reparer);
+    },
+    // Un mot du texte bégaie.
+    mot: function () {
+      var cands = ["lead", "head", "body", "extra", "outro"].map(function (k) {
+        return document.querySelector('[data-k="' + k + '"]');
+      }).filter(function (el) { return el && !el.hidden && el.textContent; });
+      if (!cands.length) return;
+      var el = cands[Math.floor(Math.random() * cands.length)], orig = el.textContent;
+      var mots = orig.split(" "), i = Math.floor(Math.random() * mots.length);
+      mots[i] = Math.random() < 0.3 ? [mots[i], mots[i], mots[i]].join(" ") : mots[i] + " " + mots[i];
+      var neuf = mots.join(" ");
+      el.textContent = neuf;
+      el.classList.add("begaie");
+      setTimeout(function () {
+        if (el.textContent === neuf) el.textContent = orig;
+        el.classList.remove("begaie");
+      }, hasard(900, 2000));
+    },
+    // Toute la page tressaute.
+    secousse: function () {
+      document.querySelectorAll("main > :not(.hero), .hero > :not(.cam)").forEach(function (el) { glitch(el, 380); });
+    }
+  };
+
+  var POIDS = [["tranche", 32], ["brouille", 20], ["echo", 16], ["mot", 20], ["secousse", 12]];
+  function unGlitch() {
+    var r = Math.random() * 100, acc = 0;
+    for (var i = 0; i < POIDS.length; i++) {
+      acc += POIDS[i][1];
+      if (r < acc) {
+        effets[POIDS[i][0]]();
+        if (POIDS[i][0] === "tranche" && Math.random() < 0.3) effets.secousse();
+        return;
+      }
+    }
+  }
+  function crise() {
+    var n = Math.random() < 0.3 ? (Math.random() < 0.5 ? 2 : 3) : 1, d = 0;
+    for (var i = 0; i < n; i++) { setTimeout(unGlitch, d); d += hasard(600, 950); }
+    var r = Math.random();
+    setTimeout(crise, d + (r < 0.5 ? hasard(500, 2500) : r < 0.85 ? hasard(2500, 6000) : hasard(7000, 13000)));
+  }
+
+  /* ---------- Secrets : visites et rechargement ---------- */
+  var visites = (parseInt(lire("dv-visites"), 10) || 0) + 1;
+  ecrire("dv-visites", String(visites));
+  if (lire("dv-visites") === null) visites = 1; // stockage bloqué : pas de secret
+
+  var nav = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null;
+  var recharge = nav ? nav.type === "reload" : (performance.navigation && performance.navigation.type === 1);
+  if (recharge) {
+    // En haut de l'entête, là où le pouce vient de tirer pour recharger.
+    var slot = $("#slot");
+    if (mouvementReduit) {
+      slot.classList.add("fixe");
+      setTimeout(function () { slot.classList.remove("fixe"); }, 5000);
+    } else {
+      slot.classList.add("rv");
+    }
+  }
+
+  /* ---------- Bascule de langue ---------- */
+  $("#lang").addEventListener("click", function (ev) {
+    var b = ev.target.closest("button[data-lang]");
+    if (!b || b.getAttribute("data-lang") === langue) return;
+    langue = b.getAttribute("data-lang");
+    ecrire("dv-langue", langue);
+    afficher();
+    if (phase !== "apres") montrer(secondes(maintenant()));
+    if (!mouvementReduit) effets.tranche();
+  });
+
+  afficher();
+  battement();
+  if (!mouvementReduit) setTimeout(crise, 1200);
+
+  /* ---------- Caméra 07 : la ruée tourne en boucle, l'horodatage aussi ---------- */
+  var video = $("#ruee"), ecran = $(".cam-ecran"), heure = $("#cam-heure"), dernier = 0;
+  if (video) {
+    video.muted = true;
+    if (!mouvementReduit) {
+      var lecture = video.play();
+      if (lecture && lecture.catch) lecture.catch(function () { /* lecture auto bloquée : l'image fixe reste */ });
+    }
+    video.addEventListener("timeupdate", function () {
+      var t = video.currentTime;
+      if (t < dernier && Math.random() < 0.35) glitch(ecran, 450);
+      dernier = t;
+      heure.textContent = "21:00:0" + Math.floor(t) + "." + deux(Math.floor(t * 100) % 100);
+    });
+  }
+})();
+</script>
+</body>
+</html>

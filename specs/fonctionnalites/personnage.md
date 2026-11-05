@@ -35,7 +35,7 @@ Un bouton **Retour** permet de revenir à l'écran précédent à tout moment de
 
 | Écran | Contenu | Ce que le joueur fait |
 |-------|---------|----------------------|
-| **1. Avertissement** | Jeu **punk et anticapitaliste** ; données **supprimées 7 jours après la fête** ; aucun usage commercial ; installation **fortement recommandée**, mais jeu jouable en scannant seulement les QR ([DEC-040](../decisions.md#dec-040)) | Touche « J'ai compris » |
+| **1. Avertissement** | Jeu **punk et anticapitaliste** ; données **intégralement supprimées 7 jours après la fête** ; aucun usage commercial ; installation **fortement recommandée**, mais jeu jouable en scannant seulement les QR ([DEC-040](../decisions.md#dec-040)) | Touche « J'ai compris » |
 | **2. Ton costume** | Grille des **8 emoji de type de costume** : « Choisis ce qui te ressemble le plus ». **L'emoji du personnage est l'emoji de son type** : il n'y a pas d'autre emoji à choisir (S8) | Touche un emoji |
 | **3. Les détails** | Sur le même écran : la **couleur dominante** (12 pastilles) et les **12 attributs** à cocher, avec la consigne « Coche tout ce qu'on peut voir de loin » | Touche une couleur et coche des attributs |
 | **4. Ta carte** | Récapitulatif : **pseudo généré au hasard**, avec la mention visible « Tu pourras le changer depuis ta fiche » ; **faction** et **classe D&D** tirées au hasard ; case « J'accepte que mes photos de scan apparaissent à la révélation » ; saisie du **PIN à 4 chiffres** ; bouton **« Créer mon personnage »** | Saisit son PIN et valide |
@@ -72,8 +72,10 @@ Libellés définitifs en français et en anglais : [textes §1](../textes.md#1-l
 ### Couleurs dominantes (12)
 Noir, blanc, argent, rouge, orange, doré, vert, bleu, violet, rose, brun, arc-en-ciel.
 
-### Attributs (12)
+### Attributs (24)
 Masque ; maquillage sur le visage ; perruque ou cheveux colorés ; cornes ou oreilles ; ailes ; chapeau ou couvre-chef ; lumières ou électronique ; faux sang ; accessoire tenu à la main ou à la ceinture ; cape ou manteau long ; paillettes ou tissu brillant ; queue.
+
+Derrière **« Charger plus »** (Proposition) : lunettes ou lentilles ; couronne ou tiare ; crocs ou fausses dents ; armure ou casque ; arme factice ; plumes ou fourrure ; cuir, latex ou vinyle ; chaînes ou gros bijoux ; tatouages ou peinture sur le corps ; tentacules ou membres en trop ; combinaison intégrale ou mascotte ; pancarte ou texte écrit. Libellés exacts : [textes §1.3](../textes.md#13-attributs-24).
 
 ## Parcours : un joueur actif scanne une étiquette vierge
 Un même personnage peut posséder **plusieurs étiquettes** ([DEC-020](../decisions.md#dec-020)) :

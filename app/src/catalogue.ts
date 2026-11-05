@@ -4,7 +4,11 @@
 
 export const TYPES = ["mort_vivant", "nuit", "magie", "robot", "animal", "sexy", "pop", "inclassable"] as const;
 export const COULEURS = ["noir", "blanc", "argent", "rouge", "orange", "dore", "vert", "bleu", "violet", "rose", "brun", "arc_en_ciel"] as const;
-export const ATTRIBUTS = ["masque", "maquillage", "perruque", "cornes", "ailes", "chapeau", "lumieres", "sang", "accessoire", "cape", "paillettes", "queue"] as const;
+export const ATTRIBUTS = ["masque", "maquillage", "perruque", "cornes", "ailes", "chapeau", "lumieres", "sang", "accessoire", "cape", "paillettes", "queue",
+  "lunettes", "couronne", "crocs", "armure", "arme", "plumes", "latex", "chaines", "tatouages", "tentacules", "integral", "pancarte",
+] as const;
+/** Les 12 premiers sont affichés d'office ; les suivants derrière « Charger plus ». */
+export const NB_ATTRIBUTS_BASE = 12;
 export const FACTIONS = ["ordre", "chaos", "friperie", "influence", "necro"] as const;
 export const CLASSES = ["barbare", "barde", "clerc", "druide", "magicien", "paladin", "rodeur", "voleur"] as const;
 
@@ -12,7 +16,7 @@ export const CLASSES = ["barbare", "barde", "clerc", "druide", "magicien", "pala
 export const BADGES = [
   "tueur_de_poussin", "achat_compulsif", "surconsommation", "trans_classe", "installe_portail", "boucle_detectee",
   "jour_marmotte", "client_maudit", "jumeaux_retrouves", "fermer_boucle", "patient_zero", "dernier_survivant",
-  "amnesie", "serie_complete", "garde_robe_mj", "anticapitaliste", "employe_du_mois", "client_difficile",
+  "amnesie", "serie_complete", "garde_robe_mj", "anticapitaliste", "employe_du_mois", "client_difficile", "collegue_de_rayon",
 ] as const;
 
 export type Langue = "fr" | "en";

@@ -37,6 +37,19 @@
     ["lumieres", "💡", "Lumières ou électronique", "Lights or electronics"], ["sang", "🩸", "Faux sang", "Fake blood"],
     ["accessoire", "🪄", "Accessoire à la main ou à la ceinture", "Handheld or belt accessory"], ["cape", "🧥", "Cape ou manteau long", "Cape or long coat"],
     ["paillettes", "✨", "Paillettes ou tissu brillant", "Glitter or shiny fabric"], ["queue", "🐾", "Queue", "Tail"],
+    // Derrière « Charger plus »
+    ["lunettes", "🕶️", "Lunettes ou lentilles", "Glasses or lenses"],
+    ["couronne", "👑", "Couronne ou tiare", "Crown or tiara"],
+    ["crocs", "🦷", "Crocs ou fausses dents", "Fangs or fake teeth"],
+    ["armure", "🪖", "Armure ou casque", "Armour or helmet"],
+    ["arme", "⚔️", "Arme factice", "Prop weapon"],
+    ["plumes", "🪶", "Plumes ou fourrure", "Feathers or fur"],
+    ["latex", "🖤", "Cuir, latex ou vinyle", "Leather, latex or vinyl"],
+    ["chaines", "⛓️", "Chaînes ou gros bijoux", "Chains or big jewellery"],
+    ["tatouages", "🎨", "Tatouages ou peinture sur le corps", "Tattoos or body paint"],
+    ["tentacules", "🐙", "Tentacules ou membres en trop", "Tentacles or extra limbs"],
+    ["integral", "🧸", "Combinaison intégrale ou mascotte", "Full-body suit or mascot"],
+    ["pancarte", "🪧", "Pancarte ou texte écrit", "Sign or written text"],
   ].map(([id, e, fr, en]) => ({ id, e, fr, en }));
   const FACTIONS = {
     ordre: { e: "🛡️", fr: "L'Ordre du Ticket de Caisse", en: "The Order of the Receipt", dfr: "Sans reçu, point de salut.", den: "No receipt, no salvation." },
@@ -58,11 +71,11 @@
   // Badges (FEAT-015, textes §1.6) : [emoji, nom FR, nom EN, condition FR, condition EN, secret]
   // L'ordre est celui de l'écran ; un badge secret n'apparaît qu'une fois gagné.
   const BADGES = {
-    tueur_de_poussin: ["🐣", "Tueur de poussin", "Chick Killer", "Laisser une étiquette vierge qui n'était pas à toi.", "Pass on a blank tag that wasn't yours."],
-    achat_compulsif: ["🛍️", "Achat compulsif", "Impulse Buy", "Ajouter une étiquette à ton personnage.", "Add a tag to your character."],
-    surconsommation: ["🧾", "Surconsommation", "Overconsumption", "Prendre plus de 3 étiquettes. À éviter.", "Take more than 3 tags. Don't."],
+    tueur_de_poussin: ["🐣", "Tueur de poussin", "Chick Killer", "Scanner une étiquette pas encore activée qui n'est pas à toi.", "Scan a not-yet-activated tag that isn't yours."],
+    achat_compulsif: ["🛍️", "Achat compulsif", "Impulse Buy", "Ajouter une étiquette à ton personnage. Demande au MJ.", "Add a tag to your character. Ask the GM."],
+    surconsommation: ["🧾", "Surconsommation", "Overconsumption", "Prendre plus de 3 étiquettes.", "Take more than 3 tags."],
     trans_classe: ["🔀", "Trans-classe", "Class Shifter", "Changer de classe avant 1 h.", "Change class before 1 a.m."],
-    installe_portail: ["📲", "Installé le Portail", "Portal Installed", "Installer l'app sur ton écran d'accueil.", "Install the app on your home screen."],
+    installe_portail: ["🖖", "Téléporteur installé", "Transporter Installed", "Installer l'app sur ton écran d'accueil.", "Install the app on your home screen."],
     boucle_detectee: ["🔁", "Boucle détectée", "Loop Detected", "Revoir la même personne 3 fois.", "See the same person 3 times."],
     jour_marmotte: ["🕰️", "Jour de la marmotte", "Groundhog Day", "Revoir la même personne 6 fois.", "See the same person 6 times."],
     client_maudit: ["🧿", "Client maudit", "Cursed Customer", "Ce badge n'existe pas. Tu ne l'as jamais eu.", "This badge doesn't exist. You never got it.", true],
@@ -75,7 +88,8 @@
     garde_robe_mj: ["👔", "Garde-robe du MJ", "GM's Wardrobe", "Collectionner les 10 légendaires du MJ.", "Collect all 10 of the GM's legendaries."],
     anticapitaliste: ["✊", "Anticapitaliste", "Anti-capitalist", "Trouver un bon de réduction très particulier.", "Find a very special discount voucher."],
     employe_du_mois: ["🏷️", "Employé du mois", "Employee of the Month", "Réussir une mission confiée par le MJ.", "Complete a mission from the GM."],
-    client_difficile: ["⚠️", "Client difficile", "Difficult Customer", "Recevoir un avertissement du MJ. Rien de glorieux.", "Get a warning from the GM. Not proud."],
+    client_difficile: ["⚠️", "Client difficile", "Difficult Customer", "Recevoir un avertissement du MJ. Rien de glorieux.", "Get a warning from the GM. Not proud.", true],
+    collegue_de_rayon: ["🤝", "Collègue de rayon", "Aisle Mate", "Scanner une personne de ta faction.", "Scan someone from your faction."],
   };
   const lib = (o) => (L === "en" ? o.en : o.fr);
   const typeDe = (id) => TYPES.find((t) => t.id === id) || TYPES[7];
@@ -104,12 +118,12 @@
       avTitre: "Avant d'entrer dans la boutique",
       av: [
         "🏴 <b>Déjà vu !</b> est un jeu <b>punk et anticapitaliste</b>. Les soldes, ici, c'est pour rire.",
-        "🗑️ Tes données sont <b>supprimées 7 jours après la fête</b>. Aucun usage commercial, jamais.",
+        "🗑️ Tes données sont <b>intégralement supprimées 7 jours après la fête</b>. Aucun usage commercial, jamais.",
         "🔢 Pas de compte, pas de courriel : juste un <b>code PIN</b> pour retrouver ton personnage.",
       ],
       compris: "J'ai compris",
       instTitre: "Installe l'app : on te la recommande",
-      instPourquoi: "Pour une meilleure expérience : plein écran, ouverture en un geste, plus rapide, jouable même quand le réseau faiblit, et les notifications (ton jumeau, les annonces du MJ). Tu gagnes aussi le badge « Installé le Portail ». Sans installation, tu peux quand même jouer en scannant les QR.",
+      instPourquoi: "Pour une meilleure expérience : plein écran, ouverture en un geste, plus rapide, jouable même quand le réseau faiblit, et les notifications (ton jumeau, les annonces du MJ). Tu gagnes aussi le badge « Téléporteur installé ». Sans installation, tu peux quand même jouer en scannant les QR.",
       instBouton: "Installer l'app",
       instPuis: (c) => `Ensuite, ouvre <b>Déjà vu !</b> depuis ton écran d'accueil et entre le code de ton étiquette : <b class="code">${c}</b>`,
       instIos: "Sur iPhone, l'app installée ne partage pas la mémoire de ton navigateur : crée ton personnage <b>dans l'app</b>.",
@@ -131,7 +145,7 @@
         ordi: ["Dans la barre d'adresse, clique sur l'icône d'installation <b>⊕</b>, ou passe par le menu du navigateur."],
       },
       costumeTitre: "Ton costume", costumeAide: "Choisis ce qui te ressemble le plus.",
-      detailsTitre: "Les détails", couleurTitre: "Couleur dominante",
+      detailsTitre: "Les détails", couleurTitre: "Couleur dominante du costume", plusAttrs: "Charger plus",
       attrsAide: "Coche tout ce qu'on peut voir de loin sur ton costume.",
       suivant: "Suivant →", carteTitre: "Ta carte",
       pseudoModifiable: "Tu pourras le changer depuis ta fiche.",
@@ -142,8 +156,18 @@
       creer: "Créer mon personnage", tirage: "On fouille les bacs de soldes…",
       dejaReclamee: "Trop tard : quelqu'un vient de réclamer cette étiquette.",
       // Tutoriel (textes §5.1)
-      tutoTitre: "Comment jouer",
-      tuto: [["📷", "<b>Scanne</b> les étiquettes des autres : chaque personne rejoint ta collection."], ["🔁", "<b>Revois-les</b> : chaque déjà vu compte."], ["👯", "<b>Cherche ton jumeau</b> : des indices arrivent à partir de minuit."], ["🕔", "<b>Révélation à 5 h</b> pour tout Pandémonium."]],
+      tutoTitre: "Ta mission",
+      tuto: [["📷", "<b>Scanne des inconnus</b> : chaque personne devient une carte de ta collection, et te fait monter au classement."],
+        ["🔁", "<b>Revois-les</b> : chaque déjà vu compte, et certains cachent des badges."],
+        ["👯", "<b>Quelqu'un dans Pandémonium te ressemble un peu trop.</b> Premiers indices à minuit."],
+        ["🕔", "<b>5 h : révélation</b> pour tout Pandémonium. Les classements se figent, les médailles restent."]],
+      pouls: (j, r) => `⚡ <b>${j} joueur${j > 1 ? "s" : ""}</b> déjà dans la partie${r ? ` · record : <b>${r} carte${r > 1 ? "s" : ""}</b>` : ""}.`,
+      missionTitre: "🎯 Ta première mission", missionSuivante: "🎯 Mission suivante", missionFaite: "✅ Mission accomplie !", missionsToutes: "Toutes les missions de départ sont accomplies. Chapeau.",
+      missionAide: { installe_portail: "Suis les étapes d'installation, puis ouvre l'app depuis ton écran d'accueil.",
+        collegue_de_rayon: (f) => `Trouve quelqu'un de ${f} et scanne son étiquette.`,
+        boucle_detectee: "Scanne la même personne 3 fois, à 5 minutes d'écart au moins.",
+        trans_classe: "Va dans <b>Moi</b> et change de classe avant 1 h." },
+      premierScan: "📷 Scanner ma première personne", scannerQqn: "📷 Scanner quelqu'un",
       cestParti: "C'est parti",
       // Accueil (textes §5.2)
       maintenant: "Et maintenant ?",
@@ -158,7 +182,7 @@
       // Résultats
       nouvelle: "Nouvelle pièce ajoutée", collectionN: (n) => `Ta collection : ${n} pièce${n > 1 ? "s" : ""}.`,
       souvenirBientot: "Votre faux souvenir commun se reconstitue…",
-      dejaVu: (n) => `DÉJÀ VU ×${n}`, panier: "Article déjà dans ton panier.",
+      dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Article déjà dans ton panier.", fenetre: "Trop tôt pour compter : un même déjà vu compte une fois toutes les 5 minutes.",
       soiTitre: "C'est toi.", soi: "Ton double existe… quelque part. Les indices arrivent à partir de minuit.",
       encore: "Scanner encore",
       spectMJ: "Va trouver le MJ pour avoir ta propre étiquette !",
@@ -190,11 +214,11 @@
       classeFigee: "La classe ne se change plus.",
       classeAlerte: "Changer de classe donne le badge « Trans-classe ».",
       modifierCostume: "Modifier mon costume", confidentialite: "Photos",
-      langue: "Language / Langue", commentJouer: "Comment jouer",
+      langue: "Language / Langue", commentJouer: "Ta mission",
       pinRappel: "Ton PIN te permet de retrouver ton personnage : rescanne une de tes étiquettes depuis un autre navigateur, puis touche « Réintégrer le jeu avec mon PIN ».",
       enregistre: "Enregistré.", mj: "MJ",
       ongAccueil: "Accueil", ongCollection: "Collection", ongClassements: "Classements", ongBadges: "Badges", ongMedailles: "Médailles", ongMoi: "Moi",
-      sousBadges: "Badges", sousClassements: "Classements", bonus: (n) => `bonus`, toutPandemonium: "Tout Pandémonium",
+      sousBadges: "Badges", sousClassements: "Classements", bonus: (n) => `bonus`, toutPandemonium: "Tout Pandémonium", tous: "Tous",
       medaillesBonus: "Médailles bonus", medaillesBonusAide: "Un top 3 dans un classement, dans tout Pandémonium ou dans ta faction, rapporte une médaille. Provisoire : tout se fige à la révélation de 5 h.",
       medaillesFigees: "Classements figés depuis la révélation.",
       voirMedailles: (m) => `Mes médailles (${m.gagnes}/${m.total}${m.bonus ? ` +${m.bonus}` : ""})`,
@@ -226,12 +250,12 @@
       avTitre: "Before you walk into the store",
       av: [
         "🏴 <b>Déjà vu!</b> is a <b>punk, anti-capitalist</b> game. The sales here are a joke.",
-        "🗑️ Your data is <b>deleted 7 days after the party</b>. No commercial use, ever.",
+        "🗑️ Your data is <b>fully deleted 7 days after the party</b>. No commercial use, ever.",
         "🔢 No account, no email: just a <b>PIN</b> to get your character back.",
       ],
       compris: "Got it",
       instTitre: "Install the app: we recommend it",
-      instPourquoi: "For a better experience: full screen, one-tap launch, faster, playable even when the network struggles, and notifications (your twin, the GM's announcements). You also earn the “Portal Installed” badge. Without installing, you can still play by scanning QR codes.",
+      instPourquoi: "For a better experience: full screen, one-tap launch, faster, playable even when the network struggles, and notifications (your twin, the GM's announcements). You also earn the “Transporter Installed” badge. Without installing, you can still play by scanning QR codes.",
       instBouton: "Install the app",
       instPuis: (c) => `Then open <b>Déjà vu!</b> from your home screen and enter your tag's code: <b class="code">${c}</b>`,
       instIos: "On iPhone, the installed app doesn't share your browser's memory: create your character <b>in the app</b>.",
@@ -253,7 +277,7 @@
         ordi: ["In the address bar, click the install icon <b>⊕</b>, or use the browser menu."],
       },
       costumeTitre: "Your costume", costumeAide: "Pick what looks most like you.",
-      detailsTitre: "The details", couleurTitre: "Main colour",
+      detailsTitre: "The details", couleurTitre: "Main colour of your outfit", plusAttrs: "Load more",
       attrsAide: "Tick everything people can see from across the room.",
       suivant: "Next →", carteTitre: "Your card",
       pseudoModifiable: "You can change it from your profile.",
@@ -263,8 +287,18 @@
       pinAide: "You'll use it to get your character back in another browser. Keep it in your head.",
       creer: "Create my character", tirage: "Digging through the bargain bins…",
       dejaReclamee: "Too late: someone just claimed this tag.",
-      tutoTitre: "How to play",
-      tuto: [["📷", "<b>Scan</b> other people's tags: each person joins your collection."], ["🔁", "<b>See them again</b>: every déjà vu counts."], ["👯", "<b>Find your twin</b>: clues start at midnight."], ["🕔", "<b>Reveal at 5 a.m.</b> for all of Pandémonium."]],
+      tutoTitre: "Your mission",
+      tuto: [["📷", "<b>Scan strangers</b>: each person becomes a card in your collection, and moves you up the rankings."],
+        ["🔁", "<b>See them again</b>: every déjà vu counts, and some hide badges."],
+        ["👯", "<b>Someone in Pandémonium looks a little too much like you.</b> First clues at midnight."],
+        ["🕔", "<b>5 a.m.: the reveal</b> for all of Pandémonium. Rankings freeze, medals stay."]],
+      pouls: (j, r) => `⚡ <b>${j} player${j === 1 ? "" : "s"}</b> already in the game${r ? ` · record: <b>${r} card${r === 1 ? "" : "s"}</b>` : ""}.`,
+      missionTitre: "🎯 Your first mission", missionSuivante: "🎯 Next mission", missionFaite: "✅ Mission complete!", missionsToutes: "All starter missions complete. Hats off.",
+      missionAide: { installe_portail: "Follow the install steps, then open the app from your home screen.",
+        collegue_de_rayon: (f) => `Find someone from ${f} and scan their tag.`,
+        boucle_detectee: "Scan the same person 3 times, at least 5 minutes apart.",
+        trans_classe: "Go to <b>Me</b> and change your class before 1 a.m." },
+      premierScan: "📷 Scan my first person", scannerQqn: "📷 Scan someone",
       cestParti: "Let's go",
       maintenant: "What now?",
       mBloque: (m) => `Scanner locked for ${m} more min. Patience, loyal customer.`,
@@ -277,7 +311,7 @@
       saisieAide: "The built-in scanner is coming soon. Meanwhile, scan the QR with your phone's camera, or enter the code printed under it.",
       nouvelle: "New item added", collectionN: (n) => `Your collection: ${n} item${n === 1 ? "" : "s"}.`,
       souvenirBientot: "Your shared fake memory is loading…",
-      dejaVu: (n) => `DÉJÀ VU ×${n}`, panier: "Item already in your cart.",
+      dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Item already in your cart.", fenetre: "Too soon to count: the same déjà vu counts once every 5 minutes.",
       soiTitre: "That's you.", soi: "Your double is out there… somewhere. Clues start at midnight.",
       encore: "Scan again",
       spectMJ: "Go find the game master to get your own tag!",
@@ -307,11 +341,11 @@
       classeFigee: "Your class can't change anymore.",
       classeAlerte: "Changing class earns the “Class Shifter” badge.",
       modifierCostume: "Edit my costume", confidentialite: "Photos",
-      langue: "Language / Langue", commentJouer: "How to play",
+      langue: "Language / Langue", commentJouer: "Your mission",
       pinRappel: "Your PIN gets your character back: scan one of your tags in another browser, then tap “Rejoin the game with my PIN”.",
       enregistre: "Saved.", mj: "GM",
       ongAccueil: "Home", ongCollection: "Collection", ongClassements: "Rankings", ongBadges: "Badges", ongMedailles: "Medals", ongMoi: "Me",
-      sousBadges: "Badges", sousClassements: "Rankings", bonus: (n) => `bonus`, toutPandemonium: "All of Pandémonium",
+      sousBadges: "Badges", sousClassements: "Rankings", bonus: (n) => `bonus`, toutPandemonium: "All of Pandémonium", tous: "All",
       medaillesBonus: "Bonus medals", medaillesBonusAide: "A top 3 in a ranking, across Pandémonium or within your faction, earns a medal. Provisional: everything freezes at the 5 a.m. reveal.",
       medaillesFigees: "Rankings frozen since the reveal.",
       voirMedailles: (m) => `My medals (${m.gagnes}/${m.total}${m.bonus ? ` +${m.bonus}` : ""})`,
@@ -359,8 +393,10 @@
     etat.moi = d.personnage ? d : null;
     ecrire(CLE.moi, etat.moi ? JSON.stringify(etat.moi) : null);
   }
+  let installSignalee = false;
   async function chargerMoi() {
     try { majMoi(await api("/api/moi")); } catch (e) { if (e.erreur !== "reseau") throw e; }
+    if (!installSignalee && etat.moi && etat.moi.personnage) { installSignalee = true; signalerInstallation(); }
     return etat.moi;
   }
 
@@ -417,7 +453,7 @@
   };
   const formulaireCode = (valeur = "") => `<form class="boite" id="f-code" autocomplete="off">
       <label class="mono petit muted" for="code">${t.saisir}</label>
-      <input class="saisie" id="code" name="code" maxlength="6" autocapitalize="characters" spellcheck="false" value="${esc(valeur)}" required style="margin-top:8px">
+      <input type="text" class="saisie" id="code" name="code" maxlength="6" autocapitalize="characters" spellcheck="false" value="${esc(valeur)}" required style="margin-top:8px">
       <button class="bouton">${t.voir}</button></form>`;
   function brancherCode() {
     const f = $("#f-code"); if (!f) return;
@@ -527,9 +563,45 @@
     brancherCode();
   }
 
-  function tutoriel() {
-    rendre(`<h2>${t.tutoTitre}</h2><ul class="liste tuto">${t.tuto.map(([e, l]) => `<li><span class="e">${e}</span><span>${l}</span></li>`).join("")}</ul>
-      <a class="bouton" href="/" data-nav>${t.cestParti}</a>`);
+  // ---------- Ta mission (ex-tutoriel) : personnage, preuve sociale, règles, première mission, premier geste ----------
+  // Missions de départ (badges faciles) ; chaque joueur commence par une mission différente selon son identifiant.
+  const MISSIONS = ["collegue_de_rayon", "boucle_detectee", "installe_portail", "trans_classe"];
+  function missionDe(d) {
+    const gagnes = new Set((d.badges || []).map((b) => b.badge));
+    let h = 0; for (const c of d.personnage.id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    // App déjà installée (badge acquis ou app ouverte depuis l'écran d'accueil) : cette mission n'est jamais distribuée
+    const installee = gagnes.has("installe_portail") || matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+    const liste = MISSIONS.filter((m) => !(installee && m === "installe_portail"));
+    const ordre = liste.map((_, i) => liste[(h + i) % liste.length]);
+    const dispo = (m) => !gagnes.has(m) && (m !== "trans_classe" || d.droits.classe) && (m !== "collegue_de_rayon" || (d.factions || []).length);
+    return { premiere: ordre[0], faite: gagnes.has(ordre[0]), courante: ordre.find(dispo) || null };
+  }
+  async function tutoriel() {
+    const d = await chargerMoi().catch(() => null);
+    const regles = `<ul class="liste tuto">${t.tuto.map(([e, l]) => `<li><span class="e">${e}</span><span>${l}</span></li>`).join("")}</ul>`;
+    if (!d || !d.personnage) return rendre(`<h2>${t.tutoTitre}</h2>${regles}<a class="bouton" href="/saisie" data-nav>${t.premierScan}</a>`);
+    const pe = d.personnage, ty = typeDe(pe.type), cl = CLASSES[pe.classe];
+    const mesFactions = (d.factions || []).map((f) => FACTIONS[f]).filter(Boolean);
+    const m = missionDe(d);
+    let mission = `<p class="petit">${t.missionsToutes}</p>`;
+    if (m.courante) {
+      const b = BADGES[m.courante], aide = t.missionAide[m.courante];
+      const fac = mesFactions.map((f) => `<b>${f.e} ${esc(lib(f))}</b>`).join(L === "en" ? " or " : " ou ");
+      mission = `${m.faite ? `<p class="ok petit" style="margin:0 0 6px">${t.missionFaite}</p>` : ""}
+        <div class="mission"><span class="e">${b[0]}</span><div><b>${L === "en" ? b[2] : b[1]}</b><small>${typeof aide === "function" ? aide(fac) : aide}</small></div></div>`;
+    }
+    rendre(`<p class="perso-ligne"><span>${ty.e}</span> <b>${esc(pe.pseudo)}</b> · ${mesFactions.map((f) => f.e).join(" ")}${cl ? ` · ${esc(L === "en" ? cl[1] : cl[0])}` : ""}</p>
+      <h2 style="margin-top:4px">${t.tutoTitre}</h2>
+      ${d.partie && d.partie.joueurs > 1 ? `<p class="pouls">${t.pouls(d.partie.joueurs, d.partie.record)}</p>` : ""}
+      <div class="boite mission-boite"><p class="titre-inst" style="color:var(--pink)">${m.faite || !m.courante ? t.missionSuivante : t.missionTitre}</p>${mission}</div>
+      <a class="bouton" href="/saisie" data-nav style="margin-top:0">${d.nb_cartes ? t.scannerQqn : t.premierScan}</a>
+      ${regles}`, { onglet: "moi" });
+  }
+  // BDG-4 : l'app installée se signale une fois (le badge s'affiche dans Médailles)
+  async function signalerInstallation() {
+    if (!(matchMedia("(display-mode: standalone)").matches || navigator.standalone)) return;
+    if (!etat.moi || !etat.moi.personnage || (etat.moi.badges || []).some((b) => b.badge === "installe_portail")) return;
+    try { const r = await api("/api/installe", {}); if (r.badge) { await chargerMoi(); toast(`🖖 ${t.badgeGagne} : ${BADGES.installe_portail[L === "en" ? 2 : 1]}`); } } catch {}
   }
 
   // ---------- Scan (FEAT-002, arbre de décision de FEAT-003) ----------
@@ -563,11 +635,11 @@
       case "nouvelle_carte":
         fixer(); vibrer(40); chargerMoi();
         return rendre(`<span class="chip vert">${t.nouvelle}</span>
-          ${carte(r.carte)}<p class="muted">${t.collectionN(r.nb_cartes)}</p>
+          ${carte(r.carte)}<p class="muted">${t.collectionN(r.nb_cartes)}</p>${(r.badges || []).map(badgeGagne).join("")}
           <a class="bouton" href="/saisie" data-nav>${t.encore}</a><a class="bouton sec" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
       case "deja_vu":
         fixer(); vibrer(20);
-        return rendre(`<div class="echo">${[0, 1, 2].map(() => `<div>${t.dejaVu(r.n)}</div>`).join("")}</div><p>${t.panier}</p>${carte(r.carte, { grand: false })}
+        return rendre(`<div class="echo">${[0, 1, 2].map(() => `<div>${t.dejaVu(r.compte === false ? null : r.n)}</div>`).join("")}</div><p>${t.panier}</p>${(r.badges || []).map(badgeGagne).join("")}${r.compte === false ? `<p class="petit muted">${t.fenetre}</p>` : ""}${carte(r.carte, { grand: false })}
           <a class="bouton" href="/saisie" data-nav>${t.encore}</a>`, { onglet: "accueil" });
       default: return ecranErreur({}, () => scanner(code));
     }
@@ -609,7 +681,7 @@
         rendre(`${entete()}<h2>${t.detailsTitre}</h2><h3>${t.couleurTitre}</h3>
           <div class="couleurs">${COULEURS.map((c) => `<button class="couleur" data-c="${c.id}" aria-pressed="${b.couleur === c.id}"><i style="background:${c.hex}"></i>${lib(c)}</button>`).join("")}</div>
           <h3>${t.attrsAide}</h3>
-          <div class="attrs">${ATTRS.map((a) => `<button class="attr" data-a="${a.id}" aria-pressed="${b.attributs.includes(a.id)}"><span class="e">${a.e}</span>${lib(a)}</button>`).join("")}</div>
+          ${grilleAttrs(b.attributs)}
           <button class="bouton" id="b-suiv" ${b.couleur ? "" : "disabled"}>${t.suivant}</button>`);
         app.querySelectorAll(".couleur").forEach((x) => (x.onclick = () => {
           if (b.couleur !== x.dataset.c) b.tirage = null;
@@ -622,6 +694,7 @@
           i >= 0 ? b.attributs.splice(i, 1) : b.attributs.push(a); sauver();
           x.setAttribute("aria-pressed", i < 0);
         }));
+        brancherPlusAttrs();
         $("#b-suiv").onclick = () => { if (b.couleur) { b.etape = 4; sauver(); dessiner(); } };
       } else {
         dessinerCarte();
@@ -822,7 +895,12 @@
     const f = new URLSearchParams(location.search).get("faction");
     let r;
     try { r = await api("/api/classements" + (f ? "?faction=" + encodeURIComponent(f) : "")); } catch (e) { return ecranErreur(e, classements); }
-    const filtres = `<div class="filtres">${[null, ...r.mes_factions].map((x) => `<a href="/medailles?vue=classements${x ? "&faction=" + x : ""}" data-nav${(r.faction || null) === x ? ' aria-current="page"' : ""}>${x ? esc(factionLib(x)) : t.toutPandemonium}</a>`).join("")}</div>`;
+    // Jusqu'à 3 factions : seul le filtre actif affiche son nom ; les autres, leur emoji (nom en aria-label)
+    const filtres = `<div class="filtres">${[null, ...r.mes_factions].map((x) => {
+      const actif = (r.faction || null) === x, nom = x ? lib(FACTIONS[x]) : t.toutPandemonium;
+      const texte = actif ? (x ? `${FACTIONS[x].e} ${esc(nom)}` : nom) : x ? FACTIONS[x].e : t.tous;
+      return `<a href="/medailles?vue=classements${x ? "&faction=" + x : ""}" data-nav aria-label="${esc(nom)}"${actif ? ' aria-current="page"' : ""}${!actif && x ? ' class="emoji"' : ""}>${texte}</a>`;
+    }).join("")}</div>`;
     const bloc = (c) => {
       const lb = t.lb[c.id] || [c.id, "", String];
       const lignes = c.top.map((x) => `<li class="${x.moi ? "moi" : ""}"><span class="rang">${x.rang <= 3 ? MEDAILLE[x.rang - 1] : "#" + x.rang}</span>
@@ -866,19 +944,31 @@
     const bc = $("#b-costume"); if (bc) bc.onclick = () => modifierCostume(pe, envoyer);
   }
 
+  // Grille des attributs : 12 d'office, 12 de plus derrière « Charger plus » (ouverte si l'un d'eux est coché)
+  const NB_ATTRS_BASE = 12;
+  function grilleAttrs(choisis) {
+    const ouverte = choisis.some((id) => ATTRS.findIndex((a) => a.id === id) >= NB_ATTRS_BASE);
+    const btn = (a, i) => `<button class="attr" data-a="${a.id}" aria-pressed="${choisis.includes(a.id)}"${i >= NB_ATTRS_BASE && !ouverte ? " hidden" : ""}><span class="e">${a.e}</span>${lib(a)}</button>`;
+    return `<div class="attrs">${ATTRS.map(btn).join("")}</div>${ouverte ? "" : `<button class="bouton sec" id="b-plus-attrs" type="button">＋ ${t.plusAttrs}</button>`}`;
+  }
+  function brancherPlusAttrs() {
+    const p = $("#b-plus-attrs"); if (!p) return;
+    p.onclick = () => { app.querySelectorAll(".attr[hidden]").forEach((x) => (x.hidden = false)); p.remove(); };
+  }
+
   function modifierCostume(pe, envoyer) {
     const c = { type: pe.type, couleur: pe.couleur, attributs: [...pe.attributs] };
     rendre(`<button class="retour" id="b-retour">${t.retour}</button><h2>${t.costumeTitre}</h2>
       <div class="grille-types">${TYPES.map((ty) => `<button class="type" data-t="${ty.id}" aria-pressed="${c.type === ty.id}"><span class="e">${ty.e}</span><span>${lib(ty)}</span></button>`).join("")}</div>
       <h3>${t.couleurTitre}</h3><div class="couleurs">${COULEURS.map((x) => `<button class="couleur" data-c="${x.id}" aria-pressed="${c.couleur === x.id}"><i style="background:${x.hex}"></i>${lib(x)}</button>`).join("")}</div>
-      <h3>${t.attrsAide}</h3><div class="attrs">${ATTRS.map((a) => `<button class="attr" data-a="${a.id}" aria-pressed="${c.attributs.includes(a.id)}"><span class="e">${a.e}</span>${lib(a)}</button>`).join("")}</div>
+      <h3>${t.attrsAide}</h3>${grilleAttrs(c.attributs)}
       <button class="bouton" id="b-ok">${t.enregistrer}</button>`, { onglet: "moi" });
     $("#b-retour").onclick = fiche;
     const choix = (sel, cle) => app.querySelectorAll(sel).forEach((x) => (x.onclick = () => {
       c[cle] = x.dataset[cle === "type" ? "t" : "c"];
       app.querySelectorAll(sel).forEach((y) => y.setAttribute("aria-pressed", y === x));
     }));
-    choix(".type", "type"); choix(".couleur", "couleur");
+    choix(".type", "type"); choix(".couleur", "couleur"); brancherPlusAttrs();
     app.querySelectorAll(".attr").forEach((x) => (x.onclick = () => {
       const i = c.attributs.indexOf(x.dataset.a); i >= 0 ? c.attributs.splice(i, 1) : c.attributs.push(x.dataset.a);
       x.setAttribute("aria-pressed", i < 0);

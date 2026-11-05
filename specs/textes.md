@@ -23,6 +23,8 @@ La colonne « forme » sert dans les gabarits (`{type_A}`), après « en » en f
 | 🤡 | Inclassable | OVNI vestimentaire | Unclassifiable | a fashion UFO |
 
 ### 1.2 Couleurs dominantes (12)
+Titre à l'écran : **« Couleur dominante du costume »** / **« Main colour of your outfit »**.
+
 Forme utilisée dans les gabarits : « tout en {couleur} » / « all in {color} ».
 
 | FR | EN | FR | EN |
@@ -34,7 +36,7 @@ Forme utilisée dans les gabarits : « tout en {couleur} » / « all in {color} 
 | orange | orange | brun | brown |
 | doré | gold | arc-en-ciel | rainbow |
 
-### 1.3 Attributs (12)
+### 1.3 Attributs (24)
 Consigne en haut de l'écran : **« Coche tout ce qu'on peut voir de loin sur ton costume. »** / **« Tick everything people can see from across the room. »**
 
 La colonne « forme » sert dans les gabarits (`{attr_A}`) ; elle porte son propre article.
@@ -53,6 +55,20 @@ La colonne « forme » sert dans les gabarits (`{attr_A}`) ; elle porte son prop
 | 10 | Cape ou manteau long | une cape | Cape or long coat | a cape |
 | 11 | Paillettes ou tissu brillant | des paillettes | Glitter or shiny fabric | glitter |
 | 12 | Queue | une queue | Tail | a tail |
+| 13 | Lunettes ou lentilles | des lunettes | Glasses or lenses | glasses |
+| 14 | Couronne ou tiare | une couronne | Crown or tiara | a crown |
+| 15 | Crocs ou fausses dents | des crocs | Fangs or fake teeth | fangs |
+| 16 | Armure ou casque | une armure | Armour or helmet | armour |
+| 17 | Arme factice | une arme en plastique | Prop weapon | a plastic weapon |
+| 18 | Plumes ou fourrure | des plumes | Feathers or fur | feathers |
+| 19 | Cuir, latex ou vinyle | du latex | Leather, latex or vinyl | latex |
+| 20 | Chaînes ou gros bijoux | des chaînes | Chains or big jewellery | chains |
+| 21 | Tatouages ou peinture sur le corps | des tatouages | Tattoos or body paint | tattoos |
+| 22 | Tentacules ou membres en trop | des tentacules | Tentacles or extra limbs | tentacles |
+| 23 | Combinaison intégrale ou mascotte | une combinaison intégrale | Full-body suit or mascot | a full-body suit |
+| 24 | Pancarte ou texte écrit | une pancarte | Sign or written text | a sign |
+
+Les 12 premiers sont affichés d'office. Les 12 suivants (**Proposition**) apparaissent sous le bouton **« Charger plus »** / **« Load more »** ; la grille s'ouvre d'office si l'un d'eux est déjà coché.
 
 Si le joueur n'a coché aucun attribut, la forme vaut **« un costume qui n'avait pas encore été inventé »** / **« an outfit that hadn't been invented yet »**.
 
@@ -80,15 +96,15 @@ Pour l'instant, ce n'est que de la saveur ; la caractéristique favorite servira
 | Voleur d'Étiquettes | Tag Thief | Dextérité |
 
 ### 1.6 Badges ([FEAT-015](fonctionnalites/badges-classements.md))
-**Statut : Proposition** (libellés anglais et conditions affichées). Écran « Badges » de la barre d'onglets : badges gagnés avec l'heure, puis badges à débloquer avec leur condition. Un badge secret n'apparaît qu'une fois gagné.
+**Statut : Proposition** (libellés anglais et conditions affichées). Écran « Badges » de la barre d'onglets : badges gagnés avec l'heure, puis badges à débloquer avec leur condition. Un badge secret n'apparaît qu'une fois gagné, et ne compte dans le total qu'à ce moment-là (Client maudit, Client difficile).
 
 | Badge | FR | EN | Condition affichée FR | Condition affichée EN |
 |-------|----|----|----------------------|-----------------------|
-| BDG-1 | 🐣 Tueur de poussin | Chick Killer | Laisser une étiquette vierge qui n'était pas à toi. | Pass on a blank tag that wasn't yours. |
-| BDG-11 | 🛍️ Achat compulsif | Impulse Buy | Ajouter une étiquette à ton personnage. | Add a tag to your character. |
-| BDG-12 | 🧾 Surconsommation | Overconsumption | Prendre plus de 3 étiquettes. À éviter. | Take more than 3 tags. Don't. |
+| BDG-1 | 🐣 Tueur de poussin | Chick Killer | Scanner une étiquette pas encore activée qui n'est pas à toi. | Scan a not-yet-activated tag that isn't yours. |
+| BDG-11 | 🛍️ Achat compulsif | Impulse Buy | Ajouter une étiquette à ton personnage. Demande au MJ. | Add a tag to your character. Ask the GM. |
+| BDG-12 | 🧾 Surconsommation | Overconsumption | Prendre plus de 3 étiquettes. | Take more than 3 tags. |
 | BDG-14 | 🔀 Trans-classe | Class Shifter | Changer de classe avant 1 h. | Change class before 1 a.m. |
-| BDG-4 | 📲 Installé le Portail | Portal Installed | Installer l'app sur ton écran d'accueil. | Install the app on your home screen. |
+| BDG-4 | 🖖 Téléporteur installé | Transporter Installed | Installer l'app sur ton écran d'accueil. | Install the app on your home screen. |
 | BDG-3 | 🔁 Boucle détectée | Loop Detected | Revoir la même personne 3 fois. | See the same person 3 times. |
 | BDG-3 | 🕰️ Jour de la marmotte | Groundhog Day | Revoir la même personne 6 fois. | See the same person 6 times. |
 | BDG-3 | 🧿 Client maudit (secret) | Cursed Customer | Ce badge n'existe pas. Tu ne l'as jamais eu. | This badge doesn't exist. You never got it. |
@@ -101,7 +117,8 @@ Pour l'instant, ce n'est que de la saveur ; la caractéristique favorite servira
 | BDG-9 | 👔 Garde-robe du MJ | GM's Wardrobe | Collectionner les 10 légendaires du MJ. | Collect all 10 of the GM's legendaries. |
 | BDG-10 | ✊ Anticapitaliste | Anti-capitalist | Trouver un bon de réduction très particulier. | Find a very special discount voucher. |
 | BDG-16 | 🏷️ Employé du mois | Employee of the Month | Réussir une mission confiée par le MJ. | Complete a mission from the GM. |
-| BDG-17 | ⚠️ Client difficile | Difficult Customer | Recevoir un avertissement du MJ. Rien de glorieux. | Get a warning from the GM. Not proud. |
+| BDG-18 | 🤝 Collègue de rayon | Aisle Mate | Scanner une personne de ta faction. | Scan someone from your faction. |
+| BDG-17 | ⚠️ Client difficile (secret) | Difficult Customer | Recevoir un avertissement du MJ. Rien de glorieux. | Get a warning from the GM. Not proud. |
 
 ### 1.7 Médailles et classements ([FEAT-015](fonctionnalites/badges-classements.md))
 **Statut : Proposition** (option C choisie par Florian). Onglet 🏅 « Médailles » / "Medals", deux sous-onglets : **Badges** et **Classements**. Le total affiché compte les badges non secrets ; un **top 3 dans un classement**, dans tout Pandémonium **ou dans l'une de ses factions** ([LB-9](fonctionnalites/badges-classements.md)), donne une **médaille bonus** (🥇🥈🥉), affichée « +N ». Le sous-onglet Classements se filtre par faction (« Tout Pandémonium », puis les factions du joueur). Les classements et les médailles bonus se figent à la révélation ([RG-015-2](fonctionnalites/badges-classements.md)). Le MJ n'est pas classé. À égalité, la place revient à qui a atteint le score en premier.
@@ -266,28 +283,35 @@ Ils sont plus longs et s'affichent au moment des retrouvailles. `{C}` désigne l
 
 ## 5. Tutoriel et accueil
 
-### 5.1 Tutoriel (un seul écran, après la création)
-**FR**
-> **Comment jouer**
-> 📷 **Scanne** les étiquettes des autres : chaque personne rejoint ta collection.
-> 🔁 **Revois-les** : chaque déjà vu compte.
-> 👯 **Cherche ton jumeau** : des indices arrivent à partir de minuit.
-> 🕔 **Révélation à 5 h** pour tout Pandémonium.
-> [ C'est parti ]
+### 5.1 Ta mission (ex-« Comment jouer »)
+**Statut : Proposition** (orientations validées par Florian : premier geste immédiat, preuve sociale, personnage en tête, mystère du jumeau, une mission de départ par joueur).
 
-**EN**
-> **How to play**
-> 📷 **Scan** other people's tags: each person joins your collection.
-> 🔁 **See them again**: every déjà vu counts.
-> 👯 **Find your twin**: clues start at midnight.
-> 🕔 **Reveal at 5 a.m.** for all of Pandémonium.
-> [ Let's go ]
+Ordre de l'écran :
+1. **Personnage**, une ligne sobre : « {emoji du type} **{pseudo}** · {emojis des factions} · {classe} ».
+2. **Titre :** « Ta mission » / "Your mission".
+3. **Preuve sociale** (si au moins 2 joueurs) : « ⚡ **{n} joueurs** déjà dans la partie · record : **{r} cartes**. » / "⚡ **{n} players** already in the game · record: **{r} cards**."
+4. **Mission** : « 🎯 Ta première mission », puis « 🎯 Mission suivante » une fois accomplie (« ✅ Mission accomplie ! »).
+5. **Règles :**
+> 📷 **Scanne des inconnus** : chaque personne devient une carte de ta collection, et te fait monter au classement.
+> 🔁 **Revois-les** : chaque déjà vu compte, et certains cachent des badges.
+> 👯 **Quelqu'un dans Pandémonium te ressemble un peu trop.** Premiers indices à minuit.
+> 🕔 **5 h : révélation** pour tout Pandémonium. Les classements se figent, les médailles restent.
+6. **Bouton :** « 📷 Scanner ma première personne » (puis « 📷 Scanner quelqu'un »), qui ouvre directement le scanner.
+
+**Missions de départ** : les badges les plus faciles à démarrer. Chaque joueur commence par une mission différente (rotation selon son identifiant) ; une mission indisponible ou déjà gagnée passe à la suivante. Si l'app est déjà installée (badge acquis ou app ouverte depuis l'écran d'accueil), la mission « Téléporteur installé » n'est jamais distribuée : le joueur reçoit d'office une autre mission.
+
+| Mission | Badge | Aide FR | Aide EN |
+|---------|-------|---------|---------|
+| 1 | 🤝 Collègue de rayon | Trouve quelqu'un de {faction} et scanne son étiquette. | Find someone from {faction} and scan their tag. |
+| 2 | 🔁 Boucle détectée | Scanne la même personne 3 fois, à 5 minutes d'écart au moins. | Scan the same person 3 times, at least 5 minutes apart. |
+| 3 | 🖖 Téléporteur installé | Suis les étapes d'installation, puis ouvre l'app depuis ton écran d'accueil. | Follow the install steps, then open the app from your home screen. |
+| 4 | 🔀 Trans-classe (avant 1 h seulement) | Va dans **Moi** et change de classe avant 1 h. | Go to **Me** and change your class before 1 a.m. |
 
 ### 5.1bis Installation (écran 1 de la création)
 **Statut : Proposition.** Encadré sous l'avertissement, adapté au navigateur détecté ([FEAT-021](fonctionnalites/pwa-hors-ligne.md)). Il n'apparaît pas si l'app est déjà installée.
 
 - **Titre :** « Installe l'app : on te la recommande » / "Install the app: we recommend it"
-- **Pourquoi :** « Pour une meilleure expérience : plein écran, ouverture en un geste, plus rapide, jouable même quand le réseau faiblit, et les notifications (ton jumeau, les annonces du MJ). Tu gagnes aussi le badge « Installé le Portail ». Sans installation, tu peux quand même jouer en scannant les QR. »
+- **Pourquoi :** « Pour une meilleure expérience : plein écran, ouverture en un geste, plus rapide, jouable même quand le réseau faiblit, et les notifications (ton jumeau, les annonces du MJ). Tu gagnes aussi le badge « Téléporteur installé ». Sans installation, tu peux quand même jouer en scannant les QR. »
 - **Étapes selon le navigateur :** Safari (iPhone) : Partager → « Sur l'écran d'accueil » → Ajouter ; Chrome sur iPhone : Partager dans la barre d'adresse → « Sur l'écran d'accueil » ; autre navigateur iPhone : ouvrir dans Safari ou Chrome (les deux sont acceptés sur iPhone) ; Chrome Android : bouton « Installer l'app » (invitation native), sinon menu ⋮ → « Installer l'application » ; Samsung Internet : menu ≡ → « Ajouter la page à » → « Écran d'accueil » ; Firefox Android : menu ⋮ → « Installer » ; navigateur intégré (Instagram…) : ouvrir d'abord dans Safari ou Chrome.
 - **Ensuite :** « Ouvre Déjà vu ! depuis ton écran d'accueil et entre le code de ton étiquette : {code} ». Sur iPhone : « l'app installée ne partage pas la mémoire de ton navigateur : crée ton personnage dans l'app » ([FEAT-019](fonctionnalites/recuperation.md)).
 - **Bouton :** « Continuer sans installer » / "Continue without installing"

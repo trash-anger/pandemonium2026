@@ -26,12 +26,12 @@ Récompenser des styles de jeu variés, pas seulement le volume de scans, et per
 | BDG-1 | Tueur de poussin | [RG-003-6](personnage.md) | Confirmé |
 | BDG-2 | Jumeaux retrouvés | [RG-007-10](jumeaux.md) | Confirmé |
 | BDG-3 | Boucle détectée / Jour de la marmotte / ×13 secret | [RG-005-2](rescan-deja-vu.md) | Confirmé |
-| BDG-4 | Installé le Portail | App installée sur l'écran d'accueil ([FEAT-021](pwa-hors-ligne.md)) | Confirmé (S5, S10) |
+| BDG-4 | Téléporteur installé | App installée sur l'écran d'accueil ([FEAT-021](pwa-hors-ligne.md)) | Confirmé (S5, S10) |
 | BDG-5 | Fermer la boucle | [RG-005-7](rescan-deja-vu.md) | Confirmé |
 | BDG-6 | Patient zéro | Premier joueur corrompu par un chat noir | Confirmé (S10) |
 | BDG-6b | Dernier survivant | Joueur jamais corrompu qui a fait le plus de nouvelles cartes au moment de la révélation (départage des derniers non corrompus) | Confirmé (S10) |
 | BDG-7 | Série complète | [RG-012-2](series-rarete.md) | Confirmé (principe) |
-| BDG-8 | Installé | Fusionné avec BDG-4 « Installé le Portail » | Abandonné (doublon, S10) |
+| BDG-8 | Installé | Fusionné avec BDG-4 « Téléporteur installé » | Abandonné (doublon, S10) |
 | BDG-9 | Garde-robe du MJ | [RG-022-3](costume-mj.md) | Confirmé (S10) |
 | BDG-10 | Anticapitaliste | Légendaire L-5 ([FEAT-022](costume-mj.md)) | Confirmé (S7) |
 | BDG-11 | Achat compulsif | Ajouter une étiquette à son personnage ([RG-003-6](personnage.md)) | Confirmé (S7) |
@@ -39,7 +39,8 @@ Récompenser des styles de jeu variés, pas seulement le volume de scans, et per
 | BDG-14 | Trans-classe | Changer de classe D&D ([RG-003-12](personnage.md)) | Confirmé (S8) |
 | BDG-15 | Amnésie | Jauge de souvenirs à 0 ([barème §3](../bareme.md#3-mémoire-et-rôles-gagnés)) | Confirmé (S10) |
 | BDG-16 | Employé du mois | Réussir une mission confiée par le MJ ([ADM-19](admin.md)) | Proposition |
-| BDG-17 | Client difficile | Sanction de niveau 1 ([ADM-18](admin.md)) | Confirmé (S9) |
+| BDG-17 | Client difficile | Sanction de niveau 1 ([ADM-18](admin.md)). **Secret** : invisible et hors du total tant qu'il n'est pas gagné. | Confirmé (S9) ; secret : Confirmé (Florian, LOT-1) |
+| BDG-18 | Collègue de rayon | Premier scan d'une personne qui partage l'une de ses factions ([FEAT-011](factions.md)) | Confirmé (Florian, LOT-1) |
 | BDG-13 | Badges de faction | En fin de partie, un badge par faction pour chaque classement pertinent (par exemple « Célébrité de la Friperie »), en plus du badge global | Confirmé (S7, [RG-011-7](factions.md)) |
 
 ## Règles métier

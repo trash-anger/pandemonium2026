@@ -23,7 +23,7 @@ a{color:var(--green)}
 .boite{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:16px}
 .boite.alerte{border-color:var(--pink);background:#2a0f1b}
 input,select,button{font:inherit;color:inherit}
-input[type=text],input[type=tel],select{width:100%;background:var(--bg3);border:1.5px solid var(--line);border-radius:12px;padding:12px;font-size:18px;min-height:52px}
+input:not([type]),input[type=text],input[type=tel],input[type=number],input[type=search],select{width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;background:var(--bg3);border:1.5px solid var(--line);border-radius:12px;padding:12px;font-size:18px;min-height:52px}
 input:focus,select:focus{outline:2px solid var(--green);outline-offset:1px}
 input.saisie{font-family:var(--mono);font-size:28px;letter-spacing:.35em;text-transform:uppercase;text-align:center}
 input.pin{font-family:var(--mono);font-size:34px;letter-spacing:.6em;text-align:center;padding-left:.6em}
@@ -50,6 +50,7 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .couleur[aria-pressed=true] i{outline:3px solid var(--green);outline-offset:3px}
 .couleur[aria-pressed=true]{color:var(--fg)}
 .attrs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.attr[hidden]{display:none}
 .attr{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:var(--bg2);border:2px solid var(--line);border-radius:14px;padding:8px 4px;min-height:76px;cursor:pointer;font-size:12.5px;line-height:1.15;text-align:center}
 .attr .e{font-size:26px}
 .case{display:flex;gap:12px;align-items:flex-start;padding:12px 0;cursor:pointer;line-height:1.4}
@@ -120,7 +121,14 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .badge.bonus{border-color:var(--gold)}
 .filtres{display:flex;gap:6px;overflow-x:auto;padding:8px 0 4px;scrollbar-width:none}
 .filtres a{flex:none;display:flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:22px;color:var(--fg);text-decoration:none;font-size:14px;white-space:nowrap}
-.filtres a[aria-current=page]{border-color:var(--green);background:#10251a}
+.filtres a[aria-current=page]{border-color:var(--green);background:#10251a;font-weight:700}
+.filtres a.emoji{font-size:20px;padding:0;width:44px;justify-content:center}
+/* Ta mission */
+.perso-ligne{font-size:14px;color:var(--muted);margin:0;line-height:1.4}.perso-ligne b{color:var(--fg)}
+.pouls{background:#10251a;border:1px solid var(--green);border-radius:12px;padding:10px 12px;font-size:15px;margin:8px 0}
+.mission-boite{border-color:var(--pink)}
+.mission{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center}
+.mission .e{font-size:34px;text-align:center}.mission>div>b{display:block;font-size:17px}.mission small{display:block;color:var(--muted);font-size:14px;line-height:1.4;margin-top:2px}
 .titre-lb{font-family:var(--display);font-size:20px;margin:0}
 .classement{list-style:none;padding:0;margin:0}
 .classement li{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line)}

@@ -192,7 +192,18 @@ async function moi(env: EnvJeu, p: LignePerso, t: number) {
     },
     etiquettes, badges, nb_cartes: nb?.n ?? 0, droits: droits(p, h, t), heures: h,
     medailles: await medaillesDe(env, p.id, h),
+    factions: await factionsDe(env, p.id),
+    partie: await pouls(env),
   };
+}
+
+/** Preuve sociale (écran « Ta mission ») : joueurs lancés et record de cartes. Le MJ ne compte pas. */
+async function pouls(env: EnvJeu) {
+  const j = await env.DB.prepare("SELECT COUNT(*) AS n FROM personnages WHERE est_mj = 0").first<{ n: number }>();
+  const r = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM collection c JOIN personnages p ON p.id = c.possesseur_id WHERE p.est_mj = 0 GROUP BY c.possesseur_id ORDER BY n DESC LIMIT 1",
+  ).first<{ n: number }>();
+  return { joueurs: j?.n ?? 0, record: r?.n ?? 0 };
 }
 
 async function donnerBadge(env: EnvJeu, id: string, badge: string, t: number) {
@@ -206,6 +217,9 @@ async function effectifsFactions(env: EnvJeu): Promise<Record<string, number>> {
     .all<{ f: string; n: number }>();
   return Object.fromEntries(r.results.map((x) => [x.f, x.n]));
 }
+
+const FENETRE_RESCAN_MS = 5 * 60_000;
+const PALIERS_RESCAN: Record<number, string> = { 3: "boucle_detectee", 6: "jour_marmotte", 13: "client_maudit" };
 
 // ---------- Routes ----------
 export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Response> {
@@ -229,6 +243,12 @@ export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Res
     if (p === "/api/etiquette") return ajouterEtiquette(req, env, t, corps);
     if (p === "/api/reintegrer") return reintegrer(req, env, t, corps);
     if (p === "/api/modifier") return modifier(req, env, t, corps);
+    if (p === "/api/installe") {
+      // BDG-4 : l'app signale qu'elle tourne installée (display-mode standalone)
+      const me = await personnageDe(req, env, t);
+      if (!me) return erreur("sans_personnage", 401);
+      return json({ badge: (await donnerBadge(env, me.id, "installe_portail", t)) ? "installe_portail" : null });
+    }
     return erreur("introuvable", 404);
   } catch (e) {
     console.error(e);
@@ -292,13 +312,24 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
     // Premier scan de la cible par un autre joueur : fige son costume (RG-003-11)
     await env.DB.prepare("UPDATE personnages SET premier_scanne_le = ? WHERE id = ? AND premier_scanne_le IS NULL").bind(iso, cible).run();
     const nb = await env.DB.prepare("SELECT COUNT(*) AS n FROM collection WHERE possesseur_id = ?").bind(me.id).first<{ n: number }>();
-    return enregistrer("nouvelle_carte", { type: "nouvelle_carte", code: e.code, carte, nb_cartes: nb?.n ?? 1 }, cible);
+    // BDG-18 : première personne de l'une de ses factions
+    const memeFaction = await env.DB.prepare(
+      "SELECT 1 AS x FROM etiquettes a JOIN etiquettes b ON a.faction_id = b.faction_id WHERE a.personnage_id = ? AND b.personnage_id = ? LIMIT 1",
+    ).bind(me.id, cible).first();
+    const badges = memeFaction && (await donnerBadge(env, me.id, "collegue_de_rayon", t)) ? ["collegue_de_rayon"] : [];
+    return enregistrer("nouvelle_carte", { type: "nouvelle_carte", code: e.code, carte, nb_cartes: nb?.n ?? 1, badges }, cible);
   }
-  // Rescan : compteur simple ; paliers, souvenirs et limites au LOT-2 (FEAT-005)
-  await env.DB.prepare("UPDATE collection SET nb_scans = nb_scans + 1, dernier_scan_le = ? WHERE possesseur_id = ? AND personnage_id = ?")
-    .bind(iso, me.id, cible).run();
-  const n = await env.DB.prepare("SELECT nb_scans AS n FROM collection WHERE possesseur_id = ? AND personnage_id = ?").bind(me.id, cible).first<{ n: number }>();
-  return enregistrer("deja_vu", { type: "deja_vu", code: e.code, carte, n: n?.n ?? 2 }, cible);
+  // Rescan : compte une fois par fenêtre de 5 min et par paire (RG-005-3) ; paliers ×3, ×6, ×13 (RG-005-2).
+  // Souvenirs et autres effets au LOT-2 (FEAT-005).
+  const fenetre = new Date(t - FENETRE_RESCAN_MS).toISOString();
+  const maj = await env.DB.prepare(
+    "UPDATE collection SET nb_scans = nb_scans + 1, dernier_scan_le = ? WHERE possesseur_id = ? AND personnage_id = ? AND dernier_scan_le <= ?",
+  ).bind(iso, me.id, cible, fenetre).run();
+  const n = (await env.DB.prepare("SELECT nb_scans AS n FROM collection WHERE possesseur_id = ? AND personnage_id = ?").bind(me.id, cible).first<{ n: number }>())?.n ?? 2;
+  const badges: string[] = [];
+  const palier = PALIERS_RESCAN[n];
+  if (maj.meta.changes > 0 && palier && (await donnerBadge(env, me.id, palier, t))) badges.push(palier);
+  return enregistrer("deja_vu", { type: "deja_vu", code: e.code, carte, n, compte: maj.meta.changes > 0, badges }, cible);
 }
 
 function valider(c: Record<string, unknown>) {

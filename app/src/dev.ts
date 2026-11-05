@@ -4,6 +4,7 @@ import bancHtml from "../banc/banc.html";
 import { auHasard, ATTRIBUTS, CLASSES, COULEURS, FACTIONS, genererPseudo, TYPES } from "./catalogue";
 import { genererCodes } from "./codes";
 import { definirPin, nouvelAppareil, sha256 } from "./jeu";
+import { bancProd } from "./mode";
 
 export interface EnvDev {
   DB: D1Database;
@@ -11,6 +12,7 @@ export interface EnvDev {
   SESSION_SECRET?: string;
   /** « actif » sur le Worker d'aperçu des PR (wrangler.jsonc, env apercu) */
   BANC?: string;
+  BANC_SESSION?: boolean;
 }
 
 const TABLES_PARTIE = ["appareils", "scans", "collection", "badges", "pin_essais", "personnages"]; // appareils avant personnages (clé étrangère)
@@ -35,13 +37,23 @@ export async function avecAgent(r: Response): Promise<Response> {
 
 export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Response | null> {
   const p = url.pathname;
-  if (p === "/banc") return new Response(bancHtml, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+  // En production, seules les étiquettes du banc (Stock de test) sont utilisées ou modifiées
+  const prod = bancProd(env), duBanc = prod ? " AND banc = 1" : "";
+  if (p === "/banc") return new Response(prod ? bancHtml.replace(/<body([^>]*)>/, `<body$1>${BANDEAU_PROD}`) : bancHtml, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
   if (p === "/__dev/agent.js") return new Response(AGENT, { headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-store" } });
   if (!p.startsWith("/__dev/")) return null;
 
   // ----- Simulation : modifie le vrai état du serveur -----
   if (p === "/__dev/reinitialiser" && req.method === "POST") {
-    await env.DB.batch(["etiquettes", "config", "journal_mj", ...TABLES_PARTIE].map((x) => env.DB.prepare(`DELETE FROM ${x}`)));
+    // En production : seulement jusqu'à samedi 7 novembre 6 h (Montréal), heure réelle, avec confirmation tapée.
+    // Le journal du MJ est conservé et garde une trace de l'effacement.
+    if (prod) {
+      if (Date.now() >= REINIT_PROD_JUSQU_A) return json({ erreur: "« Tout réinitialiser » est fermé en production depuis samedi 6 h : utilise « Partie à zéro »." }, 403);
+      const c = (await req.clone().json().catch(() => ({}))) as { confirmation?: string };
+      if (String(c.confirmation ?? "").trim().toUpperCase() !== "TOUT") return json({ erreur: "Confirmation manquante : rien n'a été effacé." }, 400);
+    }
+    await env.DB.batch(["etiquettes", "config", ...(prod ? [] : ["journal_mj"]), ...TABLES_PARTIE].map((x) => env.DB.prepare(`DELETE FROM ${x}`)));
+    if (prod) await env.DB.prepare("INSERT INTO journal_mj (qui, action, details) VALUES ('banc', 'tout_reinitialiser', '{}')").run();
     return json({ ok: true });
   }
   if (p === "/__dev/partie-zero" && req.method === "POST") {
@@ -55,7 +67,7 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
   const corps = req.method === "POST" ? ((await req.clone().json().catch(() => ({}))) as Record<string, unknown>) : {};
   if (p === "/__dev/personnage" && req.method === "POST") {
     // Personnage complet en un clic (PIN 1234), lié à une étiquette vierge tirée au hasard
-    const e = await env.DB.prepare("SELECT code FROM etiquettes WHERE etat = 'vierge' AND role = 'normale' ORDER BY random() LIMIT 1").first<{ code: string }>();
+    const e = await env.DB.prepare(`SELECT code FROM etiquettes WHERE etat = 'vierge' AND role = 'normale'${duBanc} ORDER BY random() LIMIT 1`).first<{ code: string }>();
     if (!e) return json({ erreur: "Plus d'étiquette vierge : clique « Stock de test »." }, 404);
     const id = crypto.randomUUID().slice(0, 12), type = auHasard(TYPES), couleur = auHasard(COULEURS), iso = new Date(Number(corps.maintenant) || Date.now()).toISOString();
     const attributs = ATTRIBUTS.filter(() => Math.random() < 0.3);
@@ -77,7 +89,7 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
     const miennes = (await env.DB.prepare("SELECT faction_id AS f FROM etiquettes WHERE personnage_id = ?").bind(id).all<{ f: string }>()).results.map((x) => x.f);
     const libres = FACTIONS.filter((f) => !miennes.includes(f));
     const n = Math.max(0, Number(corps.n ?? 3) - miennes.length);
-    const codes = (await env.DB.prepare("SELECT code FROM etiquettes WHERE etat = 'vierge' AND role = 'normale' ORDER BY random() LIMIT ?").bind(n).all<{ code: string }>()).results;
+    const codes = (await env.DB.prepare(`SELECT code FROM etiquettes WHERE etat = 'vierge' AND role = 'normale'${duBanc} ORDER BY random() LIMIT ?`).bind(n).all<{ code: string }>()).results;
     const iso = new Date().toISOString();
     await env.DB.batch(codes.map((c, i) => env.DB.prepare("UPDATE etiquettes SET etat = 'reclamee', personnage_id = ?, faction_id = ?, reclamee_le = ? WHERE code = ?").bind(id, libres[i % libres.length], iso, c.code)));
     return json({ ajoutees: codes.length });
@@ -99,7 +111,7 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
     const existants = new Set((await env.DB.prepare("SELECT code FROM etiquettes").all<{ code: string }>()).results.map((r) => r.code));
     const lot0 = ((await env.DB.prepare("SELECT MAX(lot) AS m FROM etiquettes").first<{ m: number | null }>())?.m ?? 0) + 1;
     const plan: [number, string, string][] = [[30, "petit", "normale"], [1, "grand", "personnelle_mj"], [15, "grand", "speciale_mj"], [10, "grand", "normale"]];
-    const stmt = env.DB.prepare("INSERT INTO etiquettes (code, format, role, lot) VALUES (?, ?, ?, ?)");
+    const stmt = env.DB.prepare("INSERT INTO etiquettes (code, format, role, lot, banc) VALUES (?, ?, ?, ?, 1)");
     let lot = lot0;
     for (const [n, format, role] of plan) {
       const codes = genererCodes(n, existants);
@@ -113,11 +125,12 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
     // GET ?etat=vierge&role=normale → un code au hasard ; POST {code, etat} → change l'état
     if (req.method === "POST") {
       const { code, etat } = (await req.json()) as { code: string; etat: string };
-      await env.DB.prepare("UPDATE etiquettes SET etat = ? WHERE code = ?").bind(etat, code).run();
+      if (!["vierge", "reclamee", "desactivee"].includes(etat)) return json({ erreur: "État inconnu" }, 400);
+      await env.DB.prepare(`UPDATE etiquettes SET etat = ? WHERE code = ?${duBanc}`).bind(etat, code).run();
       return json({ ok: true });
     }
     const etat = url.searchParams.get("etat") || "vierge", role = url.searchParams.get("role") || "normale";
-    const e = await env.DB.prepare("SELECT code FROM etiquettes WHERE etat = ? AND role = ? ORDER BY random() LIMIT 1").bind(etat, role).first<{ code: string }>();
+    const e = await env.DB.prepare(`SELECT code FROM etiquettes WHERE etat = ? AND role = ?${duBanc} ORDER BY random() LIMIT 1`).bind(etat, role).first<{ code: string }>();
     return e ? json(e) : json({ erreur: "Aucune étiquette : clique « Stock de test »." }, 404);
   }
   if (p === "/__dev/etat") {
@@ -130,6 +143,13 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
 
 // Agent chargé dans chaque page du jeu servie en local. Il écoute le banc (window.parent)
 // et lui renvoie ce qui se passe. Les injections visuelles des lots suivants s'ajoutent ici.
+/** Samedi 7 novembre 2026, 6 h à Montréal (UTC−5) : fin de « Tout réinitialiser » en production. */
+export const REINIT_PROD_JUSQU_A = Date.UTC(2026, 10, 7, 11, 0);
+
+const BANDEAU_PROD = `<div style="position:sticky;top:0;z-index:99;background:#ffcf5a;color:#18161d;font:700 14px/1.4 system-ui;padding:10px 14px">
+⚠️ PRODUCTION (p.uyt.re) : les actions écrivent dans la vraie base. Le banc n'utilise que ses propres étiquettes : clique d'abord « Stock de test ».
+« Tout réinitialiser » efface TOUT, étiquettes imprimées comprises (possible jusqu'à samedi 6 h) ; « Partie à zéro » efface aussi les vrais joueurs.</div>`;
+
 const AGENT = String.raw`(function(){
 if (window.parent === window) return;
 var envoyer = function(type, d){ try{ window.parent.postMessage(Object.assign({source:"dv-app", type:type}, d||{}), "*"); }catch(e){} };

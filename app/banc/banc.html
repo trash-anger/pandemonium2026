@@ -222,7 +222,7 @@ const TESTS = [
       ["×1", () => vitesse(1)], ["×60", () => vitesse(60)], ["réelle", () => regler(null)]]],
     ["A4", "Réinitialiser, stock de test, réseau", "", [
       ["Stock de test", async () => { await api("/__dev/stock", {}); log("banc", "stock : 30 petites, 16 MJ, 10 grandes"); }],
-      ["Tout réinitialiser", async () => { if (!confirm("Effacer toute la base locale ?")) return; await api("/__dev/reinitialiser", {}); log("banc", "base locale vidée"); diffuser({ type: "recharger" }); }],
+      ["Tout réinitialiser", async () => { const c = prompt("Effacer TOUTE la base, étiquettes comprises ? Tape TOUT pour confirmer."); if ((c || "").trim().toUpperCase() !== "TOUT") return; await api("/__dev/reinitialiser", { confirmation: "TOUT" }); log("banc", "base locale vidée"); diffuser({ type: "recharger" }); }],
       ["État serveur", async () => log("banc", JSON.stringify((await api("/__dev/etat")).comptes))],
       ["Partie à zéro", async () => { if (!confirm("Effacer les personnages et remettre les étiquettes à vierge ?")) return; await api("/__dev/partie-zero", {}); cibles().forEach((id) => envoyer(id, { type: "oublier" })); log("banc", "partie remise à zéro"); }],
       ["Oublier ce téléphone", () => cibles().forEach((id) => envoyer(id, { type: "oublier" }))],

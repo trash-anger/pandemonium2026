@@ -10,7 +10,7 @@ const ORIGINE = "http://localhost:8787";
 const H = (h: number, m = 0) => Date.UTC(2026, 10, 8, h, m);
 const T0 = H(2, 30); // 21 h 30
 
-let env: { DB: ReturnType<typeof d1Memoire>; PUBLIC_ORIGIN: string; SESSION_SECRET: string };
+let env: { DB: ReturnType<typeof d1Memoire>; PUBLIC_ORIGIN: string; SESSION_SECRET: string; BANC_SESSION: boolean };
 let n = 0;
 
 async function api(chemin: string, corps?: object, jeton?: string, t = T0): Promise<Record<string, any>> {
@@ -45,7 +45,7 @@ const scan = (qui: { jeton: string }, code: string, t = T0) => api("/api/scan", 
 const badges = async (qui: { jeton: string }) => ((await api("/api/moi", undefined, qui.jeton)).badges as { badge: string }[]).map((b) => b.badge);
 
 beforeEach(() => {
-  env = { DB: d1Memoire(), PUBLIC_ORIGIN: ORIGINE, SESSION_SECRET: "secret-de-test" };
+  env = { DB: d1Memoire(), PUBLIC_ORIGIN: ORIGINE, SESSION_SECRET: "secret-de-test", BANC_SESSION: true }; // horloge simulée
 });
 
 describe("création du personnage (FEAT-003)", () => {

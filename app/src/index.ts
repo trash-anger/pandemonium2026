@@ -7,9 +7,13 @@ import { langue, pageAdmin, pageApp, pageConnexion, type Compte, type EtiquetteV
 import { definirPin, routeApi } from "./jeu";
 import { localVersIso } from "./temps";
 import { avecAgent, devActif, routeDev } from "./dev";
+import { bancEnvironnement, bancProd, peutOuvrirBanc } from "./mode";
 
 export interface Env extends EnvAuth {
   DB: D1Database;
+  BANC?: string;
+  /** Posé par requête quand la personne connectée a droit au banc (voir mode.ts). */
+  BANC_SESSION?: boolean;
 }
 
 const FORMATS = ["petit", "grand"];
@@ -19,8 +23,18 @@ const ETATS = ["vierge", "reclamee", "desactivee"];
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
+    // Banc derrière Google partout : MJ et lecteur en local et sur l'aperçu, MJ seulement en production
+    env = { ...env, BANC_SESSION: false };
+    const bancDemande = url.pathname === "/banc" || url.pathname.startsWith("/__dev/");
+    if (bancDemande || req.headers.has("Cookie") || bancEnvironnement(env)) {
+      const u = await utilisateurConnecte(req, env).catch(() => null);
+      if (peutOuvrirBanc(env, u?.role)) env = { ...env, BANC_SESSION: true };
+      else if (url.pathname === "/banc") return u ? new Response("Banc réservé au maître du jeu.", { status: 403 }) : Response.redirect(`${url.origin}/admin`, 302);
+    }
     if (devActif(env)) {
-      // Banc d'essai et simulation : uniquement en local (PUBLIC_ORIGIN = http://localhost…)
+      if (req.method === "POST" && url.pathname.startsWith("/__dev/") && req.headers.get("Origin") !== url.origin) {
+        return new Response("Origine refusée", { status: 403 });
+      }
       const r = await routeDev(req, env, url);
       if (r) return r;
       return avecAgent(await servir(req, env, url));
@@ -172,8 +186,8 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
   if (url.pathname === "/admin/export.csv") {
     const lot = url.searchParams.get("lot"), format = url.searchParams.get("format");
     const q = lot
-      ? env.DB.prepare("SELECT code FROM etiquettes WHERE lot = ? ORDER BY rowid").bind(Number(lot))
-      : env.DB.prepare("SELECT code FROM etiquettes WHERE format = ? ORDER BY lot, rowid").bind(format === "grand" ? "grand" : "petit");
+      ? env.DB.prepare("SELECT code FROM etiquettes WHERE lot = ? AND banc = 0 ORDER BY rowid").bind(Number(lot))
+      : env.DB.prepare("SELECT code FROM etiquettes WHERE format = ? AND banc = 0 ORDER BY lot, rowid").bind(format === "grand" ? "grand" : "petit");
     const codes = (await q.all<{ code: string }>()).results.map((r) => r.code);
     const nom = lot ? `etiquettes-lot-${Number(lot)}.csv` : `etiquettes-${format === "grand" ? "grand" : "petit"}.csv`;
     await journal(env, email, "export", { lot, format, n: codes.length });
@@ -183,8 +197,8 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
   }
 
   if (url.pathname !== "/admin") return new Response("Introuvable", { status: 404 });
-  const comptes = (await env.DB.prepare("SELECT format, role, etat, COUNT(*) AS n FROM etiquettes GROUP BY format, role, etat").all<Compte>()).results;
-  const lots = (await env.DB.prepare("SELECT lot, format, role, COUNT(*) AS n, MIN(cree_le) AS cree_le FROM etiquettes GROUP BY lot, format, role ORDER BY lot DESC").all<Lot>()).results;
+  const comptes = (await env.DB.prepare("SELECT format, role, etat, COUNT(*) AS n FROM etiquettes WHERE banc = 0 GROUP BY format, role, etat").all<Compte>()).results;
+  const lots = (await env.DB.prepare("SELECT lot, format, role, COUNT(*) AS n, MIN(cree_le) AS cree_le, MAX(banc) AS banc FROM etiquettes GROUP BY lot, format, role ORDER BY lot DESC").all<Lot>()).results;
   const recherche = url.searchParams.get("code") || "";
   const code = recherche ? normaliserCode(recherche) : null;
   const etiquette = code
@@ -195,7 +209,7 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       ).bind(code).first<EtiquetteVue>()
     : null;
   return pageAdmin({
-    email, role: u.role, comptes, lots, etiquette, recherche,
+    email, role: u.role, comptes, lots, etiquette, recherche, banc: peutOuvrirBanc(env, u.role),
     joueurs: {
       personnages: (await env.DB.prepare("SELECT COUNT(*) AS n FROM personnages").first<{ n: number }>())?.n ?? 0,
       scans: (await env.DB.prepare("SELECT COUNT(*) AS n FROM scans").first<{ n: number }>())?.n ?? 0,

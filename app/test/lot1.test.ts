@@ -200,9 +200,10 @@ describe("classements et médailles (FEAT-015)", () => {
     expect(coll.top[0]).toMatchObject({ rang: 1, n: 2, moi: true });
     const moi = await api("/api/moi", undefined, a.jeton);
     expect(moi.medailles).toEqual(expect.arrayContaining([expect.objectContaining({ classement: "collectionneurs", faction: null, rang: 1 })]));
-    env.DB.sqlite.prepare("UPDATE personnages SET est_mj = 1 WHERE id = ?").run(a.id);
+    // Pseudo unique : deux joueurs au même costume peuvent tirer le même pseudo
+    env.DB.sqlite.prepare("UPDATE personnages SET est_mj = 1, pseudo = 'MJ unique' WHERE id = ?").run(a.id);
     const sans = await api("/api/classements", undefined, b.jeton);
-    expect(sans.classements[0].top.some((x: { pseudo: string }) => x.pseudo === moi.personnage.pseudo)).toBe(false);
+    for (const c of sans.classements) expect(c.top.some((x: { pseudo: string }) => x.pseudo === "MJ unique")).toBe(false);
   });
 });
 

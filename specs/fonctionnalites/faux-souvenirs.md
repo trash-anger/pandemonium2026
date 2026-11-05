@@ -12,12 +12,12 @@ Chaque scan entre deux personnes génère un **souvenir commun absurde**, comme 
 |----|-------|--------|
 | RG-006-1 | Le souvenir d'une paire est **toujours le même** pour cette paire. | Confirmé (S1) |
 | RG-006-2 | Il est produit par **gabarits combinés, sans IA**. | Confirmé (S1) |
-| RG-006-3 | Le gabarit utilise les **attributs de costume** des deux personnages : catégorie, couleur, masque, maquillage, accessoires… | Confirmé (S3) |
+| RG-006-3 | Le gabarit utilise les **attributs de costume** des deux personnages : type de costume et les 12 attributs ([FEAT-003](personnage.md)). | Confirmé (S3, S6) |
 | RG-006-4 | La paire n'est **pas orientée** : A×B et B×A donnent le même souvenir. | Hypothèse |
 | RG-006-5 | Le choix des éléments est déterministe, calculé à partir des identifiants de la paire triés. | Proposition (implémentation) |
 | RG-006-6 | Les gabarits mélangent les univers [Déjà vu, mode, D&D et Matrix](../univers-et-ton.md), et le NSFW soft est permis. | Confirmé (S3) |
 | RG-006-7 | Les retrouvailles de jumeaux produisent un souvenir **spécial**, plus long ([FEAT-007](jumeaux.md)). | Proposition (S2) |
-| RG-006-8 | Un souvenir peut devenir « flou » selon [RG-005-5](rescan-deja-vu.md). | À préciser ([Q-012](../questions-ouvertes.md#q-012)) |
+| RG-006-8 | Un souvenir peut devenir « flou » selon [RG-005-5](rescan-deja-vu.md). | Confirmé (S5, [DEC-031](../decisions.md#dec-031)) |
 
 ## Structure de gabarit (Proposition)
 `Vous vous êtes rencontrés en {année} {lieu}. {détail_A} {détail_B} {chute}`
@@ -30,7 +30,7 @@ Chaque scan entre deux personnes génère un **souvenir commun absurde**, comme 
 | `{détail_B}` | « L'autre avait du maquillage vert, mais en solde. » | attributs de B |
 | `{chute}` | « Personne n'en a jamais reparlé. » | hash de la paire |
 
-Le nombre de gabarits nécessaire pour éviter les répétitions visibles reste **À préciser** ([Q-017](../questions-ouvertes.md#q-017)).
+Environ **40 gabarits**, en français et en anglais, rédigés par l'assistant et relus par Florian ([DEC-042](../decisions.md#dec-042)). Ton : allusions, rien d'explicite ([DEC-049](../decisions.md#dec-049)).
 
 ## Propositions non validées (S2)
 - **Ta vie antérieure :** en fin de soirée, tous les souvenirs d'un joueur forment une biographie chronologique.
@@ -38,5 +38,5 @@ Le nombre de gabarits nécessaire pour éviter les répétitions visibles reste 
 
 ## Critères d'acceptation
 - **CA-006-1 :** Pour la même paire, deux affichages, même sur deux appareils, produisent le même texte, sauf l'effet Mandela s'il est retenu.
-- **CA-006-2 :** Deux paires différentes ont une probabilité faible d'obtenir le même texte (seuil : [Q-017](../questions-ouvertes.md#q-017)).
+- **CA-006-2 :** Deux paires différentes ont une probabilité faible d'obtenir le même texte (seuil proposé : moins de 1 % sur 1 000 paires tirées au hasard).
 - **CA-006-3 :** Tout texte généré est grammaticalement correct quels que soient les attributs (genre, accords). Une revue d'un échantillon de 50 souvenirs est requise.

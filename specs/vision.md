@@ -10,8 +10,8 @@
 | Importance du costume | Les déguisements y sont très importants et la créativité est primordiale | Confirmé | S1 |
 | Thème 2026 | **« Déjà vu »**. Ne jamais le perdre de vue | Confirmé | S1, S3 |
 | Date | Samedi 7 novembre 2026. Florian a écrit « le samedi », ce qui donne cette date | Hypothèse | S1 |
-| Heures de début et de fin | Inconnues ([Q-001](questions-ouvertes.md#q-001)) | À préciser | — |
-| Nombre de participants | Inconnu ([Q-002](questions-ouvertes.md#q-002)) | À préciser | — |
+| Heures | Ouverture 21 h ; jeu effectif à partir de minuit ; jumeaux complets à 2 h ; révélation 5 h ; fin 6 h | Confirmé | S5, S6 |
+| Nombre de joueurs | 300 à 400 espérés, avec une marge ; environ 800 autocollants | Confirmé (estimation) | S5 |
 | Auteur, organisateur du jeu | Florian, participant costumé. Il n'organise pas la fête | Hypothèse | S1 |
 
 ## 2. Problème à résoudre
@@ -36,9 +36,9 @@ Le thème « Déjà vu » traverse toutes les mécaniques :
 |------|-------------|--------------|--------|
 | **Porteur** | Fêtard qui a reçu une étiquette et l'a réclamée en créant son personnage | Créer son personnage vite, sans clavier ; être trouvable ; collectionner | Confirmé (S1, S3) |
 | **Scanneur** | Toute personne qui scanne une étiquette. Un porteur est aussi un scanneur | Comprendre le jeu en quelques secondes ; voir sa collection et se comparer | Confirmé (S1) |
-| **Spectateur** | Personne qui scanne sans avoir d'étiquette | Entrer dans le jeu malgré tout | À préciser ([Q-003](questions-ouvertes.md#q-003)) |
+| **Spectateur** | Personne qui scanne sans avoir d'étiquette | Voir les cartes ; être orientée vers le MJ pour obtenir une étiquette | Confirmé (S5, S6) |
 | **Florian (maître du jeu)** | Créateur. Porte des étiquettes, les distribue, pilote la soirée | Préparer et imprimer les étiquettes ; configurer jumeaux, triplés et chats noirs ; suivre en direct ; déclencher des événements | Confirmé (S1, S3 : panneau admin) |
-| **Organisateurs de Pandémonium** | Tiers éventuels (projection, annonce au micro) | Aucun besoin spécifié | Hypothèse ([Q-030](questions-ouvertes.md#q-030)) |
+| **Organisateurs de Pandémonium** | Aucun rôle : pas d'écran ni d'annonce attendus | — | Confirmé (S5) |
 
 Contexte d'usage, toujours vrai : téléphone personnel, **salle sombre et bruyante**, personnes **costumées** (masques, maquillage, gants), souvent **sous l'effet de l'alcool**, avec une attention fragmentée. L'humour doit rester **accessible à tous** (S3).
 
@@ -51,7 +51,8 @@ Contexte d'usage, toujours vrai : téléphone personnel, **salle sombre et bruya
 | OBJ-3 | Créer un sentiment d'aventure collective | Tout le monde voit la progression globale | Confirmé (S1 : « que le monde ait conscience de l'avancement global ») |
 | OBJ-4 | Faire rire, avec un humour accessible et un NSFW soft toléré | Revue des textes | Confirmé (S3) |
 | OBJ-5 | Créer des souvenirs partageables le lendemain | Partages sur les réseaux sociaux | Confirmé (S3) |
-| OBJ-6 | Ne rien demander de lourd au joueur : pas de clavier, pas de compte | Temps de création du personnage (cible à définir, [Q-004](questions-ouvertes.md#q-004)) | Confirmé (S3) |
+| OBJ-6 | Ne rien demander de lourd au joueur : pas de clavier, pas de compte | Création du personnage en moins de 30 s | Confirmé (S3, S5) |
+| OBJ-7 | Porter une **critique punk et anticapitaliste** de la société de consommation et du temps passé sur les écrans | Temps d'écran révélé à chacun ; aucune donnée exploitée commercialement | Confirmé (S5, S6) |
 
 ## 6. Périmètre
 
@@ -65,7 +66,9 @@ L'index complet se trouve dans [fonctionnalites/README.md](fonctionnalites/READM
 |---------|--------|--------|
 | Création de compte (courriel, mot de passe) | Hypothèse | Contraire à l'objectif OBJ-6 |
 | Génération de texte par IA | Confirmé (S1 : « gabarits combinés, sans IA ») | Les souvenirs sont produits par gabarits |
-| Jumeaux partageant le même identifiant | Confirmé exclu (S1) | Voir [DEC-002](decisions.md#dec-002) |
+| Jumeaux partageant le même identifiant | Confirmé exclu (S1) | Voir [DEC-002](decisions.md#dec-002) et [DEC-021](decisions.md#dec-021) |
+| Projection en salle, annonce au micro | Confirmé exclu (S5) | Pas d'écran ([DEC-046](decisions.md#dec-046)) |
+| Mécaniques de Loup-garou (nuit, vote) | Confirmé exclu (S5) | Simple analogie ([DEC-050](decisions.md#dec-050)) |
 | Messagerie libre entre joueurs | Proposition | Évite la modération ; réactions emoji seulement ([FEAT-014](fonctionnalites/reactions.md)) |
 | Réutilisation pour d'autres événements | Hypothèse | Hors objectif ; dépôt public néanmoins |
 

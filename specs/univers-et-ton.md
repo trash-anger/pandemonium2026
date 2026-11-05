@@ -4,7 +4,7 @@
 
 Ce document définit **l'identité éditoriale** du jeu. Les textes de toutes les fonctionnalités doivent s'y conformer.
 
-## 1. Les quatre piliers
+## 1. Les cinq piliers
 
 | Pilier | Contenu | Statut | Source |
 |--------|---------|--------|--------|
@@ -12,8 +12,9 @@ Ce document définit **l'identité éditoriale** du jeu. Les textes de toutes le
 | **Mode, fast fashion, soldes** | Étiquettes, tailles, consignes d'entretien, codes-barres, démarques, « dernière chance », retours, cabine d'essayage, collection automne-hiver. | Confirmé | S3 |
 | **Donjons & Dragons** | Classes, jets de dés, d20, points de vie, niveaux, quêtes, objets légendaires, MJ. | Confirmé | S3 |
 | **Matrix** | Le déjà vu comme glitch de la Matrice. Chat noir, Agent. | Confirmé (chat noir, S1) ; Agent : Proposition (S2) | S1, S2 |
+| **Punk et anticapitaliste** | Critique de la société de consommation et du temps passé sur les écrans. Le jeu le dit dès le premier scan et le rend concret à la fin, en révélant à chacun son temps d'écran. Les pièges du MJ parodient les frustrations de la consommation. | Confirmé | S5, S6 |
 
-**Hypothèse :** les quatre univers se mélangent librement. Par exemple : *« Objet légendaire −70 % : Cape de Déjà-vu +2, non repris, non échangé »*.
+**Hypothèse :** les univers se mélangent librement. Par exemple : *« Objet légendaire −70 % : Cape de Déjà-vu +2, non repris, non échangé »*.
 
 ## 2. Humour
 
@@ -22,13 +23,13 @@ Ce document définit **l'identité éditoriale** du jeu. Les textes de toutes le
 | L'humour est omniprésent | Confirmé | S3 |
 | Il est **accessible à tous** : on comprend la blague sans connaître D&D, Matrix ou la mode | Confirmé | S3 |
 | Le **NSFW soft** est autorisé : sous-entendus, grivoiserie légère | Confirmé | S3 |
-| Rien d'explicite, d'humiliant ou de discriminatoire, aucune blague qui vise une caractéristique réelle d'une personne | Proposition ([Q-033](questions-ouvertes.md#q-033)) | — |
-| Le contenu NSFW soft pourrait se désactiver par un réglage « version familiale » | Proposition | — |
+| Allusions seulement : rien d'explicite, d'humiliant ou de discriminatoire, aucune blague qui vise une caractéristique réelle d'une personne | Confirmé (S5, [DEC-049](decisions.md#dec-049)) | S5 |
+| Pas de version familiale | Confirmé (S5) | S5 |
 
 ## 3. Langue
 
-- **Hypothèse :** l'interface est en français québécois. Pandémonium se tient à Montréal, et Florian est bilingue.
-- **À préciser :** faut-il aussi l'anglais ? Voir [Q-006](questions-ouvertes.md#q-006).
+- L'interface existe **en français et en anglais**, selon la langue du téléphone ([DEC-039](decisions.md#dec-039)). Confirmé (S5).
+- **Hypothèse :** le français est québécois. Pandémonium se tient à Montréal.
 
 ## 4. Exemples de ton
 

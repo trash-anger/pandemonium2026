@@ -14,7 +14,7 @@ Laisser une trace sur la carte de quelqu'un, **rapidement, avec des emoji**, à 
 | RG-014-2 | Elles se posent en **un toucher** depuis l'écran de résultat du scan. | Confirmé (« rapide », S3) |
 | RG-014-3 | Liste proposée : 🎃 👻 💀 🦇 🕷️ 🧛 🔮 🖤 (8 au maximum). | Proposition |
 | RG-014-4 | Une réaction par emoji et par scanneur sur une carte donnée ; elle peut être retirée. | Proposition |
-| RG-014-5 | Le porteur voit le total des réactions reçues par emoji, ainsi que leurs auteurs. | Proposition ; visibilité des auteurs : [Q-022](../questions-ouvertes.md#q-022) |
+| RG-014-5 | Le porteur voit seulement le **total** des réactions reçues par emoji, pas leurs auteurs. | Confirmé (S5, [DEC-037](../decisions.md#dec-037)) |
 
 ## Critères d'acceptation
 - **CA-014-1 :** Étant donné l'écran de résultat, quand le joueur touche un emoji, alors la réaction est enregistrée sans autre confirmation.

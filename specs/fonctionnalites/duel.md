@@ -18,14 +18,14 @@ Permettre à **la personne qui scanne de se comparer à la personne scannée** (
 | ID | Règle | Statut |
 |----|-------|--------|
 | RG-010-4 | Afficher le plus court chemin entre deux joueurs : « Vous êtes reliés par Batgirl → Le Moine → toi ». | Confirmé (« intéressant », S3) |
-| RG-010-5 | Les degrés permettent de **repérer des clans** : des groupes de joueurs fortement connectés. | Hypothèse (S3 : « ça peut permettre éventuellement de connaître un peu les clans ») ; lien avec les factions : [Q-014](../questions-ouvertes.md#q-014) |
+| RG-010-5 | Les degrés permettent de **repérer des clans** : des groupes de joueurs fortement connectés. | Hypothèse (S3 : « ça peut permettre éventuellement de connaître un peu les clans ») ; sans lien avec les factions, qui sont choisies |
 
 ## 10.3 Duel D&D
 | ID | Règle | Statut |
 |----|-------|--------|
 | RG-010-6 | Un duel n'a lieu que si **les deux personnes ont donné leur accord**. | Confirmé (S3) |
-| RG-010-7 | Mécanique : jets de d20 virtuels, modifiés par des caractéristiques tirées du costume (par exemple, « Charisme vestimentaire » +2 si accessoires). | Proposition |
-| RG-010-8 | Enjeu du duel : souvenirs, points de faction ou titre seulement ? | À préciser ([Q-015](../questions-ouvertes.md#q-015)) |
+| RG-010-7 | Mécanique : jets de d20 virtuels, modifiés par la **classe** du joueur et par des caractéristiques tirées du costume (par exemple, « Charisme vestimentaire » +2 si paillettes). | Confirmé (principe, S5, [DEC-030](../decisions.md#dec-030)) ; valeurs : Proposition |
+| RG-010-8 | Enjeu du duel : souvenirs, points de faction ou titre seulement ? | À préciser (duels hors périmètre de samedi, [DEC-017](../decisions.md#dec-017)) |
 | RG-010-9 | Le consentement passe par un scan mutuel ou par un bouton « J'accepte le duel » chez l'autre, avec une expiration de 60 s. | Proposition |
 | RG-010-10 | Limite de duels entre les mêmes joueurs, pour éviter l'acharnement : un par heure. | Proposition |
 

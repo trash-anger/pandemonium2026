@@ -23,6 +23,8 @@ export const PARAMETRES_PAR_DEFAUT = {
   surconsommation: { max_factions: 3 },
   // Barème §3 (DEC-031) : jauge de départ, rescans faits par heure glissante avant de perdre des souvenirs, seuil du flou
   memoire: { depart: 10, rescans_par_heure: 10, seuil_flou: 5 },
+  // RG-005-3 : un rescan d'une même paire ne compte qu'une fois par fenêtre (minutes)
+  rescan: { fenetre_min: 5 },
 };
 
 export type Heures = typeof HEURES_PAR_DEFAUT;

@@ -246,7 +246,6 @@ async function effectifsFactions(env: EnvJeu): Promise<Record<string, number>> {
   return Object.fromEntries(r.results.map((x) => [x.f, x.n]));
 }
 
-const FENETRE_RESCAN_MS = 5 * 60_000;
 const PALIERS_RESCAN: Record<number, string> = { 3: "boucle_detectee", 6: "jour_marmotte", 13: "client_maudit" };
 
 // ---------- Routes ----------
@@ -365,9 +364,10 @@ async function dejaVu(
   enregistrer: (resultat: string, reponse: object, cible: string | null) => Promise<Response>,
 ): Promise<Response> {
   const iso = new Date(t).toISOString(), cible = carte.id;
-  const m = (await lireParametres(env.DB)).memoire;
+  const params = await lireParametres(env.DB), m = params.memoire;
+  const fenetreMin = Math.max(0, Number(params.rescan?.fenetre_min) || 0);
   const dejaRescanne = await env.DB.prepare("SELECT 1 AS x FROM scans WHERE scanneur_id = ? AND resultat IN ('deja_vu', 'deja_vu_repete') LIMIT 1").bind(me.id).first();
-  const fenetre = new Date(t - FENETRE_RESCAN_MS).toISOString();
+  const fenetre = new Date(t - fenetreMin * 60_000).toISOString();
   const maj = await env.DB.prepare(
     "UPDATE collection SET nb_scans = nb_scans + 1, dernier_scan_le = ? WHERE possesseur_id = ? AND personnage_id = ? AND dernier_scan_le <= ?",
   ).bind(iso, me.id, cible, fenetre).run();
@@ -403,7 +403,7 @@ async function dejaVu(
         .bind(me.id, cible).all<{ h: string }>()).results.map((x) => x.h), iso].slice(-13)
     : undefined;
   return enregistrer(compte ? "deja_vu" : "deja_vu_repete", {
-    type: "deja_vu", code, carte, n, compte, badges, palier, heures,
+    type: "deja_vu", code, carte, n, compte, fenetre_min: fenetreMin, badges, palier, heures,
     premier_rescan: !dejaRescanne, // CA-005-4 : l'invitation ne s'affiche qu'une fois
     souvenir: souvenirVu(me, carte, m.seuil_flou), souvenirs: me.souvenirs, perte,
     mes_reactions: await mesReactions(env, me.id, cible),

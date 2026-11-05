@@ -181,6 +181,7 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .ticket div{display:flex;justify-content:space-between;border-bottom:1px dashed #0003;padding:2px 0}
 .ticket small{display:block;text-align:center;margin-top:10px}
 .alerte-ligne{color:var(--pink);font-weight:700}
+.trop-tot{color:var(--gold);font-weight:700;font-size:17px;border:1.5px solid var(--gold);border-radius:12px;padding:10px 14px;background:#2a2410}
 .jauge{position:relative;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;overflow:hidden}
 .jauge b{position:relative;font-family:var(--mono);font-size:20px;z-index:1}
 .jauge i{position:absolute;inset:0 auto 0 0;width:calc(var(--n) * 5%);background:linear-gradient(90deg,#1d3a2a,#2a5a3e);opacity:.8}
@@ -195,6 +196,9 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
   .echo div{animation:ec .6s ease-out both}.echo div:nth-child(2){animation-delay:.12s}.echo div:nth-child(3){animation-delay:.24s}
   @keyframes ec{from{opacity:0;filter:blur(4px)}}
   /* ×6 : la carte rejoue son apparition trois fois ; ×13 : glitch court, moins de 3 changements par seconde (REQ-003) */
+  /* « Trop tôt pour compter » : fondu lent, bien sous 3 changements par seconde (REQ-003) */
+  .trop-tot{animation:clignote 1.6s ease-in-out infinite}
+  @keyframes clignote{0%,100%{opacity:1}50%{opacity:.25}}
   .palier-6 .carte.apparait{animation:ap .7s ease-out 3}
   .palier-13 .echo{animation:gl13 1.5s steps(1) 1}
   @keyframes gl13{0%{transform:translateX(-6px) skewX(8deg);filter:hue-rotate(90deg)}40%{transform:translateX(5px) skewX(-6deg);filter:none}80%{transform:translateX(-2px)}100%{transform:none}}

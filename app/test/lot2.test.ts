@@ -202,3 +202,13 @@ describe("temps d'écran (RG-015-4)", () => {
     expect((await api("/api/ecran", { secondes: -40 }, a.jeton, T0 + 10 * MIN)).temps_ecran_s).toBe(600);
   });
 });
+
+describe("fenêtre de rescan réglable (RG-005-3)", () => {
+  it("suit parametres.rescan.fenetre_min", async () => {
+    env.DB.sqlite.prepare("INSERT INTO config (cle, valeur) VALUES ('parametres', ?)").run(JSON.stringify({ rescan: { fenetre_min: 2 } }));
+    const a = await joueur(), b = await joueur();
+    await scan(a, b.code);
+    expect(await scan(a, b.code, T0 + MIN)).toMatchObject({ compte: false, fenetre_min: 2 });
+    expect(await scan(a, b.code, T0 + 3 * MIN)).toMatchObject({ compte: true, n: 2 });
+  });
+});

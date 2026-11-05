@@ -199,7 +199,7 @@
       enFile: "Pas de réseau. Ton scan partira tout seul dès que le réseau revient, sans doublon.",
       synchro: (n) => `${n} scan${n > 1 ? "s" : ""} en attente envoyé${n > 1 ? "s" : ""}.`,
       reessayerMaintenant: "Réessayer maintenant",
-      dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Article déjà dans ton panier.", fenetre: "Trop tôt pour compter : un même déjà vu compte une fois toutes les 5 minutes.",
+      dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Article déjà dans ton panier.", fenetre: (m) => `Trop tôt pour compter : un même déjà vu compte une fois toutes les ${m} minute${m > 1 ? "s" : ""}.`,
       soiTitre: "C'est toi.", soi: "Ton double existe… quelque part. Les indices arrivent à partir de minuit.",
       encore: "Scanner encore",
       spectMJ: "Va trouver le MJ pour avoir ta propre étiquette !",
@@ -343,7 +343,7 @@
       enFile: "No network. Your scan will be sent automatically when the network is back, with no duplicates.",
       synchro: (n) => `${n} waiting scan${n > 1 ? "s" : ""} sent.`,
       reessayerMaintenant: "Try again now",
-      dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Item already in your cart.", fenetre: "Too soon to count: the same déjà vu counts once every 5 minutes.",
+      dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Item already in your cart.", fenetre: (m) => `Too soon to count: the same déjà vu counts once every ${m} minute${m > 1 ? "s" : ""}.`,
       soiTitre: "That's you.", soi: "Your double is out there… somewhere. Clues start at midnight.",
       encore: "Scan again",
       spectMJ: "Go find the game master to get your own tag!",
@@ -730,7 +730,7 @@
       : r.palier === 13 ? `<p class="oeuf">${t.oeuf13}</p><div class="ticket"><b>${t.ticket}</b>${(r.heures || []).map((x, i) => `<div><span>#${String(i + 1).padStart(2, "0")}</span><span>${heureCourte(x)}</span></div>`).join("")}<small>${t.ticketPied}</small></div>`
       : "";
     return `<div class="echo">${[0, 1, 2].map(() => `<div>${titre}</div>`).join("")}</div>${oeuf || `<p>${t.panier}</p>`}
-      ${(r.badges || []).map(badgeGagne).join("")}${r.compte === false ? `<p class="petit muted">${t.fenetre}</p>` : ""}
+      ${(r.badges || []).map(badgeGagne).join("")}${r.compte === false ? `<p class="trop-tot">⏳ ${t.fenetre(r.fenetre_min ?? 5)}</p>` : ""}
       ${r.perte ? `<p class="alerte-ligne">🫥 ${t.perte(r.souvenirs)}</p>` : ""}
       ${r.premier_rescan ? `<div class="boite mission apparait"><b>🔁</b> ${t.invitation}</div>` : ""}
       ${souvenirBloc(r.souvenir)}${carte(r.carte, { grand: false })}${reactionsBloc(r.carte.id, r.mes_reactions)}

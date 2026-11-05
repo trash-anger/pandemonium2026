@@ -53,12 +53,15 @@ function page(l: Langue, titre: string, corps: string, robots = true): Response 
 }
 
 /** Coquille de l'application du joueur (LOT-1) : tout l'affichage est fait par public/app.js. */
-export const VERSION_APP = "l1-4";
+export const VERSION_APP = "l1-9";
 export function pageApp(l: Langue, status = 200): Response {
   const html = `<!doctype html><html lang="${l}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0a0f"><meta name="robots" content="noindex">
 <title>Déjà vu !</title><link rel="icon" href="/favicon.svg">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Déjà vu !"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="/app.css?v=${VERSION_APP}"><script src="/app.js?v=${VERSION_APP}" defer></script></head>
 <body><div id="app"><main class="ecran centre"><p class="chargement">${l === "en" ? "Looking for your size in the stockroom…" : "On cherche ta taille en réserve…"}</p></main></div>
 <noscript><p style="padding:20px">JavaScript est nécessaire pour jouer. / JavaScript is required to play.</p></noscript></body></html>`;

@@ -46,7 +46,7 @@ async function servir(req: Request, env: Env, url: URL): Promise<Response> {
         return pageApp(langue(req));
       }
       if (chemin.startsWith("/api/")) return routeApi(req, env, url);
-      if (["/collection", "/moi", "/saisie", "/tuto", "/badges"].includes(chemin)) return pageApp(langue(req));
+      if (["/collection", "/moi", "/saisie", "/tuto", "/badges", "/medailles"].includes(chemin)) return pageApp(langue(req));
       if (chemin === "/auth/connexion") return debutConnexion(env);
       if (chemin === "/auth/retour") return retourConnexion(req, env);
       if (chemin === "/auth/deconnexion") return deconnexion(env);

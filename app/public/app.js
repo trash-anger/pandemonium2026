@@ -75,7 +75,7 @@
     garde_robe_mj: ["👔", "Garde-robe du MJ", "GM's Wardrobe", "Collectionner les 10 légendaires du MJ.", "Collect all 10 of the GM's legendaries."],
     anticapitaliste: ["✊", "Anticapitaliste", "Anti-capitalist", "Trouver un bon de réduction très particulier.", "Find a very special discount voucher."],
     employe_du_mois: ["🏷️", "Employé du mois", "Employee of the Month", "Réussir une mission confiée par le MJ.", "Complete a mission from the GM."],
-    client_difficile: ["⚠️", "Client difficile", "Difficult Customer", "Recevoir un avertissement du MJ. Pas fier.", "Get a warning from the GM. Not proud."],
+    client_difficile: ["⚠️", "Client difficile", "Difficult Customer", "Recevoir un avertissement du MJ. Rien de glorieux.", "Get a warning from the GM. Not proud."],
   };
   const lib = (o) => (L === "en" ? o.en : o.fr);
   const typeDe = (id) => TYPES.find((t) => t.id === id) || TYPES[7];
@@ -105,10 +105,31 @@
       av: [
         "🏴 <b>Déjà vu !</b> est un jeu <b>punk et anticapitaliste</b>. Les soldes, ici, c'est pour rire.",
         "🗑️ Tes données sont <b>supprimées 7 jours après la fête</b>. Aucun usage commercial, jamais.",
-        "📲 <b>Installer l'app est fortement recommandé</b>, mais tu peux jouer en scannant seulement les QR.",
         "🔢 Pas de compte, pas de courriel : juste un <b>code PIN</b> pour retrouver ton personnage.",
       ],
       compris: "J'ai compris",
+      instTitre: "Installe l'app : on te la recommande",
+      instPourquoi: "Pour une meilleure expérience : plein écran, ouverture en un geste, plus rapide, jouable même quand le réseau faiblit, et les notifications (ton jumeau, les annonces du MJ). Tu gagnes aussi le badge « Installé le Portail ». Sans installation, tu peux quand même jouer en scannant les QR.",
+      instBouton: "Installer l'app",
+      instPuis: (c) => `Ensuite, ouvre <b>Déjà vu !</b> depuis ton écran d'accueil et entre le code de ton étiquette : <b class="code">${c}</b>`,
+      instIos: "Sur iPhone, l'app installée ne partage pas la mémoire de ton navigateur : crée ton personnage <b>dans l'app</b>.",
+      instDeja: "✅ L'app est installée. Parfait.",
+      instSans: "Continuer sans installer",
+      redirTitre: (n) => `Ouvre ton étiquette dans ${n}`,
+      redir: (n) => `Ce navigateur risque d'oublier ton personnage. Ton étiquette n'est pas encore activée : ouvre-la plutôt dans <b>${n}</b>.`,
+      redirOuvrir: (n) => `Ouvrir dans ${n}`, redirCopier: "Copier le lien", redirCopie: (n) => `Lien copié. Colle-le dans ${n}.`,
+      redirManuel: (n) => `Si le bouton ne marche pas : copie le lien, ouvre ${n}, colle-le dans la barre d'adresse.`,
+      redirIci: "Continuer ici quand même",
+      inst: {
+        safari: ["Touche le bouton <b>Partager</b> <span class=\"ico\">⬆︎</span> en bas de l'écran (ou en haut sur iPad).", "Fais défiler et choisis <b>« Sur l'écran d'accueil »</b>.", "Touche <b>Ajouter</b>."],
+        chromeIos: ["Touche le bouton <b>Partager</b> <span class=\"ico\">⬆︎</span> dans la barre d'adresse.", "Choisis <b>« Sur l'écran d'accueil »</b>.", "Touche <b>Ajouter</b>."],
+        autreIos: ["Ouvre cette page dans <b>Safari</b> ou <b>Chrome</b>.", "Touche <b>Partager</b> <span class=\"ico\">⬆︎</span>, puis <b>« Sur l'écran d'accueil »</b>."],
+        chrome: ["Touche le menu <b>⋮</b> en haut à droite.", "Choisis <b>« Installer l'application »</b> ou <b>« Ajouter à l'écran d'accueil »</b>.", "Confirme avec <b>Installer</b>."],
+        samsung: ["Touche le menu <b>≡</b> en bas à droite.", "Choisis <b>« Ajouter la page à »</b>, puis <b>« Écran d'accueil »</b>."],
+        firefox: ["Touche le menu <b>⋮</b>.", "Choisis <b>« Installer »</b> ou <b>« Ajouter à l'écran d'accueil »</b>."],
+        integre: ["Tu es dans le navigateur d'une autre app (Instagram, Messenger…). Ouvre d'abord cette page dans <b>Safari</b> ou <b>Chrome</b> : menu <b>⋯</b>, puis « Ouvrir dans le navigateur »."],
+        ordi: ["Dans la barre d'adresse, clique sur l'icône d'installation <b>⊕</b>, ou passe par le menu du navigateur."],
+      },
       costumeTitre: "Ton costume", costumeAide: "Choisis ce qui te ressemble le plus.",
       detailsTitre: "Les détails", couleurTitre: "Couleur dominante",
       attrsAide: "Coche tout ce qu'on peut voir de loin sur ton costume.",
@@ -122,7 +143,7 @@
       dejaReclamee: "Trop tard : quelqu'un vient de réclamer cette étiquette.",
       // Tutoriel (textes §5.1)
       tutoTitre: "Comment jouer",
-      tuto: [["📷", "<b>Scanne</b> les étiquettes des autres : chaque personne rejoint ta collection."], ["🔁", "<b>Revois-les</b> : chaque déjà vu compte."], ["👯", "<b>Cherche ton jumeau</b> : des indices arrivent à partir de minuit."], ["🕔", "<b>Révélation à 5 h</b> pour toute la salle."]],
+      tuto: [["📷", "<b>Scanne</b> les étiquettes des autres : chaque personne rejoint ta collection."], ["🔁", "<b>Revois-les</b> : chaque déjà vu compte."], ["👯", "<b>Cherche ton jumeau</b> : des indices arrivent à partir de minuit."], ["🕔", "<b>Révélation à 5 h</b> pour tout Pandémonium."]],
       cestParti: "C'est parti",
       // Accueil (textes §5.2)
       maintenant: "Et maintenant ?",
@@ -165,14 +186,23 @@
       moiTitre: "Ma fiche", mesEtiquettes: "Mes étiquettes", mesBadges: "Mes badges", aucunBadge: "Aucun badge pour l'instant.",
       pseudo: "Pseudo", enregistrer: "Enregistrer", fige: "Figé",
       pseudoFige: "Le pseudo ne se change plus après minuit.",
-      costumeFige: "Ton costume est figé : quelqu'un t'a déjà scanné, ou il est passé minuit.",
+      costumeFige: "Ton costume est figé : quelqu'un a déjà scanné ton étiquette, ou il est passé minuit.",
       classeFigee: "La classe ne se change plus.",
       classeAlerte: "Changer de classe donne le badge « Trans-classe ».",
       modifierCostume: "Modifier mon costume", confidentialite: "Photos",
       langue: "Language / Langue", commentJouer: "Comment jouer",
       pinRappel: "Ton PIN te permet de retrouver ton personnage : rescanne une de tes étiquettes depuis un autre navigateur, puis touche « Réintégrer le jeu avec mon PIN ».",
       enregistre: "Enregistré.", mj: "MJ",
-      ongAccueil: "Accueil", ongCollection: "Collection", ongClassements: "Classements", ongBadges: "Badges", ongMoi: "Moi",
+      ongAccueil: "Accueil", ongCollection: "Collection", ongClassements: "Classements", ongBadges: "Badges", ongMedailles: "Médailles", ongMoi: "Moi",
+      sousBadges: "Badges", sousClassements: "Classements", bonus: (n) => `bonus`, toutPandemonium: "Tout Pandémonium",
+      medaillesBonus: "Médailles bonus", medaillesBonusAide: "Un top 3 dans un classement, dans tout Pandémonium ou dans ta faction, rapporte une médaille. Provisoire : tout se fige à la révélation de 5 h.",
+      medaillesFigees: "Classements figés depuis la révélation.",
+      voirMedailles: (m) => `Mes médailles (${m.gagnes}/${m.total}${m.bonus ? ` +${m.bonus}` : ""})`,
+      place: (r) => (r === 1 ? "1re place" : `${r}e place`),
+      lb: { collectionneurs: ["Collectionneurs", "Personnes différentes scannées", (n) => `${n} personne${n > 1 ? "s" : ""}`], celebrites: ["Célébrités", "Personnes différentes qui ont scanné ton étiquette", (n) => `${n} scanneur${n > 1 ? "s" : ""}`] },
+      lbBientot: "Bientôt : Fantôme, Boucle infinie, Business, Pont, Premier jumeau réuni, Factions.",
+      lbVide: "Personne pour l'instant. Va scanner !", lbToi: "Toi", lbPasClasse: "Pas encore au classement : scanne, et fais scanner ton étiquette.",
+      lbParticipants: (n) => `${n} au classement`,
       badgesTitre: "Badges", badgesGagnes: "Gagnés", badgesAVenir: "À débloquer",
       badgesVide: "Aucun badge pour l'instant. Ils se gagnent en jouant… ou en faisant des bêtises.",
       voirBadges: (n) => `Mes badges (${n})`, gagneA: (h) => `gagné à ${h}`,
@@ -197,10 +227,31 @@
       av: [
         "🏴 <b>Déjà vu!</b> is a <b>punk, anti-capitalist</b> game. The sales here are a joke.",
         "🗑️ Your data is <b>deleted 7 days after the party</b>. No commercial use, ever.",
-        "📲 <b>Installing the app is strongly recommended</b>, but you can play just by scanning QR codes.",
         "🔢 No account, no email: just a <b>PIN</b> to get your character back.",
       ],
       compris: "Got it",
+      instTitre: "Install the app: we recommend it",
+      instPourquoi: "For a better experience: full screen, one-tap launch, faster, playable even when the network struggles, and notifications (your twin, the GM's announcements). You also earn the “Portal Installed” badge. Without installing, you can still play by scanning QR codes.",
+      instBouton: "Install the app",
+      instPuis: (c) => `Then open <b>Déjà vu!</b> from your home screen and enter your tag's code: <b class="code">${c}</b>`,
+      instIos: "On iPhone, the installed app doesn't share your browser's memory: create your character <b>in the app</b>.",
+      instDeja: "✅ The app is installed. Perfect.",
+      instSans: "Continue without installing",
+      redirTitre: (n) => `Open your tag in ${n}`,
+      redir: (n) => `This browser may forget your character. Your tag isn't activated yet: open it in <b>${n}</b> instead.`,
+      redirOuvrir: (n) => `Open in ${n}`, redirCopier: "Copy the link", redirCopie: (n) => `Link copied. Paste it in ${n}.`,
+      redirManuel: (n) => `If the button doesn't work: copy the link, open ${n}, paste it in the address bar.`,
+      redirIci: "Continue here anyway",
+      inst: {
+        safari: ["Tap the <b>Share</b> button <span class=\"ico\">⬆︎</span> at the bottom of the screen (top on iPad).", "Scroll down and pick <b>“Add to Home Screen”</b>.", "Tap <b>Add</b>."],
+        chromeIos: ["Tap the <b>Share</b> button <span class=\"ico\">⬆︎</span> in the address bar.", "Pick <b>“Add to Home Screen”</b>.", "Tap <b>Add</b>."],
+        autreIos: ["Open this page in <b>Safari</b> or <b>Chrome</b>.", "Tap <b>Share</b> <span class=\"ico\">⬆︎</span>, then <b>“Add to Home Screen”</b>."],
+        chrome: ["Tap the <b>⋮</b> menu at the top right.", "Pick <b>“Install app”</b> or <b>“Add to Home screen”</b>.", "Confirm with <b>Install</b>."],
+        samsung: ["Tap the <b>≡</b> menu at the bottom right.", "Pick <b>“Add page to”</b>, then <b>“Home screen”</b>."],
+        firefox: ["Tap the <b>⋮</b> menu.", "Pick <b>“Install”</b> or <b>“Add to Home screen”</b>."],
+        integre: ["You're inside another app's browser (Instagram, Messenger…). First open this page in <b>Safari</b> or <b>Chrome</b>: <b>⋯</b> menu, then “Open in browser”."],
+        ordi: ["In the address bar, click the install icon <b>⊕</b>, or use the browser menu."],
+      },
       costumeTitre: "Your costume", costumeAide: "Pick what looks most like you.",
       detailsTitre: "The details", couleurTitre: "Main colour",
       attrsAide: "Tick everything people can see from across the room.",
@@ -213,7 +264,7 @@
       creer: "Create my character", tirage: "Digging through the bargain bins…",
       dejaReclamee: "Too late: someone just claimed this tag.",
       tutoTitre: "How to play",
-      tuto: [["📷", "<b>Scan</b> other people's tags: each person joins your collection."], ["🔁", "<b>See them again</b>: every déjà vu counts."], ["👯", "<b>Find your twin</b>: clues start at midnight."], ["🕔", "<b>Reveal at 5 a.m.</b> for the whole room."]],
+      tuto: [["📷", "<b>Scan</b> other people's tags: each person joins your collection."], ["🔁", "<b>See them again</b>: every déjà vu counts."], ["👯", "<b>Find your twin</b>: clues start at midnight."], ["🕔", "<b>Reveal at 5 a.m.</b> for all of Pandémonium."]],
       cestParti: "Let's go",
       maintenant: "What now?",
       mBloque: (m) => `Scanner locked for ${m} more min. Patience, loyal customer.`,
@@ -259,7 +310,16 @@
       langue: "Language / Langue", commentJouer: "How to play",
       pinRappel: "Your PIN gets your character back: scan one of your tags in another browser, then tap “Rejoin the game with my PIN”.",
       enregistre: "Saved.", mj: "GM",
-      ongAccueil: "Home", ongCollection: "Collection", ongClassements: "Rankings", ongBadges: "Badges", ongMoi: "Me",
+      ongAccueil: "Home", ongCollection: "Collection", ongClassements: "Rankings", ongBadges: "Badges", ongMedailles: "Medals", ongMoi: "Me",
+      sousBadges: "Badges", sousClassements: "Rankings", bonus: (n) => `bonus`, toutPandemonium: "All of Pandémonium",
+      medaillesBonus: "Bonus medals", medaillesBonusAide: "A top 3 in a ranking, across Pandémonium or within your faction, earns a medal. Provisional: everything freezes at the 5 a.m. reveal.",
+      medaillesFigees: "Rankings frozen since the reveal.",
+      voirMedailles: (m) => `My medals (${m.gagnes}/${m.total}${m.bonus ? ` +${m.bonus}` : ""})`,
+      place: (r) => ["1st", "2nd", "3rd"][r - 1] || `${r}th`,
+      lb: { collectionneurs: ["Collectors", "Different people scanned", (n) => `${n} ${n === 1 ? "person" : "people"}`], celebrites: ["Celebrities", "Different people who scanned you", (n) => `${n} scanner${n === 1 ? "" : "s"}`] },
+      lbBientot: "Coming soon: Ghost, Infinite Loop, Business, Bridge, First Twins Reunited, Factions.",
+      lbVide: "Nobody yet. Go scan!", lbToi: "You", lbPasClasse: "Not ranked yet: scan and get scanned.",
+      lbParticipants: (n) => `${n} in the ranking`,
       badgesTitre: "Badges", badgesGagnes: "Earned", badgesAVenir: "To unlock",
       badgesVide: "No badges yet. You earn them by playing… or by misbehaving.",
       voirBadges: (n) => `My badges (${n})`, gagneA: (h) => `earned at ${h}`,
@@ -316,7 +376,7 @@
   }
   function onglets(actif) {
     const o = (id, href, e, l) => `<a href="${href}" data-nav class="${id === "scan" ? "scan" : ""}"${actif === id ? ' aria-current="page"' : ""}><span class="e">${e}</span>${l}</a>`;
-    return `<nav class="onglets">${o("accueil", "/", "🏠", t.ongAccueil)}${o("collection", "/collection", "🗂️", t.ongCollection)}${o("scan", "/saisie", "📷", t.scanner)}${o("badges", "/badges", "🏅", t.ongBadges + (badgesNonVus() ? '<i class="pastille"></i>' : ""))}${o("moi", "/moi", "👤", t.ongMoi)}</nav>`;
+    return `<nav class="onglets">${o("accueil", "/", "🏠", t.ongAccueil)}${o("collection", "/collection", "🗂️", t.ongCollection)}${o("scan", "/saisie", "📷", t.scanner)}${o("medailles", "/medailles", "🏅", t.ongMedailles + (medaillesNonVues() ? '<i class="pastille"></i>' : ""))}${o("moi", "/moi", "👤", t.ongMoi)}</nav>`;
   }
   function toast(texte) {
     const d = document.createElement("div"); d.className = "toast apparait"; d.textContent = texte;
@@ -353,7 +413,7 @@
   }
   const badgeGagne = (id) => {
     const b = BADGES[id]; if (!b) return "";
-    return `<a class="badge-gagne apparait" href="/badges" data-nav style="color:inherit;text-decoration:none"><span class="e">${b[0]}</span><div><small>${t.badgeGagne}</small><b>${L === "en" ? b[2] : b[1]}</b><small>${L === "en" ? b[4] : b[3]}</small></div></a>`;
+    return `<a class="badge-gagne apparait" href="/medailles" data-nav style="color:inherit;text-decoration:none"><span class="e">${b[0]}</span><div><small>${t.badgeGagne}</small><b>${L === "en" ? b[2] : b[1]}</b><small>${L === "en" ? b[4] : b[3]}</small></div></a>`;
   };
   const formulaireCode = (valeur = "") => `<form class="boite" id="f-code" autocomplete="off">
       <label class="mono petit muted" for="code">${t.saisir}</label>
@@ -371,6 +431,20 @@
     rendre(`<span class="chip">ERR</span><h1 class="moyen">${e && e.erreur === "reseau" ? t.reseau : t.erreur}</h1>
       <button class="bouton" id="b-re">${t.reessayer}</button><a class="bouton sec" href="/" data-nav>${t.accueil}</a>`, { onglet: etat.moi ? "accueil" : null });
     $("#b-re").onclick = reprise || route;
+  }
+
+  // ---------- Installation (FEAT-021) ----------
+  let invitationInstall = null; // Chrome et Edge sur Android : invitation native
+  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); invitationInstall = e; });
+  addEventListener("appinstalled", () => { invitationInstall = null; });
+  function navigateur() {
+    const ua = navigator.userAgent;
+    if (matchMedia("(display-mode: standalone)").matches || navigator.standalone) return "installee";
+    if (/Instagram|FBAN|FBAV|Snapchat|TikTok|Line\//i.test(ua)) return "integre";
+    const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    if (ios) return /CriOS|EdgiOS/.test(ua) ? "chromeIos" : /FxiOS|OPiOS/.test(ua) ? "autreIos" : "safari";
+    if (/Android/.test(ua)) return /SamsungBrowser/.test(ua) ? "samsung" : /Firefox/.test(ua) ? "firefox" : "chrome";
+    return "ordi";
   }
 
   // ---------- Navigation ----------
@@ -393,7 +467,7 @@
       if (p === "/moi") return fiche();
       if (p === "/saisie") return saisie();
       if (p === "/tuto") return tutoriel();
-      if (p === "/badges") return badges();
+      if (p === "/badges" || p === "/medailles") return medailles();
       const m = p.match(/^\/([^/]{1,12})\/?$/);
       if (m) return scanner(decodeURIComponent(m[1]).toUpperCase());
       return inconnue("");
@@ -437,7 +511,9 @@
       <p class="maintenant"><small>${t.maintenant}</small>${esc(ligne)}</p>
       <a class="gros-scan" href="/saisie" data-nav><span>📷</span>${t.scanner}</a>
       <div class="discret"><a href="/moi" data-nav><b>${ty.e}</b><span>${t.maCarte}</span><div class="petit" style="margin-top:4px">${esc(pe.pseudo)}</div></a>
-      <a href="/collection" data-nav><b>${d.nb_cartes}</b><span>${t.maCollection}</span><div class="petit" style="margin-top:4px">${t.cartes(d.nb_cartes)}</div></a></div>`, { onglet: "accueil" });
+      <a href="/collection" data-nav><b>${d.nb_cartes}</b><span>${t.maCollection}</span><div class="petit" style="margin-top:4px">${t.cartes(d.nb_cartes)}</div></a>
+      ${(() => { const m = compteMedailles(); return `<a href="/medailles" data-nav class="carte-medailles"><b>${m.gagnes}<small>/${m.total}</small></b><span>${t.ongMedailles}</span>
+        <div class="petit" style="margin-top:4px">${m.bonus ? `<em class="or" style="font-style:normal">+${m.bonus} ${t.bonus(m.bonus)}</em> ${m.emojis}` : ""}</div>${medaillesNonVues() ? '<i class="pastille"></i>' : ""}</a>`; })()}</div>`, { onglet: "accueil" });
   }
 
   function saisie() {
@@ -506,10 +582,20 @@
     const retour = () => { if (b.etape > 1) { b.etape--; sauver(); dessiner(); } else { ecrire(CLE.brouillon, null); aller("/", true); } };
 
     function dessiner() {
+      const nav = navigateur();
+      if (b.etape === 1 && !b.resterIci && (nav === "integre" || nav === "autreIos")) return autreNavigateur();
       if (b.etape === 1) {
+        const n = navigateur();
         rendre(`${entete()}<h2>${t.avTitre}</h2>${estMJ ? `<p><span class="chip or">${t.mj}</span></p>` : ""}
-          <ul class="liste">${t.av.map((x) => `<li>${x}</li>`).join("")}</ul><button class="bouton" id="b-ok">${t.compris}</button>`);
+          <ul class="liste">${t.av.map((x) => `<li>${x}</li>`).join("")}</ul>
+          ${n === "installee" ? `<p class="ok"><b>${t.instDeja}</b></p>` : `<div class="boite installer"><p class="titre-inst">📲 ${t.instTitre}</p><p class="petit">${t.instPourquoi}</p>
+            ${invitationInstall ? `<button class="bouton vert" id="b-inst">${t.instBouton}</button>` : `<ol class="etapes-inst">${t.inst[n].map((x) => `<li>${x}</li>`).join("")}</ol>`}
+            ${n !== "integre" && n !== "ordi" ? `<p class="petit">${t.instPuis(esc(code))}</p>` : ""}
+            ${["safari", "chromeIos", "autreIos"].includes(n) ? `<p class="petit muted">${t.instIos}</p>` : ""}</div>`}
+          <button class="bouton${n === "installee" ? "" : " sec"}" id="b-ok">${n === "installee" ? t.compris : t.instSans}</button>`);
         $("#b-ok").onclick = () => { b.etape = 2; sauver(); dessiner(); };
+        const bi = $("#b-inst");
+        if (bi) bi.onclick = async () => { invitationInstall.prompt(); const r = await invitationInstall.userChoice; if (r.outcome === "accepted") { invitationInstall = null; dessiner(); } };
       } else if (b.etape === 2) {
         rendre(`${entete()}<h2>${t.costumeTitre}</h2><p class="muted">${t.costumeAide}</p>
           <div class="grille-types">${TYPES.map((ty) => `<button class="type" data-t="${ty.id}" aria-pressed="${b.type === ty.id}"><span class="e">${ty.e}</span><span>${lib(ty)}</span></button>`).join("")}</div>
@@ -541,6 +627,29 @@
         dessinerCarte();
       }
       const r = $("#b-retour"); if (r) r.onclick = retour;
+    }
+
+    // Navigateur intégré ou navigateur iPhone peu fiable : proposer le navigateur principal AVANT la réclamation
+    function autreNavigateur() {
+      const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+      // Sur iPhone, on accepte Safari et Chrome (même moteur, tous deux installent l'app)
+      const nom = ios ? (L === "en" ? "Safari or Chrome" : "Safari ou Chrome") : "Chrome";
+      const lien = `${location.origin}/${code}`;
+      const boutons = ios
+        ? [["Safari", "x-safari-" + lien], ["Chrome", lien.replace(/^https?:/, (m) => (m === "https:" ? "googlechromes:" : "googlechrome:"))]]
+        : [["Chrome", `intent://${location.host}/${code}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(lien)};end`]];
+      rendre(`${entete()}<h2>${t.redirTitre(nom)}</h2><p>${t.redir(nom)}</p>
+        <div class="${boutons.length > 1 ? "duo" : ""}">${boutons.map(([n, u]) => `<a class="bouton vert" href="${esc(u)}">${t.redirOuvrir(n)}</a>`).join("")}</div>
+        <div class="boite"><input type="text" id="lien" readonly value="${esc(lien)}" style="font-family:var(--mono);font-size:16px">
+        <button class="bouton" id="b-copier">📋 ${t.redirCopier}</button><p class="petit muted">${t.redirManuel(nom)}</p></div>
+        <button class="lien" id="b-ici">${t.redirIci}</button>`);
+      $("#b-retour").onclick = retour;
+      $("#b-copier").onclick = async () => {
+        const champ = $("#lien");
+        try { await navigator.clipboard.writeText(lien); } catch { champ.select(); try { document.execCommand("copy"); } catch {} }
+        vibrer(); toast(t.redirCopie(nom));
+      };
+      $("#b-ici").onclick = () => { b.resterIci = true; sauver(); dessiner(); };
     }
 
     async function dessinerCarte() {
@@ -668,24 +777,63 @@
     }));
   }
 
-  // ---------- Badges (FEAT-015) ----------
-  const CLE_VUS = "dv-badges-vus" + SUFFIXE;
-  function badgesNonVus() {
+  // ---------- Médailles : badges + classements (FEAT-015, option C) ----------
+  // Total = badges non secrets ; les médailles de classement (top 3) sont des bonus.
+  const CLE_VUS = "dv-medailles-vues" + SUFFIXE;
+  const MEDAILLE = ["🥇", "🥈", "🥉"];
+  const clesMedailles = () => [
+    ...((etat.moi && etat.moi.badges) || []).map((b) => "b:" + b.badge),
+    ...((etat.moi && etat.moi.medailles) || []).map((m) => `m:${m.classement}:${m.faction || "tous"}:${m.rang}`),
+  ];
+  function medaillesNonVues() {
     const vus = lireJson(CLE_VUS) || [];
-    return ((etat.moi && etat.moi.badges) || []).some((b) => !vus.includes(b.badge));
+    return clesMedailles().some((k) => !vus.includes(k));
   }
-  async function badges() {
+  function compteMedailles() {
+    const gagnes = ((etat.moi && etat.moi.badges) || []).length;
+    const secretsGagnes = ((etat.moi && etat.moi.badges) || []).filter((b) => BADGES[b.badge] && BADGES[b.badge][5]).length;
+    const total = Object.values(BADGES).filter((b) => !b[5]).length + secretsGagnes;
+    const m = (etat.moi && etat.moi.medailles) || [];
+    return { gagnes, total, bonus: m.length, emojis: m.map((x) => MEDAILLE[x.rang - 1]).join("") };
+  }
+  const sousOnglets = (actif) => `<div class="sous-onglets"><a href="/medailles" data-nav${actif === "badges" ? ' aria-current="page"' : ""}>${t.sousBadges}</a><a href="/medailles?vue=classements" data-nav${actif === "classements" ? ' aria-current="page"' : ""}>${t.sousClassements}</a></div>`;
+
+  async function medailles() {
     if (!(await chargerMoi())) return aller("/", true);
-    const gagnes = etat.moi.badges || [];
-    ecrire(CLE_VUS, JSON.stringify(gagnes.map((b) => b.badge)));
+    if (new URLSearchParams(location.search).get("vue") === "classements") return classements();
+    ecrire(CLE_VUS, JSON.stringify(clesMedailles()));
+    const gagnes = etat.moi.badges || [], m = compteMedailles();
     const ids = new Set(gagnes.map((b) => b.badge));
     const heure = (iso) => new Date(iso).toLocaleTimeString(L === "en" ? "en-CA" : "fr-CA", { hour: "2-digit", minute: "2-digit" });
-    const ligne = (id, b, quand) => `<li class="badge${quand ? " gagne" : ""}"><span class="e">${b[0]}</span><div><b>${L === "en" ? b[2] : b[1]}</b>
+    const ligne = (b, quand) => `<li class="badge${quand ? " gagne" : ""}"><span class="e">${b[0]}</span><div><b>${L === "en" ? b[2] : b[1]}</b>
       <small>${L === "en" ? b[4] : b[3]}</small>${quand ? `<small class="mono or">${t.gagneA(heure(quand))}</small>` : ""}</div></li>`;
     const aVenir = Object.entries(BADGES).filter(([id, b]) => !ids.has(id) && !b[5]);
-    rendre(`<h2>${t.badgesTitre} · ${gagnes.length}/${gagnes.length + aVenir.length}</h2>
-      <h3>${t.badgesGagnes}</h3>${gagnes.length ? `<ul class="liste-badges">${gagnes.map((g) => ligne(g.badge, BADGES[g.badge] || ["🏅", g.badge, g.badge, "", ""], g.obtenu_le)).join("")}</ul>` : `<p class="muted">${t.badgesVide}</p>`}
-      <h3>${t.badgesAVenir}</h3><ul class="liste-badges">${aVenir.map(([id, b]) => ligne(id, b, null)).join("")}</ul>`, { onglet: "badges" });
+    const bonus = (etat.moi.medailles || []).map((x) => { const lb = t.lb[x.classement] || [x.classement, "", String];
+      return `<li class="badge gagne bonus"><span class="e">${MEDAILLE[x.rang - 1]}</span><div><b>${lb[0]} · ${t.place(x.rang)}</b>
+        <small>${x.faction ? esc(factionLib(x.faction)) : t.toutPandemonium} · ${lb[2](x.n)}</small></div></li>`; }).join("");
+    rendre(`<h2>${t.ongMedailles} · ${m.gagnes}/${m.total}${m.bonus ? ` <span class="or">+${m.bonus}</span>` : ""}</h2>${sousOnglets("badges")}
+      ${bonus ? `<h3>${t.medaillesBonus}</h3><ul class="liste-badges">${bonus}</ul><p class="petit muted">${t.medaillesBonusAide}</p>` : ""}
+      <h3>${t.badgesGagnes}</h3>${gagnes.length ? `<ul class="liste-badges">${gagnes.map((g) => ligne(BADGES[g.badge] || ["🏅", g.badge, g.badge, "", ""], g.obtenu_le)).join("")}</ul>` : `<p class="muted">${t.badgesVide}</p>`}
+      <h3>${t.badgesAVenir}</h3><ul class="liste-badges">${aVenir.map(([, b]) => ligne(b, null)).join("")}</ul>`, { onglet: "medailles" });
+  }
+
+  async function classements() {
+    rendre(`<h2>${t.ongMedailles}</h2>${sousOnglets("classements")}<p class="chargement">${t.lecture}</p>`, { onglet: "medailles" });
+    const f = new URLSearchParams(location.search).get("faction");
+    let r;
+    try { r = await api("/api/classements" + (f ? "?faction=" + encodeURIComponent(f) : "")); } catch (e) { return ecranErreur(e, classements); }
+    const filtres = `<div class="filtres">${[null, ...r.mes_factions].map((x) => `<a href="/medailles?vue=classements${x ? "&faction=" + x : ""}" data-nav${(r.faction || null) === x ? ' aria-current="page"' : ""}>${x ? esc(factionLib(x)) : t.toutPandemonium}</a>`).join("")}</div>`;
+    const bloc = (c) => {
+      const lb = t.lb[c.id] || [c.id, "", String];
+      const lignes = c.top.map((x) => `<li class="${x.moi ? "moi" : ""}"><span class="rang">${x.rang <= 3 ? MEDAILLE[x.rang - 1] : "#" + x.rang}</span>
+        <span class="qui">${typeDe(x.type).e} ${esc(x.pseudo)}</span><span class="n">${x.n}</span></li>`).join("");
+      const moi = c.moi ? (c.moi.rang > 10 ? `<li class="moi"><span class="rang">#${c.moi.rang}</span><span class="qui">${t.lbToi}</span><span class="n">${c.moi.n}</span></li>` : "")
+        : `<p class="petit muted">${t.lbPasClasse}</p>`;
+      return `<div class="boite"><p class="titre-lb">${lb[0]}</p><p class="petit muted" style="margin:2px 0 8px">${lb[1]} · ${t.lbParticipants(c.participants)}</p>
+        ${c.top.length ? `<ol class="classement">${lignes}${moi.startsWith("<li") ? moi : ""}</ol>${moi.startsWith("<p") ? moi : ""}` : `<p class="muted">${t.lbVide}</p>`}</div>`;
+    };
+    rendre(`<h2>${t.ongMedailles}</h2>${sousOnglets("classements")}${filtres}${r.fige ? `<p class="or petit">${t.medaillesFigees}</p>` : `<p class="petit muted">${t.medaillesBonusAide}</p>`}
+      ${r.classements.map(bloc).join("")}<p class="petit muted">${t.lbBientot}</p>`, { onglet: "medailles" });
   }
 
   // ---------- Fiche (E-05 ; RG-003-11, RG-003-12, REQ-010) ----------
@@ -698,7 +846,7 @@
       <h3>${t.costumeTitre}</h3>${dr.costume ? `<button class="bouton sec" id="b-costume">${t.modifierCostume}</button>` : `<p class="muted">🔒 ${t.costumeFige}</p>`}
       <h3>${t.confidentialite}</h3><label class="case"><input type="checkbox" id="c-photos" ${pe.photos_ok ? "checked" : ""}><span>${t.photos}</span></label>
       <h3>${t.mesEtiquettes}</h3><ul class="liste">${d.etiquettes.map((e) => `<li><span class="mono">${esc(e.code)}</span> · ${esc(factionLib(e.faction))}</li>`).join("")}</ul>
-      <h3>${t.mesBadges}</h3><a class="bouton sec" href="/badges" data-nav style="margin-top:0">🏅 ${t.voirBadges(d.badges.length)}</a>
+      <h3>${t.ongMedailles}</h3><a class="bouton sec" href="/medailles" data-nav style="margin-top:0">🏅 ${t.voirMedailles(compteMedailles())}</a>
       <p class="petit muted">🔢 ${t.pinRappel}</p>
       <h3>${t.langue}</h3><div class="duo"><button class="bouton ${L === "fr" ? "" : "sec"}" data-l="fr">Français</button><button class="bouton ${L === "en" ? "" : "sec"}" data-l="en">English</button></div>
       <a class="bouton sec" href="/tuto" data-nav>${t.commentJouer}</a>`, { onglet: "moi" });

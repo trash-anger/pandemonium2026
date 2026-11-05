@@ -95,6 +95,13 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .tuto li{display:flex;gap:14px;align-items:flex-start;padding:14px 0;font-size:18px;line-height:1.4;border-bottom:1px solid var(--line)}
 .tuto .e{font-size:30px;flex:none}
 
+/* Installation */
+.installer{border-color:var(--green)}
+.titre-inst{font-family:var(--display);font-size:20px;line-height:1.2;margin:0 0 4px;color:var(--green)}
+.etapes-inst{margin:10px 0;padding-left:22px}.etapes-inst li{padding:6px 0;line-height:1.45}
+.installer .code{font-size:20px;letter-spacing:.2em}
+.ico{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:0 5px;font-size:14px}
+
 /* Badges */
 .liste-badges{list-style:none;padding:0;margin:8px 0;display:grid;gap:8px}
 .badge{display:flex;gap:14px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;opacity:.55}
@@ -105,6 +112,26 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .badge small.or{color:var(--gold)}
 .onglets a{position:relative}
 .pastille{position:absolute;top:6px;right:calc(50% - 20px);width:10px;height:10px;border-radius:50%;background:var(--pink);box-shadow:0 0 0 2px var(--bg)}
+
+/* Médailles */
+.sous-onglets{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:4px;margin:6px 0 4px}
+.sous-onglets a{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:10px;color:var(--muted);text-decoration:none;font-weight:700}
+.sous-onglets a[aria-current=page]{background:var(--pink);color:var(--ink)}
+.badge.bonus{border-color:var(--gold)}
+.filtres{display:flex;gap:6px;overflow-x:auto;padding:8px 0 4px;scrollbar-width:none}
+.filtres a{flex:none;display:flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:22px;color:var(--fg);text-decoration:none;font-size:14px;white-space:nowrap}
+.filtres a[aria-current=page]{border-color:var(--green);background:#10251a}
+.titre-lb{font-family:var(--display);font-size:20px;margin:0}
+.classement{list-style:none;padding:0;margin:0}
+.classement li{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line)}
+.classement li.moi{background:#10251a;border-radius:10px;outline:1px solid var(--green)}
+.classement .rang{font-family:var(--mono);font-size:18px;text-align:center}
+.classement .qui{font-weight:600;font-size:15px;line-height:1.25;word-break:break-word}
+.classement .n{font-family:var(--mono);color:var(--gold);font-size:16px}
+.discret{grid-template-columns:repeat(3,1fr)!important}
+.discret a{position:relative;padding:10px}
+.discret b small{font-size:14px;color:var(--muted)}
+.discret .petit{font-size:13px;word-break:break-word}
 
 /* Barre d'onglets */
 .onglets{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(5,1fr);align-items:end;background:rgba(11,10,15,.94);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom));backdrop-filter:blur(8px)}

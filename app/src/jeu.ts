@@ -110,6 +110,73 @@ function droits(p: LignePerso, h: Record<keyof Heures, string>, t: number) {
   };
 }
 
+// ---------- Classements (FEAT-015, LB-1 et LB-2) et médailles de classement ----------
+// Le MJ n'est pas classé. Seuls comptent les premiers scans faits avant la révélation (RG-015-2 : figés à 5 h).
+// À égalité, la place revient à qui a atteint ce score en premier.
+export const CLASSEMENTS = {
+  collectionneurs: "possesseur_id", // LB-1 : personnages distincts scannés
+  celebrites: "personnage_id",      // LB-2 : scanneurs distincts
+} as const;
+type IdClassement = keyof typeof CLASSEMENTS;
+const MEDAILLES_PAR_CLASSEMENT = 3;
+
+/** Classement global, ou restreint aux membres d'une faction (LB-9). Paramètres : révélation [, faction]. */
+function requeteClassement(id: IdClassement, parFaction = false) {
+  const col = CLASSEMENTS[id];
+  return `SELECT c.${col} AS id, COUNT(*) AS n, MAX(c.premier_scan_le) AS atteint
+    FROM collection c JOIN personnages p ON p.id = c.${col}
+    WHERE p.est_mj = 0 AND c.premier_scan_le < ?
+    ${parFaction ? "AND c." + col + " IN (SELECT personnage_id FROM etiquettes WHERE faction_id = ?)" : ""}
+    GROUP BY c.${col} ORDER BY n DESC, atteint ASC`;
+}
+
+async function factionsDe(env: EnvJeu, id: string): Promise<string[]> {
+  const r = await env.DB.prepare("SELECT DISTINCT faction_id AS f FROM etiquettes WHERE personnage_id = ? AND faction_id IS NOT NULL").bind(id).all<{ f: string }>();
+  return r.results.map((x) => x.f);
+}
+
+async function medaillesDe(env: EnvJeu, id: string, h: Record<keyof Heures, string>) {
+  // Top 3 global, et top 3 dans chacune de ses factions
+  const r: { classement: string; faction: string | null; rang: number; n: number }[] = [];
+  const portees: (string | null)[] = [null, ...(await factionsDe(env, id))];
+  for (const c of Object.keys(CLASSEMENTS) as IdClassement[]) {
+    for (const f of portees) {
+      const q = env.DB.prepare(requeteClassement(c, !!f) + ` LIMIT ${MEDAILLES_PAR_CLASSEMENT}`);
+      const top = (await (f ? q.bind(h.revelation, f) : q.bind(h.revelation)).all<{ id: string; n: number }>()).results;
+      const i = top.findIndex((x) => x.id === id);
+      if (i >= 0) r.push({ classement: c, faction: f, rang: i + 1, n: top[i].n });
+    }
+  }
+  return r;
+}
+
+async function classements(req: Request, env: EnvJeu, t: number): Promise<Response> {
+  const me = await personnageDe(req, env, t);
+  if (!me) return erreur("sans_personnage", 401);
+  const h = await heuresIso(env.DB);
+  const mesFactions = await factionsDe(env, me.id);
+  const demandee = new URL(req.url).searchParams.get("faction");
+  const faction = demandee && (FACTIONS as readonly string[]).includes(demandee) ? demandee : null;
+  const sortie = [];
+  for (const c of Object.keys(CLASSEMENTS) as IdClassement[]) {
+    const q = env.DB.prepare(requeteClassement(c, !!faction));
+    const tous = (await (faction ? q.bind(h.revelation, faction) : q.bind(h.revelation)).all<{ id: string; n: number }>()).results;
+    const top = tous.slice(0, 10);
+    const ids = top.map((x) => x.id);
+    const pseudos = ids.length
+      ? Object.fromEntries((await env.DB.prepare(`SELECT id, pseudo, type, couleur FROM personnages WHERE id IN (${ids.map(() => "?").join(",")})`).bind(...ids)
+          .all<{ id: string; pseudo: string; type: string; couleur: string }>()).results.map((p) => [p.id, p]))
+      : {};
+    const rangMoi = tous.findIndex((x) => x.id === me.id);
+    sortie.push({
+      id: c, participants: tous.length,
+      top: top.map((x, i) => ({ rang: i + 1, n: x.n, moi: x.id === me.id, pseudo: pseudos[x.id]?.pseudo, type: pseudos[x.id]?.type, couleur: pseudos[x.id]?.couleur })),
+      moi: rangMoi >= 0 ? { rang: rangMoi + 1, n: tous[rangMoi].n } : null,
+    });
+  }
+  return json({ classements: sortie, faction, mes_factions: mesFactions, fige: new Date(t).toISOString() >= h.revelation, revelation: h.revelation });
+}
+
 async function moi(env: EnvJeu, p: LignePerso, t: number) {
   const h = await heuresIso(env.DB);
   const etiquettes = (await env.DB.prepare("SELECT code, faction_id AS faction, format FROM etiquettes WHERE personnage_id = ? ORDER BY reclamee_le")
@@ -124,6 +191,7 @@ async function moi(env: EnvJeu, p: LignePerso, t: number) {
       cree_le: p.cree_le, premier_scanne_le: p.premier_scanne_le,
     },
     etiquettes, badges, nb_cartes: nb?.n ?? 0, droits: droits(p, h, t), heures: h,
+    medailles: await medaillesDe(env, p.id, h),
   };
 }
 
@@ -149,6 +217,7 @@ export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Res
       return json(perso ? await moi(env, perso, t) : { personnage: null, heures: await heuresIso(env.DB) });
     }
     if (p === "/api/collection" && req.method === "GET") return collection(req, env, t);
+    if (p === "/api/classements" && req.method === "GET") return classements(req, env, t);
     if (req.method !== "POST") return erreur("methode", 405);
     // Les appels d'écriture viennent de notre page (protection CSRF)
     const origine = req.headers.get("Origin");

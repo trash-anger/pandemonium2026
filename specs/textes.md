@@ -101,7 +101,19 @@ Pour l'instant, ce n'est que de la saveur ; la caractéristique favorite servira
 | BDG-9 | 👔 Garde-robe du MJ | GM's Wardrobe | Collectionner les 10 légendaires du MJ. | Collect all 10 of the GM's legendaries. |
 | BDG-10 | ✊ Anticapitaliste | Anti-capitalist | Trouver un bon de réduction très particulier. | Find a very special discount voucher. |
 | BDG-16 | 🏷️ Employé du mois | Employee of the Month | Réussir une mission confiée par le MJ. | Complete a mission from the GM. |
-| BDG-17 | ⚠️ Client difficile | Difficult Customer | Recevoir un avertissement du MJ. Pas fier. | Get a warning from the GM. Not proud. |
+| BDG-17 | ⚠️ Client difficile | Difficult Customer | Recevoir un avertissement du MJ. Rien de glorieux. | Get a warning from the GM. Not proud. |
+
+### 1.7 Médailles et classements ([FEAT-015](fonctionnalites/badges-classements.md))
+**Statut : Proposition** (option C choisie par Florian). Onglet 🏅 « Médailles » / "Medals", deux sous-onglets : **Badges** et **Classements**. Le total affiché compte les badges non secrets ; un **top 3 dans un classement**, dans tout Pandémonium **ou dans l'une de ses factions** ([LB-9](fonctionnalites/badges-classements.md)), donne une **médaille bonus** (🥇🥈🥉), affichée « +N ». Le sous-onglet Classements se filtre par faction (« Tout Pandémonium », puis les factions du joueur). Les classements et les médailles bonus se figent à la révélation ([RG-015-2](fonctionnalites/badges-classements.md)). Le MJ n'est pas classé. À égalité, la place revient à qui a atteint le score en premier.
+
+| Classement | FR | EN | Sous-titre FR | Sous-titre EN |
+|-----------|----|----|---------------|---------------|
+| LB-1 | Collectionneurs | Collectors | Personnes différentes scannées | Different people scanned |
+| LB-2 | Célébrités | Celebrities | Personnes différentes qui ont scanné ton étiquette | Different people who scanned you |
+
+- **Médaille bonus :** « {Classement} · 1re place » / "{Ranking} · 1st"
+- **Aide :** « Un top 3 dans un classement rapporte une médaille. Provisoire : tout se fige à la révélation de 5 h. »
+- **Accueil :** troisième carte « Médailles », « {gagnés}/{total} » et « +{bonus} bonus ».
 
 ## 2. Easter eggs de rescan ([RG-005-2](fonctionnalites/rescan-deja-vu.md))
 
@@ -232,7 +244,7 @@ Ils sont plus longs et s'affichent au moment des retrouvailles. `{C}` désigne l
 > **Scannez-la tout de suite**, chacun la sienne : trente secondes, quatre écrans, pas de compte.
 > Ensuite, **scannez-vous entre vous** : chaque personne scannée rejoint votre collection, avec un **faux souvenir** commun complètement absurde.
 > Revoir quelqu'un, c'est un **déjà vu** : ça rapporte aussi.
-> Certains d'entre vous ont un **jumeau caché** dans la salle. Et méfiez-vous des **chats noirs**.
+> Certains d'entre vous ont un **jumeau caché** dans Pandémonium. Et méfiez-vous des **chats noirs**.
 > Révélation à **5 h**. Allez-y, scannez ! »
 
 **EN**
@@ -240,7 +252,7 @@ Ils sont plus longs et s'affichent au moment des retrouvailles. `{C}` désigne l
 > **Scan it right now**, each your own: thirty seconds, four screens, no account.
 > Then **scan each other**: everyone you scan joins your collection, with a totally absurd **fake shared memory**.
 > Seeing someone again is a **déjà vu**: that scores too.
-> Some of you have a **hidden twin** in the room. And watch out for **black cats**.
+> Some of you have a **hidden twin** somewhere in Pandémonium. And watch out for **black cats**.
 > Reveal at **5 a.m.** Go on, scan!"
 
 ### 4.2 Version éclair (environ 10 s)
@@ -260,7 +272,7 @@ Ils sont plus longs et s'affichent au moment des retrouvailles. `{C}` désigne l
 > 📷 **Scanne** les étiquettes des autres : chaque personne rejoint ta collection.
 > 🔁 **Revois-les** : chaque déjà vu compte.
 > 👯 **Cherche ton jumeau** : des indices arrivent à partir de minuit.
-> 🕔 **Révélation à 5 h** pour toute la salle.
+> 🕔 **Révélation à 5 h** pour tout Pandémonium.
 > [ C'est parti ]
 
 **EN**
@@ -268,8 +280,22 @@ Ils sont plus longs et s'affichent au moment des retrouvailles. `{C}` désigne l
 > 📷 **Scan** other people's tags: each person joins your collection.
 > 🔁 **See them again**: every déjà vu counts.
 > 👯 **Find your twin**: clues start at midnight.
-> 🕔 **Reveal at 5 a.m.** for the whole room.
+> 🕔 **Reveal at 5 a.m.** for all of Pandémonium.
 > [ Let's go ]
+
+### 5.1bis Installation (écran 1 de la création)
+**Statut : Proposition.** Encadré sous l'avertissement, adapté au navigateur détecté ([FEAT-021](fonctionnalites/pwa-hors-ligne.md)). Il n'apparaît pas si l'app est déjà installée.
+
+- **Titre :** « Installe l'app : on te la recommande » / "Install the app: we recommend it"
+- **Pourquoi :** « Pour une meilleure expérience : plein écran, ouverture en un geste, plus rapide, jouable même quand le réseau faiblit, et les notifications (ton jumeau, les annonces du MJ). Tu gagnes aussi le badge « Installé le Portail ». Sans installation, tu peux quand même jouer en scannant les QR. »
+- **Étapes selon le navigateur :** Safari (iPhone) : Partager → « Sur l'écran d'accueil » → Ajouter ; Chrome sur iPhone : Partager dans la barre d'adresse → « Sur l'écran d'accueil » ; autre navigateur iPhone : ouvrir dans Safari ou Chrome (les deux sont acceptés sur iPhone) ; Chrome Android : bouton « Installer l'app » (invitation native), sinon menu ⋮ → « Installer l'application » ; Samsung Internet : menu ≡ → « Ajouter la page à » → « Écran d'accueil » ; Firefox Android : menu ⋮ → « Installer » ; navigateur intégré (Instagram…) : ouvrir d'abord dans Safari ou Chrome.
+- **Ensuite :** « Ouvre Déjà vu ! depuis ton écran d'accueil et entre le code de ton étiquette : {code} ». Sur iPhone : « l'app installée ne partage pas la mémoire de ton navigateur : crée ton personnage dans l'app » ([FEAT-019](fonctionnalites/recuperation.md)).
+- **Bouton :** « Continuer sans installer » / "Continue without installing"
+
+**Avant l'écran 1, navigateur intégré (Instagram, Messenger…) ou navigateur iPhone autre que Safari et Chrome :** un écran propose d'ouvrir l'étiquette dans le navigateur principal **avant de la réclamer**, sinon le personnage risque d'être oublié ([FEAT-019](fonctionnalites/recuperation.md)).
+- **Titre :** « Ouvre ton étiquette dans Safari ou Chrome » sur iPhone, « dans Chrome » sur Android
+- **Texte :** « Ce navigateur risque d'oublier ton personnage. Ton étiquette n'est pas encore activée : ouvre-la plutôt dans {navigateur}. »
+- **Boutons :** « Ouvrir dans Safari » et « Ouvrir dans Chrome » sur iPhone, « Ouvrir dans Chrome » sur Android (tentative d'ouverture directe), « Copier le lien » (adresse de l'étiquette, à coller dans le navigateur), « Continuer ici quand même ».
 
 ### 5.2 Ligne « Et maintenant ? » de l'écran d'accueil
 L'accueil affiche toujours **une seule suggestion**, choisie selon la situation du joueur, par ordre de priorité ([interface §2bis](interface.md#2bis-accueil-et-tutoriel)) :

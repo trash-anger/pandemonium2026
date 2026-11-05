@@ -133,7 +133,8 @@ addEventListener("message", (ev) => {
     // Réapplique l'état du banc à chaque chargement
     if (etat.horloge.iso) envoyer(id, { type: "horloge", iso: horlogeCourante(), vitesse: etat.horloge.vitesse });
     if (etat.reduit) envoyer(id, { type: "reduit", actif: true });
-  } else if (m.type === "log") log(id, m.texte);
+  } else if (m.type === "identite") { const ok = attentes[m.demande]; if (ok) { delete attentes[m.demande]; ok(m.jeton); } }
+  else if (m.type === "log") log(id, m.texte);
 });
 
 // ---------- Horloge simulée (A3) ----------
@@ -151,7 +152,7 @@ function horlogeCourante() {
 function regler(local, libelle, vitesse) {
   etat.horloge = local ? { iso: montrealVersIso(local), vitesse: vitesse || etat.horloge.vitesse || 1, libelle } : { iso: null, vitesse: 1, libelle: "horloge réelle" };
   reglageHorloge = Date.now(); sauver();
-  diffuser({ type: "horloge", iso: etat.horloge.iso, vitesse: etat.horloge.vitesse });
+  diffuser({ type: "horloge", iso: etat.horloge.iso, vitesse: etat.horloge.vitesse, recharger: true });
   log("banc", `horloge → ${etat.horloge.libelle}`);
 }
 function vitesse(v) {
@@ -177,6 +178,37 @@ async function api(chemin, corps) {
 }
 async function codeAuHasard(etatEt = "vierge", role = "normale") { return (await api(`/__dev/etiquette?etat=${etatEt}&role=${role}`)).code; }
 
+// ---------- Outils LOT-1 : identité des téléphones et personnages simulés ----------
+const attentes = {};
+function identite(id) {
+  return new Promise((ok, ko) => {
+    const d = Math.random().toString(36).slice(2); attentes[d] = ok;
+    envoyer(id, { type: "identite", demande: d });
+    setTimeout(() => { if (attentes[d]) { delete attentes[d]; ko(new Error(`${id} ne répond pas`)); } }, 2000);
+  });
+}
+async function joueurPret(id) {
+  const t = etat.tels[+id.slice(1) - 1];
+  const r = await api("/__dev/personnage", { langue: t.lang });
+  envoyer(id, { type: "adopter", jeton: r.jeton, url: avecLang("/", t.lang) });
+  log("banc", `${id} : personnage prêt, étiquette ${r.code}, PIN 1234`);
+  return r;
+}
+async function spectateurDe(note, bloquer) {
+  const r = await api("/__dev/personnage", {});
+  if (bloquer) await api("/__dev/pin-bloquer", { code: r.code });
+  cibles().forEach((id) => envoyer(id, { type: "oublier", url: avecLang("/" + r.code, etat.tels[+id.slice(1) - 1].lang) }));
+  log("banc", `étiquette ${r.code} d'un autre joueur · ${note}`);
+  return r.code;
+}
+async function scanneEntre(a, b) {
+  if (+a.slice(1) > etat.n || +b.slice(1) > etat.n) throw new Error("affiche au moins " + Math.max(+a.slice(1), +b.slice(1)) + " téléphones");
+  const j = await identite(b);
+  if (!j) throw new Error(`${b} n'a pas de personnage : « Joueur prêt » d'abord`);
+  const { code } = await api("/__dev/code-de", { jeton: j });
+  aller("/" + code, a);
+}
+
 // ---------- Catalogue des tests (liste validée) ----------
 // a: [libellé, fonction] ; fonction absente → bouton désactivé jusqu'au lot indiqué
 const H = (l, t) => [l, () => regler(t, `${l}`)];
@@ -192,6 +224,8 @@ const TESTS = [
       ["Stock de test", async () => { await api("/__dev/stock", {}); log("banc", "stock : 30 petites, 16 MJ, 10 grandes"); }],
       ["Tout réinitialiser", async () => { if (!confirm("Effacer toute la base locale ?")) return; await api("/__dev/reinitialiser", {}); log("banc", "base locale vidée"); diffuser({ type: "recharger" }); }],
       ["État serveur", async () => log("banc", JSON.stringify((await api("/__dev/etat")).comptes))],
+      ["Partie à zéro", async () => { if (!confirm("Effacer les personnages et remettre les étiquettes à vierge ?")) return; await api("/__dev/partie-zero", {}); cibles().forEach((id) => envoyer(id, { type: "oublier" })); log("banc", "partie remise à zéro"); }],
+      ["Oublier ce téléphone", () => cibles().forEach((id) => envoyer(id, { type: "oublier" }))],
       ["Réseau coupé", null, "LOT-2"], ["Réseau lent", null, "LOT-2"]]],
     ["A5", "Journal des événements", "", [["ci-dessous", null, "toujours actif"]]],
   ]],
@@ -202,14 +236,27 @@ const TESTS = [
       ["Code manuel (minuscules)", async () => aller("/?code=" + (await codeAuHasard()).toLowerCase())],
       ["Code inconnu", () => aller("/ZZZZ")], ["Code invalide (O)", () => aller("/?code=7KO3")],
       ["Désactivée", async () => { const c = await codeAuHasard(); await api("/__dev/etiquette", { code: c, etat: "desactivee" }); aller("/" + c); }],
-      ["Accueil", () => aller("/")], ["Spectateur", null, "LOT-1"]]],
-    ["B2", "Création en 4 écrans, retour arrière, tutoriel", "LOT-1", [["Créer", null, "LOT-1"], ["Retour arrière", null, "LOT-1"], ["Tutoriel", null, "LOT-1"]]],
-    ["B3", "Réintégration par PIN : bon, mauvais, trop d'essais", "LOT-1", [["Bon PIN", null, "LOT-1"], ["Mauvais PIN", null, "LOT-1"], ["Trop d'essais", null, "LOT-1"]]],
-    ["B4", "2e, 3e, 4e étiquette ; tueur de poussin", "LOT-1", [["Achat compulsif", null, "LOT-1"], ["Surconsommation", null, "LOT-1"], ["Tuer un poussin", null, "LOT-1"]]],
-    ["B5", "Modifications avant et après minuit, 1 h, premier scan", "LOT-1", [["Pseudo", null, "LOT-1"], ["Classe → Trans-classe", null, "LOT-1"], ["Costume figé", null, "LOT-1"]]],
+      ["Accueil", () => aller("/")], ["Spectateur", () => spectateurDe("carte en lecture seule")]]],
+    ["B2", "Création en 4 écrans, retour arrière, tutoriel", "LOT-1", [
+      ["Nouvelle création (téléphone vidé)", async () => { const c = await codeAuHasard(); cibles().forEach((id) => envoyer(id, { type: "oublier", url: "/" + c })); }],
+      ["Joueur prêt (PIN 1234)", () => Promise.all(cibles().map(joueurPret))],
+      ["Tutoriel", () => aller("/tuto")], ["Accueil joueur", () => aller("/")]]],
+    ["B3", "Réintégration par PIN : bon, mauvais, trop d'essais", "LOT-1", [
+      ["Bon PIN (1234)", () => spectateurDe("PIN à taper : 1234")],
+      ["Mauvais PIN", () => spectateurDe("tape 0000 plusieurs fois")],
+      ["Trop d'essais", async () => { const c = await spectateurDe("récupération bloquée 15 min", true); }]]],
+    ["B4", "2e, 3e, 4e étiquette ; tueur de poussin", "LOT-1", [
+      ["Achat compulsif (répondre Oui)", async () => aller("/" + (await codeAuHasard()))],
+      ["Surconsommation (3 étiquettes, puis Oui)", async () => { for (const id of cibles()) { const j = await identite(id); await api("/__dev/ajouter-etiquettes", { jeton: j, n: 3 }); } aller("/" + (await codeAuHasard())); }],
+      ["Tuer un poussin (répondre Non)", async () => aller("/" + (await codeAuHasard()))]]],
+    ["B5", "Modifications avant et après minuit, 1 h, premier scan", "LOT-1", [
+      ["Ma fiche", () => aller("/moi")],
+      ["Premier scan subi (costume figé)", async () => { for (const id of cibles()) await api("/__dev/premier-scan", { jeton: await identite(id) }); aller("/moi"); }]]],
   ]],
   ["C. Collection et déjà vu", [
-    ["C1", "Nouvelle carte, faux souvenir en premier", "LOT-1", [["T1 scanne T2", null, "LOT-1"]]],
+    ["C1", "Nouvelle carte, faux souvenir en premier", "LOT-1", [
+      ["T1 scanne T2", () => scanneEntre("T1", "T2")], ["T2 scanne T1", () => scanneEntre("T2", "T1")],
+      ["T1 se scanne", () => scanneEntre("T1", "T1")], ["Ma collection", () => aller("/collection")]]],
     ["C2", "Rescans ×2, ×3, ×6, ×13 ; rescan < 5 min", "LOT-2", [["×2", null, "LOT-2"], ["×3", null, "LOT-2"], ["×6", null, "LOT-2"], ["×13", null, "LOT-2"], ["< 5 min", null, "LOT-2"]]],
     ["C3", "Jauge de souvenirs < 5, à 0 (Amnésie)", "LOT-2", [["Floue", null, "LOT-2"], ["Amnésie", null, "LOT-2"]]],
     ["C4", "Réactions, comparaison", "LOT-2", [["Réactions", null, "LOT-2"], ["Comparaison", null, "LOT-6"]]],
@@ -221,7 +268,7 @@ const TESTS = [
     ["D2", "Bannière du MJ, notification push", "LOT-3", [
       ["Bannière (injection)", () => diffuser({ type: "injecter", quoi: "banniere", titre: "MESSAGE DU MJ", texte: prompt("Texte de la bannière", "Solde éclair au bar : scannez quelqu'un que vous ne connaissez pas !") || "" })],
       ["Push", null, "LOT-3"]]],
-    ["D3", "Comptes à rebours, « Et maintenant ? »", "LOT-1", [["Situations", null, "LOT-1"], ["Révélation dans 10 min", null, "LOT-3"]]],
+    ["D3", "Comptes à rebours, « Et maintenant ? »", "LOT-1", [["Accueil (situations)", () => aller("/")], ["Révélation dans 10 min", () => regler("2026-11-08T04:50", "4:50")]]],
     ["D4", "Mission éclair ; missions M-1 à M-7", "LOT-3", [["Mission globale", null, "LOT-6"], ["M-1…M-7", null, "LOT-3"], ["Réussie", null, "LOT-3"], ["Échouée", null, "LOT-3"]]],
     ["D5", "Sanctions 1 à 5, pause, suggestion de préréglage", "LOT-3", [["Sanction 1…5", null, "LOT-3"], ["Pause", null, "LOT-3"], ["Suggestion", null, "LOT-3"]]],
   ]],

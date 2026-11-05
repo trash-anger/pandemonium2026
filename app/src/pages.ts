@@ -1,5 +1,5 @@
 // Pages HTML rendues par le Worker. Charte du teaser (teaser/index.html).
-// LOT-0 : page provisoire d'étiquette, saisie du code, panneau du MJ.
+// Coquille de l'application du joueur et panneau du MJ.
 
 export type Langue = "fr" | "en";
 
@@ -52,86 +52,24 @@ function page(l: Langue, titre: string, corps: string, robots = true): Response 
   return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
-const T = {
-  fr: {
-    soldes: "Ouverture des soldes",
-    sousTitre: "Tu as déjà vécu cette soirée.",
-    saisir: "Entre le code imprimé sous le QR",
-    voir: "Voir l'étiquette",
-    reperee: "Étiquette repérée",
-    attente: "Elle se réveillera samedi 7 novembre à 21 h. Garde-la sur toi : à l'ouverture, scanne-la pour créer ton personnage.",
-    reveil: "Réveil dans",
-    jour: "j",
-    ouvert: "Le jeu arrive. Rescanne cette étiquette dans quelques instants.",
-    inconnue: "Cette étiquette n'existe pas dans cette timeline.",
-    inconnueAide: "Vérifie le code : il n'utilise jamais 0, O, 1, I ni L.",
-    desactivee: "Article retiré de la vente. Va voir le maître du jeu.",
-    pied: "Pandémonium · Montréal · 7 novembre 2026",
-  },
-  en: {
-    soldes: "Sale now on",
-    sousTitre: "You've already lived this night.",
-    saisir: "Enter the code printed under the QR",
-    voir: "See the tag",
-    reperee: "Tag spotted",
-    attente: "It wakes up Saturday, November 7 at 9 p.m. Keep it on you: when the game opens, scan it to create your character.",
-    reveil: "Waking up in",
-    jour: "d",
-    ouvert: "The game is coming. Scan this tag again in a moment.",
-    inconnue: "This tag doesn't exist in this timeline.",
-    inconnueAide: "Check the code: it never uses 0, O, 1, I or L.",
-    desactivee: "Item withdrawn from sale. Go see the game master.",
-    pied: "Pandémonium · Montréal · November 7, 2026",
-  },
-};
-
-function formulaireCode(l: Langue, valeur = "") {
-  const t = T[l];
-  return `<form method="get" action="/" class="carte" autocomplete="off">
-<label for="code">${t.saisir}</label>
-<input class="saisie" id="code" name="code" maxlength="6" inputmode="text" autocapitalize="characters" spellcheck="false" value="${esc(valeur)}" required>
-<p style="margin:12px 0 0"><button type="submit">${t.voir}</button></p></form>`;
-}
-
-export function pageAccueil(l: Langue) {
-  const t = T[l];
-  return page(l, "Déjà vu !", `<span class="chip">${t.soldes}</span><h1>DÉJÀ<br>VU&nbsp;!</h1>
-<p class="muted">${t.sousTitre}</p>${formulaireCode(l)}<footer>${t.pied}</footer>`);
-}
-
-/** Page provisoire d'une étiquette (LOT-0 : « chaque URL répond »). */
-export function pageEtiquette(l: Langue, code: string, etat: string, debutIso: string) {
-  const t = T[l];
-  if (etat === "desactivee") {
-    return page(l, `${code} · Déjà vu !`, `<span class="chip">${code}</span><h1>ERR</h1><p>${t.desactivee}</p>`, false);
-  }
-  return page(
-    l,
-    `${code} · Déjà vu !`,
-    `<span class="chip">${t.reperee}</span><h1>DÉJÀ<br>VU&nbsp;!</h1>
-<div class="carte"><div class="code">${esc(code)}</div><p>${t.attente}</p>
-<p class="muted mono" style="margin-bottom:4px">${t.reveil}</p><div class="compte" id="c" data-debut="${esc(debutIso)}">…</div></div>
-<footer>${t.pied}</footer>
-<script>(function(){var e=document.getElementById("c"),d=Date.parse(e.dataset.debut);
-function f(){var s=Math.max(0,Math.floor((d-Date.now())/1000));if(!s){e.textContent=${JSON.stringify(t.ouvert)};e.style.fontSize="17px";return}
-var j=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),x=s%60,p=function(n){return String(n).padStart(2,"0")};
-e.textContent=(j?j+" "+${JSON.stringify(t.jour)}+" ":"")+p(h)+":"+p(m)+":"+p(x);setTimeout(f,1000)}f()})();</script>`,
-    false,
-  );
-}
-
-export function pageInconnue(l: Langue, saisie: string) {
-  const t = T[l];
-  const r = page(l, "Déjà vu ?", `<span class="chip">404</span><h1>DÉJÀ<br>VU&nbsp;?</h1>
-<p>${t.inconnue}</p><p class="muted">${t.inconnueAide}</p>${formulaireCode(l, saisie)}`, false);
-  return new Response(r.body, { status: 404, headers: r.headers });
+/** Coquille de l'application du joueur (LOT-1) : tout l'affichage est fait par public/app.js. */
+export const VERSION_APP = "l1-3";
+export function pageApp(l: Langue, status = 200): Response {
+  const html = `<!doctype html><html lang="${l}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0a0f"><meta name="robots" content="noindex">
+<title>Déjà vu !</title><link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/app.css?v=${VERSION_APP}"><script src="/app.js?v=${VERSION_APP}" defer></script></head>
+<body><div id="app"><main class="ecran centre"><p class="chargement">${l === "en" ? "Looking for your size in the stockroom…" : "On cherche ta taille en réserve…"}</p></main></div>
+<noscript><p style="padding:20px">JavaScript est nécessaire pour jouer. / JavaScript is required to play.</p></noscript></body></html>`;
+  return new Response(html, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
 // ---------- Panneau du MJ (FEAT-020, ADM-1 à ADM-3) ----------
 
 export interface Lot { lot: number; format: string; role: string; n: number; cree_le: string }
 export interface Compte { format: string; role: string; etat: string; n: number }
-export interface EtiquetteVue { code: string; format: string; role: string; etat: string; lot: number; cree_le: string }
+export interface EtiquetteVue { code: string; format: string; role: string; etat: string; lot: number; cree_le: string; personnage_id: string | null; faction_id: string | null; pseudo: string | null; nb_etiquettes: number | null }
 
 const ROLES = ["normale", "personnelle_mj", "speciale_mj"];
 const ETATS = ["vierge", "reclamee", "desactivee"];
@@ -141,6 +79,7 @@ const opts = (liste: string[], choisi?: string) =>
 export function pageAdmin(p: {
   email: string; role: "mj" | "lecteur"; comptes: Compte[]; lots: Lot[]; heures: unknown; parametres: unknown;
   message?: string; erreur?: string; etiquette?: EtiquetteVue | null; recherche?: string;
+  joueurs: { personnages: number; scans: number; cartes: number };
 }) {
   const lecture = p.role === "lecteur";
   const total = p.comptes.reduce((a, c) => a + c.n, 0);
@@ -163,13 +102,18 @@ ${lecture ? "" : `<p><a class="bouton sec" href="/admin/export.csv?format=petit"
 <div class="code">${e.code}</div><p class="muted mono">lot #${e.lot} · ${e.format} · créée ${esc(e.cree_le)}</p>
 ${lecture ? `<p class="mono">rôle : ${e.role} · état : ${e.etat}</p>` : `<div class="rangee"><div><label>Rôle</label><select name="role">${opts(ROLES, e.role)}</select></div>
 <div><label>État</label><select name="etat">${opts(ETATS, e.etat)}</select></div><div><button>Enregistrer</button></div></div>`}
-<p class="muted" style="font-size:13px">Changer le rôle ne change ni le code ni le QR (CA-001-4). <a class="ok" href="/${e.code}">Ouvrir la page</a></p></form>`
+<p class="muted" style="font-size:13px">Changer le rôle ne change ni le code ni le QR (CA-001-4). <a class="ok" href="/${e.code}">Ouvrir la page</a></p></form>
+${e.personnage_id ? `<div class="carte"><p style="margin:0"><b>${esc(e.pseudo)}</b> · faction ${esc(e.faction_id)} · ${e.nb_etiquettes} étiquette(s)</p>
+${lecture ? "" : `<form method="post" action="/admin/pin" class="rangee" style="margin-top:12px"><input type="hidden" name="code" value="${e.code}">
+<div><label>Nouveau PIN (RG-019-7)</label><input name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></div><div style="flex:0 0 auto"><button>Réinitialiser le PIN</button></div></form>
+<form method="post" action="/admin/detacher" onsubmit="return confirm('Détacher ${e.code} de ce personnage ? L\'étiquette redevient vierge.')"><input type="hidden" name="code" value="${e.code}"><p style="margin:12px 0 0"><button class="bouton sec">Détacher l'étiquette</button></p></form>`}</div>` : ""}`
     : p.recherche ? `<p class="err">Aucune étiquette ${esc(p.recherche)}.</p>` : "";
 
   return page("fr", "Admin · Déjà vu !", `<span class="chip">Maître du jeu</span>
 <p class="muted mono" style="font-size:12px">${esc(p.email)} · ${lecture ? '<span class="err">lecture seule</span>' : "MJ"} · <a class="ok" href="/auth/deconnexion">déconnexion</a></p>
 ${p.message ? `<p class="ok">${esc(p.message)}</p>` : ""}${p.erreur ? `<p class="err">${esc(p.erreur)}</p>` : ""}
 <h2>Étiquettes</h2><div class="grille">${stats}</div>
+<h2>Partie</h2><div class="grille"><div class="stat"><b>${p.joueurs.personnages}</b><span>personnages</span></div><div class="stat"><b>${p.joueurs.cartes}</b><span>cartes collectées</span></div><div class="stat"><b>${p.joueurs.scans}</b><span>scans</span></div></div>
 
 ${lecture ? "" : `<h2>Générer (ADM-1)</h2>
 <form method="post" action="/admin/generer" class="carte"><div class="rangee">
@@ -193,7 +137,10 @@ ${fiche}
 <h2>Paramètres (ADM-2)</h2>
 <form method="post" action="/admin/config" class="carte"><input type="hidden" name="cle" value="parametres">
 <textarea name="valeur" style="min-height:300px"${lecture ? " readonly" : ""}>${esc(JSON.stringify(p.parametres, null, 2))}</textarea>${lecture ? "" : `<p style="margin:12px 0 0"><button>Enregistrer les paramètres</button></p>`}</form>
-<footer>LOT-0 · panneau provisoire</footer>`, false);
+${lecture ? "" : `<h2>Zone dangereuse</h2>
+<form method="post" action="/admin/partie-zero" class="carte"><p style="margin-top:0">Efface tous les personnages, scans, collections et badges ; les étiquettes réclamées redeviennent vierges. À utiliser après les tests, avant la fête.</p>
+<label>Tape ZERO pour confirmer</label><input name="confirmation" autocomplete="off" required><p style="margin:12px 0 0"><button>Remettre la partie à zéro</button></p></form>`}
+<footer>LOT-1 · panneau provisoire</footer>`, false);
 }
 
 export function pageConnexion() {

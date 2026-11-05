@@ -1,12 +1,14 @@
 # Application « Déjà vu ! »
 
-Worker Cloudflare servi sur `https://p.uyt.re` ([DEC-048](../specs/decisions.md#dec-048)). Lot actuel : **LOT-0** ([plan](../specs/plan-implementation.md)) — étiquettes, page provisoire de chaque étiquette, panneau du MJ.
+Worker Cloudflare servi sur `https://p.uyt.re` ([DEC-048](../specs/decisions.md#dec-048)). Lots livrés ([plan](../specs/plan-implementation.md)) : **LOT-0** (étiquettes, panneau du MJ) et **LOT-1** (scan, création du personnage, collection, réintégration par PIN).
 
 | Chemin | Rôle |
 |--------|------|
-| `/` | Accueil et saisie manuelle d'un code (CA-001-3) |
-| `/<CODE>` | Page provisoire de l'étiquette ; minuscules redirigées ; code inconnu → 404 |
-| `/admin` | Panneau du MJ, Google OAuth : génération (ADM-1), export CSV Niimbot, recherche et rôle d'une étiquette (CA-001-4), heures (ADM-3), paramètres (ADM-2) |
+| `/` | Application du joueur : accueil, ou saisie d'un code sans personnage (`?code=` → `/<CODE>?s=m`) |
+| `/<CODE>` | Scan d'une étiquette (FEAT-002, FEAT-003) ; minuscules redirigées ; code inconnu → 404 |
+| `/collection`, `/moi`, `/saisie`, `/tuto` | Écrans de l'application (`public/app.js`) |
+| `/api/*` | API du jeu : `moi`, `scan`, `tirage`, `creer`, `etiquette`, `reintegrer`, `modifier`, `collection` |
+| `/admin` | Panneau du MJ, Google OAuth : génération (ADM-1), export CSV Niimbot, recherche et rôle d'une étiquette (CA-001-4), heures (ADM-3), paramètres (ADM-2), PIN et détachement d'une étiquette, remise à zéro de la partie |
 
 ## Développer en local
 
@@ -24,6 +26,10 @@ npm test && npm run typecheck
 
 `http://localhost:8787/banc` : 1 à 4 téléphones émulés côte à côte, une console de tests et un journal. Les boutons agissent par **injection** (`postMessage` vers l'agent `/__dev/agent.js`, ajouté aux pages en local) ou par **simulation** (API `/__dev/*`, qui modifie la base locale). Le banc et l'API ne répondent que si `PUBLIC_ORIGIN` commence par `http://localhost`. Les boutons grisés arrivent avec leur lot. Ajouter `?lang=en` à une URL force l'anglais.
 
+Chaque téléphone du banc a son propre stockage local (clés suffixées par `T1`…`T4`) et sa propre horloge : l'application envoie l'heure simulée au serveur (`X-Dev-Maintenant`, ignoré en production). « Joueur prêt » crée un personnage complet (PIN 1234) ; « T1 scanne T2 » fait scanner une étiquette de T2 par T1.
+
+Le navigateur s'identifie par un jeton anonyme (en-tête `X-Appareil`, stocké localement) ; le serveur n'en garde que l'empreinte.
+
 ## Déployer (première fois)
 
 ```sh
@@ -38,7 +44,22 @@ npx wrangler secret put LECTEURS_EMAILS  # facultatif : accès en lecture seule 
 npm run deploy                   # crée aussi le domaine personnalisé p.uyt.re
 ```
 
+À chaque nouveau lot : `npm run db:remote` (migrations), puis `npm run deploy`.
+
 Client OAuth Google (application Web) : URI de redirection autorisée `https://p.uyt.re/auth/retour`.
+
+## Pipeline et aperçu
+
+Workflow `.github/workflows/deja-vu.yml` :
+
+| Événement | Ce qui se passe |
+|-----------|-----------------|
+| Pull request vers `main` | Tests et types, puis déploiement sur l'**aperçu** `https://deja-vu-apercu.uyt-re.workers.dev` (Worker `deja-vu-apercu`, base D1 `deja-vu-apercu`, banc d'essai actif) ; le lien est commenté dans la PR |
+| Fusion dans `main` | Tests, migrations de la base de production, déploiement sur `https://p.uyt.re` |
+
+L'aperçu n'utilise jamais la base de production. Il montre la dernière PR poussée. Le banc (`/banc`) et l'horloge simulée y sont actifs (`BANC=actif`) ; l'admin passe par Google (URI de redirection `https://deja-vu-apercu.uyt-re.workers.dev/auth/retour`).
+
+Secrets GitHub : `CLOUDFLARE_API_TOKEN` (modèle « Modifier les Workers Cloudflare » + D1 : modifier), `CLOUDFLARE_ACCOUNT_ID`. Secrets du Worker d'aperçu : `wrangler secret put <NOM> --env apercu`.
 
 ## Imprimer les étiquettes
 

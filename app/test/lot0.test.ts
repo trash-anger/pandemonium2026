@@ -70,3 +70,20 @@ describe("rôles du panneau", () => {
     expect(roleDe(env, "inconnu@x.com")).toBeNull();
   });
 });
+
+describe("jetons signés", () => {
+  it("préservent les caractères non ASCII (pseudos)", async () => {
+    const j = await signer("s", { pseudo: "Écru −40 %" });
+    expect(await verifier("s", j)).toEqual({ pseudo: "Écru −40 %" });
+  });
+});
+
+import { devActif } from "../src/mode";
+describe("banc d'essai", () => {
+  it("n'est jamais actif en production, même avec BANC=actif", () => {
+    expect(devActif({ PUBLIC_ORIGIN: "https://p.uyt.re", BANC: "actif" } as never)).toBe(false);
+    expect(devActif({ PUBLIC_ORIGIN: "https://p.uyt.re" } as never)).toBe(false);
+    expect(devActif({ PUBLIC_ORIGIN: "https://deja-vu-apercu.uyt-re.workers.dev", BANC: "actif" } as never)).toBe(true);
+    expect(devActif({ PUBLIC_ORIGIN: "http://localhost:8787" } as never)).toBe(true);
+  });
+});

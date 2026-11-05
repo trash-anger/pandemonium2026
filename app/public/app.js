@@ -162,11 +162,11 @@
         ["👯", "<b>Quelqu'un dans Pandémonium te ressemble un peu trop.</b> Premiers indices à minuit."],
         ["🕔", "<b>5 h : révélation</b> pour tout Pandémonium. Les classements se figent, les médailles restent."]],
       pouls: (j, r) => `⚡ <b>${j} joueur${j > 1 ? "s" : ""}</b> déjà dans la partie${r ? ` · record : <b>${r} carte${r > 1 ? "s" : ""}</b>` : ""}.`,
-      missionTitre: "🎯 Ta première mission", missionSuivante: "🎯 Mission suivante", missionFaite: "✅ Mission accomplie !", missionsToutes: "Toutes les missions de départ sont accomplies. Chapeau.", missionsActives: "Missions actives", missionMJ: "MJ",
+      missionTitre: "🎯 Ta première mission", missionSuivante: "🎯 Mission suivante", missionFaite: "✅ Mission accomplie !", missionsToutes: "Toutes les missions de départ sont accomplies. Chapeau.", missionsActives: "Missions actives", missionMJ: "MJ", tonPerso: "Ton personnage",
       missionAide: { installe_portail: "Suis les étapes d'installation, puis ouvre l'app depuis ton écran d'accueil.",
         collegue_de_rayon: (f) => `Trouve quelqu'un de ${f} et scanne son étiquette.`,
         boucle_detectee: "Scanne la même personne 3 fois, à 5 minutes d'écart au moins.",
-        trans_classe: "Va dans <b>Moi</b> et change de classe avant 1 h." },
+        trans_classe: "Va dans <b>Moi</b> et change de classe avant 1&nbsp;h." },
       premierScanBouton: "📷 Scanner ma première personne", scannerQqn: "📷 Scanner quelqu'un",
       cestParti: "C'est parti",
       // Accueil (textes §5.2)
@@ -293,11 +293,11 @@
         ["👯", "<b>Someone in Pandémonium looks a little too much like you.</b> First clues at midnight."],
         ["🕔", "<b>5 a.m.: the reveal</b> for all of Pandémonium. Rankings freeze, medals stay."]],
       pouls: (j, r) => `⚡ <b>${j} player${j === 1 ? "" : "s"}</b> already in the game${r ? ` · record: <b>${r} card${r === 1 ? "" : "s"}</b>` : ""}.`,
-      missionTitre: "🎯 Your first mission", missionSuivante: "🎯 Next mission", missionFaite: "✅ Mission complete!", missionsToutes: "All starter missions complete. Hats off.", missionsActives: "Active missions", missionMJ: "GM",
+      missionTitre: "🎯 Your first mission", missionSuivante: "🎯 Next mission", missionFaite: "✅ Mission complete!", missionsToutes: "All starter missions complete. Hats off.", missionsActives: "Active missions", missionMJ: "GM", tonPerso: "Your character",
       missionAide: { installe_portail: "Follow the install steps, then open the app from your home screen.",
         collegue_de_rayon: (f) => `Find someone from ${f} and scan their tag.`,
         boucle_detectee: "Scan the same person 3 times, at least 5 minutes apart.",
-        trans_classe: "Go to <b>Me</b> and change your class before 1 a.m." },
+        trans_classe: "Go to <b>Me</b> and change your class before 1&nbsp;a.m." },
       premierScanBouton: "📷 Scan my first person", scannerQqn: "📷 Scan someone",
       cestParti: "Let's go",
       maintenant: "What now?",
@@ -604,11 +604,13 @@
     const m = missionDe(d);
     const mission = (m.courante ? (m.faite ? `<p class="ok petit" style="margin:0 0 6px">${t.missionFaite}</p>` : "") + ligneMission(d, m.courante) : "")
       || `<p class="petit">${t.missionsToutes}</p>`;
-    rendre(`<p class="perso-ligne"><span>${ty.e}</span> <b>${esc(pe.pseudo)}</b> · ${mesFactions.map((f) => f.e).join(" ")}${cl ? ` · ${esc(L === "en" ? cl[1] : cl[0])}` : ""}</p>
-      <h2 style="margin-top:4px">${t.tutoTitre}</h2>
+    rendre(`<h2>${t.tutoTitre}</h2>
+      <a class="perso-carte" href="/moi" data-nav style="--teinte:${couleurDe(pe.couleur).hex}"><span class="e">${ty.e}</span><div>
+        <small>${t.tonPerso}</small><b>${esc(pe.pseudo)}</b>
+        <span class="details">${mesFactions.map((f) => `${f.e} ${esc(lib(f))}`).join("<br>")}${cl ? `<br>${esc(L === "en" ? cl[1] : cl[0])}` : ""}</span></div></a>
       ${d.partie && d.partie.joueurs > 1 ? `<p class="pouls">${t.pouls(d.partie.joueurs, d.partie.record)}</p>` : ""}
       <div class="boite mission-boite"><p class="titre-inst" style="color:var(--pink)">${m.faite || !m.courante ? t.missionSuivante : t.missionTitre}</p>${mission}</div>
-      <a class="bouton" href="/saisie" data-nav style="margin-top:0">${d.nb_cartes ? t.scannerQqn : t.premierScanBouton}</a>
+      <a class="bouton" href="/saisie" data-nav>${d.nb_cartes ? t.scannerQqn : t.premierScanBouton}</a>
       ${regles}`, { onglet: "moi" });
   }
   // BDG-4 : l'app installée se signale une fois (le badge s'affiche dans Médailles)

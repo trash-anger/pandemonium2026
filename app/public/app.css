@@ -124,7 +124,12 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .filtres a[aria-current=page]{border-color:var(--green);background:#10251a;font-weight:700}
 .filtres a.emoji{font-size:20px;padding:0;width:44px;justify-content:center}
 /* Ta mission */
-.perso-ligne{font-size:14px;color:var(--muted);margin:0;line-height:1.4}.perso-ligne b{color:var(--fg)}
+.perso-carte{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-left:5px solid var(--teinte,var(--line));border-radius:14px;padding:12px 14px;margin:8px 0;color:inherit;text-decoration:none}
+.perso-carte .e{font-size:44px;text-align:center}
+.perso-carte small{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.perso-carte b{display:block;font-family:var(--display);font-size:21px;line-height:1.2;margin:2px 0 4px}
+.perso-carte .details{display:block;font-size:14px;color:var(--muted);line-height:1.45}
+.mission-boite{margin-bottom:16px}
 .pouls{background:#10251a;border:1px solid var(--green);border-radius:12px;padding:10px 12px;font-size:15px;margin:8px 0}
 .mission-boite{border-color:var(--pink)}
 .sep{border:0;border-top:1px solid var(--line);margin:10px 0}
@@ -137,8 +142,12 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .classement .rang{font-family:var(--mono);font-size:18px;text-align:center}
 .classement .qui{font-weight:600;font-size:15px;line-height:1.25;word-break:break-word}
 .classement .n{font-family:var(--mono);color:var(--gold);font-size:16px}
-.discret{grid-template-columns:repeat(3,1fr)!important}
-.discret a{position:relative;padding:10px}
+.discret a{position:relative}
+/* Médailles : pleine largeur, sous Ma carte et Ma collection */
+.discret .carte-medailles{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;gap:2px 14px;align-items:center}
+.carte-medailles b{grid-row:1/3;font-size:30px!important}
+.carte-medailles .petit{margin-top:0!important}
+.carte-medailles .pastille{position:absolute;top:10px;right:10px}
 .discret b small{font-size:14px;color:var(--muted)}
 .discret .petit{font-size:13px;word-break:break-word}
 

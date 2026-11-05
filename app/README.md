@@ -77,3 +77,12 @@ Secrets GitHub : `CLOUDFLARE_API_TOKEN` (modèle « Modifier les Workers Cloudfl
 Le QR encode `HTTPS://P.UYT.RE/<CODE>` en majuscules : version 2 (25 × 25 modules), soit environ 6 points d'impression par module sur la B1 à 203 dpi.
 
 5. Imprimer une planche test, la scanner avec un iPhone et un Android, lampe allumée, dans une pièce sombre (CA-001-2), puis lancer la série.
+
+## Faux souvenirs (LOT-2)
+Les gabarits, lieux et chutes viennent de `specs/textes.md` §3. Après une correction des textes, régénérer `src/souvenirs-textes.ts` depuis la racine du dépôt :
+
+```sh
+python3 app/scripts/textes-souvenirs.py
+```
+
+Les seuils de la jauge de souvenirs (départ, rescans par heure, seuil du flou) se règlent dans l'admin, section `memoire` des paramètres.

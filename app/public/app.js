@@ -1,11 +1,13 @@
 // Application du joueur « Déjà vu ! » — LOT-1 : scan, création en 4 écrans, collection, fiche, PIN.
+// LOT-2 : faux souvenirs, déjà vu et paliers, réactions, file d'attente hors ligne, temps d'écran.
 // Le serveur est la source de vérité (DEC-052) : le stockage local n'est qu'un cache.
 (() => {
   "use strict";
 
   // ---------- Stockage local (un espace par téléphone du banc d'essai : window.name = T1…T4) ----------
   const SUFFIXE = /^T\d$/.test(window.name) ? "-" + window.name : "";
-  const CLE = { jeton: "dv-appareil" + SUFFIXE, langue: "dv-langue" + SUFFIXE, moi: "dv-moi" + SUFFIXE, brouillon: "dv-brouillon" + SUFFIXE };
+  const CLE = { jeton: "dv-appareil" + SUFFIXE, langue: "dv-langue" + SUFFIXE, moi: "dv-moi" + SUFFIXE, brouillon: "dv-brouillon" + SUFFIXE,
+    collection: "dv-collection" + SUFFIXE, file: "dv-file" + SUFFIXE, ecran: "dv-ecran" + SUFFIXE };
   const lire = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
   const ecrire = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} };
   const lireJson = (k) => { try { return JSON.parse(lire(k) || "null"); } catch { return null; } };
@@ -181,8 +183,23 @@
       saisieAide: "Le scanner intégré arrive bientôt. En attendant, scanne le QR avec l'appareil photo de ton téléphone, ou entre le code imprimé dessous.",
       // Résultats
       nouvelle: "Nouvelle pièce ajoutée", collectionN: (n) => `Ta collection : ${n} pièce${n > 1 ? "s" : ""}.`,
-      souvenirBientot: "Votre faux souvenir commun se reconstitue…",
-      dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Article déjà dans ton panier.", fenetre: "Trop tôt pour compter : un même déjà vu compte une fois toutes les 5 minutes.",
+      souvenirTitre: "Votre faux souvenir commun",
+      souvenirFlou: "Ta mémoire flanche : ce souvenir s'efface. Arrête de rescanner en boucle et ta jauge remontera.",
+      invitation: "Va rescanner la personne qui a le plus marqué ta mémoire.",
+      oeuf3: "Boucle détectée. Cet article est déjà dans ton panier. Trois fois. La Matrice prend des notes.",
+      oeuf6: (h) => `Il est ${h}. Il était déjà ${h}. Il sera encore ${h}. Rien ne change, sauf ton score.`,
+      oeuf13: "Félicitations : tu atteins le statut Client fidèle, niveau Malédiction. Ce badge n'existe pas. Tu ne l'as jamais eu. Tu ne t'en souviendras pas.",
+      ticket: "Ticket de caisse", ticketPied: "Ni repris, ni échangé.",
+      perte: (n) => `Boucle infinie : −1 souvenir. Ta jauge : ${n}.`,
+      jauge: "Jauge de souvenirs",
+      jaugeAide: "On te rescanne : +1 souvenir. Tu rescannes en boucle (plus de 10 fois dans l'heure) : −1. Sous 5, tes faux souvenirs deviennent flous.",
+      reagir: "Laisse une trace", reactionsRecues: "Réactions reçues", aucuneReaction: "Personne n'a encore réagi à ta carte.",
+      horsLigne: (n) => (n ? `${n} scan${n > 1 ? "s" : ""} en attente de synchronisation` : "Hors ligne"),
+      enFileTitre: "Scan gardé en mémoire",
+      enFile: "Pas de réseau. Ton scan partira tout seul dès que le réseau revient, sans doublon.",
+      synchro: (n) => `${n} scan${n > 1 ? "s" : ""} en attente envoyé${n > 1 ? "s" : ""}.`,
+      reessayerMaintenant: "Réessayer maintenant",
+      dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Article déjà dans ton panier.", fenetre: (m) => `Trop tôt pour compter : un même déjà vu compte une fois toutes les ${m} minute${m > 1 ? "s" : ""}.`,
       soiTitre: "C'est toi.", soi: "Ton double existe… quelque part. Les indices arrivent à partir de minuit.",
       encore: "Scanner encore",
       spectMJ: "Va trouver le MJ pour avoir ta propre étiquette !",
@@ -310,8 +327,23 @@
       saisieTitre: "Scan a tag",
       saisieAide: "The built-in scanner is coming soon. Meanwhile, scan the QR with your phone's camera, or enter the code printed under it.",
       nouvelle: "New item added", collectionN: (n) => `Your collection: ${n} item${n === 1 ? "" : "s"}.`,
-      souvenirBientot: "Your shared fake memory is loading…",
-      dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Item already in your cart.", fenetre: "Too soon to count: the same déjà vu counts once every 5 minutes.",
+      souvenirTitre: "Your shared fake memory",
+      souvenirFlou: "Your memory is slipping: this one is fading. Stop rescanning in loops and your gauge will recover.",
+      invitation: "Go rescan the person who left the biggest mark on your memory.",
+      oeuf3: "Loop detected. This item is already in your cart. Three times. The Matrix is taking notes.",
+      oeuf6: (h) => `It's ${h}. It was already ${h}. It will still be ${h}. Nothing changes except your score.`,
+      oeuf13: "Congratulations: you've reached Loyal Customer status, Curse tier. This badge doesn't exist. You never got it. You won't remember it.",
+      ticket: "Receipt", ticketPied: "No returns, no exchanges.",
+      perte: (n) => `Infinite loop: −1 memory. Your gauge: ${n}.`,
+      jauge: "Memory gauge",
+      jaugeAide: "Someone rescans you: +1 memory. You rescan in loops (more than 10 times in an hour): −1. Below 5, your fake memories blur.",
+      reagir: "Leave a mark", reactionsRecues: "Reactions received", aucuneReaction: "Nobody has reacted to your card yet.",
+      horsLigne: (n) => (n ? `${n} scan${n > 1 ? "s" : ""} waiting to sync` : "Offline"),
+      enFileTitre: "Scan saved",
+      enFile: "No network. Your scan will be sent automatically when the network is back, with no duplicates.",
+      synchro: (n) => `${n} waiting scan${n > 1 ? "s" : ""} sent.`,
+      reessayerMaintenant: "Try again now",
+      dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Item already in your cart.", fenetre: (m) => `Too soon to count: the same déjà vu counts once every ${m} minute${m > 1 ? "s" : ""}.`,
       soiTitre: "That's you.", soi: "Your double is out there… somewhere. Clues start at midnight.",
       encore: "Scan again",
       spectMJ: "Go find the game master to get your own tag!",
@@ -370,14 +402,14 @@
   const vibrer = (ms = 30) => { try { navigator.vibrate && navigator.vibrate(ms); } catch {} };
   const minutesAvant = (iso) => Math.max(1, Math.ceil((Date.parse(iso) - Date.now()) / 60000));
 
-  async function api(chemin, corps) {
+  async function api(chemin, corps, { keepalive = false } = {}) {
     const h = { "X-Dev-Maintenant": String(Date.now()) };
     const jeton = lire(CLE.jeton);
     if (jeton) h["X-Appareil"] = jeton;
     if (corps !== undefined) h["Content-Type"] = "application/json";
     let r;
     try {
-      r = await fetch(chemin, { method: corps === undefined ? "GET" : "POST", headers: h, body: corps === undefined ? undefined : JSON.stringify(corps) });
+      r = await fetch(chemin, { method: corps === undefined ? "GET" : "POST", headers: h, body: corps === undefined ? undefined : JSON.stringify(corps), keepalive });
     } catch {
       throw { erreur: "reseau" };
     }
@@ -409,6 +441,7 @@
       + `<main class="ecran ${onglet ? "" : "sans-tabs"} ${classe}">${html}</main>` + (onglet ? onglets(onglet) : "");
     window.scrollTo(0, 0);
     demarrerComptes();
+    majIndicateur();
   }
   function onglets(actif) {
     const o = (id, href, e, l) => `<a href="${href}" data-nav class="${id === "scan" ? "scan" : ""}"${actif === id ? ' aria-current="page"' : ""}><span class="e">${e}</span>${l}</a>`;
@@ -451,6 +484,24 @@
     const b = BADGES[id]; if (!b) return "";
     return `<a class="badge-gagne apparait" href="/medailles" data-nav style="color:inherit;text-decoration:none"><span class="e">${b[0]}</span><div><small>${t.badgeGagne}</small><b>${L === "en" ? b[2] : b[1]}</b><small>${L === "en" ? b[4] : b[3]}</small></div></a>`;
   };
+  // Faux souvenir (FEAT-006) : élément principal de l'écran de nouvelle carte (RG-006-9)
+  const souvenirBloc = (s) => s ? `<blockquote class="souvenir${s.flou ? " flou" : ""} apparait"><small>${t.souvenirTitre}</small>
+      <p>${esc(L === "en" ? s.en : s.fr)}</p>${s.flou ? `<small class="muted">${t.souvenirFlou}</small>` : ""}</blockquote>` : "";
+  // Réactions d'Halloween en un toucher (FEAT-014)
+  const EMOJIS = ["🎃", "👻", "💀", "🦇", "🕷️", "🧛", "🔮", "🖤"];
+  const reactionsBloc = (cible, mes = []) => `<div class="reactions" data-cible="${esc(cible)}"><small>${t.reagir}</small>
+      <div class="emojis">${EMOJIS.map((e) => `<button class="reac" data-e="${e}" aria-pressed="${mes.includes(e)}">${e}</button>`).join("")}</div></div>`;
+  function brancherReactions(apres) {
+    app.querySelectorAll(".reactions").forEach((box) => box.querySelectorAll(".reac").forEach((b) => (b.onclick = async () => {
+      const actif = b.getAttribute("aria-pressed") !== "true";
+      b.setAttribute("aria-pressed", actif); vibrer(15);
+      try {
+        const r = await api("/api/reaction", { cible: box.dataset.cible, emoji: b.dataset.e, actif });
+        if (apres) apres(box.dataset.cible, r.mes_reactions);
+      } catch (e) { b.setAttribute("aria-pressed", !actif); toast(e.erreur === "reseau" ? t.reseau : t.erreur); }
+    })));
+  }
+  const heureCourte = (iso) => new Date(iso).toLocaleTimeString(L === "en" ? "en-CA" : "fr-CA", { hour: "2-digit", minute: "2-digit" });
   const formulaireCode = (valeur = "") => `<form class="boite" id="f-code" autocomplete="off">
       <label class="mono petit muted" for="code">${t.saisir}</label>
       <input type="text" class="saisie" id="code" name="code" maxlength="6" autocapitalize="characters" spellcheck="false" value="${esc(valeur)}" required style="margin-top:8px">
@@ -513,7 +564,11 @@
   }
 
   // ---------- Accueil (E-01, interface §2bis) ----------
+  /** Garde une copie de la collection pour la consulter hors ligne (CA-004-3). */
+  const precharger = () => api("/api/collection").then((r) => ecrire(CLE.collection, JSON.stringify(r))).catch(() => {});
+
   async function accueil() {
+    if (etat.moi && navigator.onLine) precharger();
     if (!etat.moi) await chargerMoi(); else chargerMoi().then((m) => { if (location.pathname === "/") m ? dessinerAccueil() : accueil(); });
     if (!etat.moi) {
       const h = etat.heures || (await api("/api/moi").catch(() => ({}))).heures;
@@ -625,10 +680,13 @@
     const source = q.get("s") === "m" ? "code_manuel" : q.get("s") === "a" ? "app" : "qr_externe";
     rendre(`<div class="centre"><p class="chargement">${t.lecture}</p></div>`);
     let r;
+    const corps = { code, id_client: uuid(), source, horodatage: new Date().toISOString() };
     try {
-      r = await api("/api/scan", { code, id_client: uuid(), source, horodatage: new Date().toISOString() });
+      r = await api("/api/scan", corps);
     } catch (e) {
       if (e.type === "inconnue" || e.status === 404) return inconnue(code);
+      // Hors ligne (RG-021-3) : on garde le scan et on l'enverra au retour du réseau. La création, elle, demande le réseau.
+      if (e.erreur === "reseau" && etat.moi && etat.moi.personnage) return scanEnFile(corps);
       return ecranErreur(e, () => scanner(code));
     }
     if (r.type === "inconnue") return inconnue(code);
@@ -649,17 +707,95 @@
       case "soi_meme": fixer(); return rendre(`<span class="chip vert">${esc(code)}</span><h1 class="moyen">${t.soiTitre}</h1>${carte(r.carte)}<p>${t.soi}</p>
           <a class="bouton" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
       case "nouvelle_carte":
-        fixer(); vibrer(40); chargerMoi();
-        return rendre(`<span class="chip vert">${t.nouvelle}</span>
+        fixer(); vibrer(40); chargerMoi(); precharger();
+        rendre(`<span class="chip vert">${t.nouvelle}</span>${souvenirBloc(r.souvenir)}
           ${carte(r.carte)}<p class="muted">${t.collectionN(r.nb_cartes)}</p>${(r.badges || []).map(badgeGagne).join("")}
+          ${reactionsBloc(r.carte.id, r.mes_reactions)}
           <a class="bouton" href="/saisie" data-nav>${t.encore}</a><a class="bouton sec" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
+        return brancherReactions();
       case "deja_vu":
-        fixer(); vibrer(20);
-        return rendre(`<div class="echo">${[0, 1, 2].map(() => `<div>${t.dejaVu(r.compte === false ? null : r.n)}</div>`).join("")}</div><p>${t.panier}</p>${(r.badges || []).map(badgeGagne).join("")}${r.compte === false ? `<p class="petit muted">${t.fenetre}</p>` : ""}${carte(r.carte, { grand: false })}
-          <a class="bouton" href="/saisie" data-nav>${t.encore}</a>`, { onglet: "accueil" });
+        fixer(); vibrer(r.palier ? [30, 60, 30] : 20); chargerMoi(); precharger();
+        rendre(ecranDejaVu(r), { onglet: "accueil", classe: r.palier ? "palier-" + r.palier : "" });
+        return brancherReactions();
       default: return ecranErreur({}, () => scanner(code));
     }
   }
+
+  // Déjà vu (FEAT-005) et ses paliers ×3, ×6, ×13 (textes §2)
+  function ecranDejaVu(r) {
+    const titre = t.dejaVu(r.compte === false ? null : r.n);
+    const h = heureCourte(new Date().toISOString());
+    const oeuf = r.palier === 3 ? `<p class="oeuf">${t.oeuf3}</p>`
+      : r.palier === 6 ? `<p class="oeuf">${t.oeuf6(h)}</p>`
+      : r.palier === 13 ? `<p class="oeuf">${t.oeuf13}</p><div class="ticket"><b>${t.ticket}</b>${(r.heures || []).map((x, i) => `<div><span>#${String(i + 1).padStart(2, "0")}</span><span>${heureCourte(x)}</span></div>`).join("")}<small>${t.ticketPied}</small></div>`
+      : "";
+    return `<div class="echo">${[0, 1, 2].map(() => `<div>${titre}</div>`).join("")}</div>${oeuf || `<p>${t.panier}</p>`}
+      ${(r.badges || []).map(badgeGagne).join("")}${r.compte === false ? `<p class="trop-tot">⏳ ${t.fenetre(r.fenetre_min ?? 5)}</p>` : ""}
+      ${r.perte ? `<p class="alerte-ligne">🫥 ${t.perte(r.souvenirs)}</p>` : ""}
+      ${r.premier_rescan ? `<div class="boite mission apparait"><b>🔁</b> ${t.invitation}</div>` : ""}
+      ${souvenirBloc(r.souvenir)}${carte(r.carte, { grand: false })}${reactionsBloc(r.carte.id, r.mes_reactions)}
+      <a class="bouton" href="/saisie" data-nav>${t.encore}</a>`;
+  }
+
+  // ---------- Hors ligne (FEAT-021) : file d'attente des scans, synchronisée sans doublon grâce à id_client ----------
+  const fileScans = () => lireJson(CLE.file) || [];
+  function scanEnFile(corps) {
+    const f = fileScans();
+    if (!f.some((x) => x.id_client === corps.id_client)) f.push(corps);
+    ecrire(CLE.file, JSON.stringify(f));
+    history.replaceState(null, "", "/");
+    rendre(`<span class="chip">${esc(corps.code)}</span><h1 class="moyen">${t.enFileTitre}</h1><p>${t.enFile}</p>
+      <button class="bouton" id="b-sync">${t.reessayerMaintenant}</button><a class="bouton sec" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
+    $("#b-sync").onclick = () => synchroniser(true);
+  }
+  let synchroEnCours = false;
+  async function synchroniser(montrer = false) {
+    if (synchroEnCours || !fileScans().length) return majIndicateur();
+    synchroEnCours = true;
+    let n = 0;
+    try {
+      for (const s of fileScans()) {
+        try { await api("/api/scan", s); } catch (e) { if (e.erreur === "reseau") break; } // autre erreur : le scan est abandonné
+        ecrire(CLE.file, JSON.stringify(fileScans().filter((x) => x.id_client !== s.id_client)));
+        n++;
+      }
+    } finally { synchroEnCours = false; }
+    majIndicateur();
+    if (n) { toast(t.synchro(n)); await chargerMoi(); if (["/", "/collection"].includes(location.pathname)) route(); }
+    else if (montrer) toast(t.reseau);
+  }
+  function majIndicateur() {
+    let d = document.getElementById("hors-ligne");
+    const n = fileScans().length, visible = !navigator.onLine || n > 0;
+    if (!visible) { if (d) d.remove(); return; }
+    if (!d) { d = document.createElement("button"); d.id = "hors-ligne"; d.onclick = () => synchroniser(true); document.body.appendChild(d); }
+    d.textContent = "📡 " + t.horsLigne(n);
+  }
+  addEventListener("online", () => synchroniser());
+  addEventListener("offline", majIndicateur);
+
+  // ---------- Temps d'écran (RG-015-4) : cumulé localement, envoyé toutes les 60 s et au passage en arrière-plan ----------
+  let visibleDepuis = document.visibilityState === "visible" ? Date.now() : null;
+  function cumulerEcran() {
+    if (visibleDepuis === null) return;
+    const maintenant = Date.now();
+    ecrire(CLE.ecran, String((Number(lire(CLE.ecran)) || 0) + (maintenant - visibleDepuis) / 1000));
+    visibleDepuis = document.visibilityState === "visible" ? maintenant : null;
+  }
+  async function envoyerEcran(keepalive = false) {
+    cumulerEcran();
+    const s = Math.floor(Number(lire(CLE.ecran)) || 0);
+    if (s < 1 || !lire(CLE.jeton)) return;
+    try {
+      await api("/api/ecran", { secondes: s }, { keepalive });
+      ecrire(CLE.ecran, String(Math.max(0, (Number(lire(CLE.ecran)) || 0) - s)));
+    } catch { /* renvoyé plus tard */ }
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") envoyerEcran(true);
+    else { visibleDepuis = Date.now(); synchroniser(); }
+  });
+  setInterval(() => { if (document.visibilityState === "visible") envoyerEcran(); }, 60_000);
 
   // ---------- Création en 4 écrans (FEAT-003, RG-003-7, RG-003-9) ----------
   function creation(code, estMJ) {
@@ -852,18 +988,26 @@
     if (!(await chargerMoi())) return aller("/", true);
     rendre(`<h2>${t.collectionTitre}</h2><p class="chargement">${t.lecture}</p>`, { onglet: "collection" });
     let r;
-    try { r = await api("/api/collection"); } catch (e) { return ecranErreur(e, collection); }
+    try {
+      r = await api("/api/collection");
+      ecrire(CLE.collection, JSON.stringify(r));
+    } catch (e) {
+      r = lireJson(CLE.collection); // CA-004-3 : consultable hors ligne, dernière version synchronisée
+      if (!r || e.erreur !== "reseau") return ecranErreur(e, collection);
+    }
     const missions = etat.moi && etat.moi.personnage ? blocMissions(etat.moi) : "";
     if (!r.cartes.length) return rendre(`<h2>${t.collectionTitre}</h2>${missions}<p class="maintenant">${t.vide}</p><a class="bouton" href="/saisie" data-nav>📷 ${t.scanner}</a>`, { onglet: "collection" });
     rendre(`<h2>${t.collectionTitre} · ${r.cartes.length}</h2>${missions}<div class="grille-cartes">${r.cartes.map((c, i) => `<button class="mini" data-i="${i}" style="--teinte:${couleurDe(c.couleur).hex}">
         ${c.nb_scans > 1 ? `<span class="n">×${c.nb_scans}</span>` : ""}<div class="e">${typeDe(c.type).e}</div><div class="pseudo">${esc(c.pseudo)}</div></button>`).join("")}</div>`, { onglet: "collection" });
     app.querySelectorAll(".mini").forEach((x) => (x.onclick = () => {
       const c = r.cartes[+x.dataset.i];
-      rendre(`<button class="retour" id="b-retour">${t.retour}</button>${carte(c)}
+      rendre(`<button class="retour" id="b-retour">${t.retour}</button>${carte(c)}${souvenirBloc(c.souvenir)}
+        ${reactionsBloc(c.id, c.mes_reactions || [])}
         <ul class="liste"><li>${(c.attributs || []).map((a) => attrDe(a)).filter(Boolean).map((a) => `${a.e} ${lib(a)}`).join("<br>") || "—"}</li>
         <li class="mono petit">${t.premierScan} : ${new Date(c.premier_scan_le).toLocaleTimeString(L === "en" ? "en-CA" : "fr-CA", { hour: "2-digit", minute: "2-digit" })}</li>
         <li class="mono petit">${t.rescans(c.nb_scans)}</li></ul>`, { onglet: "collection" });
       $("#b-retour").onclick = collection;
+      brancherReactions((_, mes) => { c.mes_reactions = mes; ecrire(CLE.collection, JSON.stringify(r)); });
     }));
   }
 
@@ -936,6 +1080,8 @@
     if (!(await chargerMoi())) return aller("/", true);
     const d = etat.moi, pe = d.personnage, dr = d.droits;
     rendre(`<h2>${t.moiTitre}</h2>${carte({ ...pe, factions: d.etiquettes.map((e) => e.faction) })}
+      <h3>${t.jauge}</h3><div class="jauge" style="--n:${Math.min(20, pe.souvenirs ?? 10)}"><b>🧠 ${pe.souvenirs ?? 10}</b><i></i></div><p class="petit muted">${t.jaugeAide}</p>
+      <h3>${t.reactionsRecues}</h3>${Object.keys(d.reactions || {}).length ? `<p class="reactions-recues">${Object.entries(d.reactions).map(([e, n]) => `<span>${e} <b>${n}</b></span>`).join("")}</p>` : `<p class="muted petit">${t.aucuneReaction}</p>`}
       <h3>${t.pseudo}</h3>${dr.pseudo ? `<form id="f-pseudo" class="duo" style="grid-template-columns:1fr auto"><input type="text" id="pseudo" maxlength="28" value="${esc(pe.pseudo)}"><button class="bouton" style="margin:0;width:auto">${t.enregistrer}</button></form>` : `<p class="muted">🔒 ${t.pseudoFige}</p>`}
       <h3>${t.classe}</h3>${dr.classe ? `<select id="classe">${Object.keys(CLASSES).map((k) => `<option value="${k}" ${k === pe.classe ? "selected" : ""}>${esc(classeLib(k))}</option>`).join("")}</select><p class="petit muted">${t.classeAlerte}</p>` : `<p class="muted">🔒 ${t.classeFigee}</p>`}
       <h3>${t.costumeTitre}</h3>${dr.costume ? `<button class="bouton sec" id="b-costume">${t.modifierCostume}</button>` : `<p class="muted">🔒 ${t.costumeFige}</p>`}
@@ -993,5 +1139,8 @@
     $("#b-ok").onclick = () => envoyer(c);
   }
 
+  // Service worker : interface disponible hors ligne après une première visite (RG-021-2, RG-021-4)
+  if ("serviceWorker" in navigator && !SUFFIXE) navigator.serviceWorker.register("/sw.js").catch(() => {});
   route();
+  synchroniser();
 })();

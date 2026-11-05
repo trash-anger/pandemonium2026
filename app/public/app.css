@@ -162,6 +162,32 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .bandeau{background:var(--gold);color:var(--ink);font-size:15px;padding:10px 16px;text-align:center;font-weight:700}
 .toast{position:fixed;left:16px;right:16px;bottom:calc(var(--tabs) + 24px);z-index:60;background:var(--fg);color:var(--ink);border-radius:14px;padding:14px;font-weight:700;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.6)}
 
+/* LOT-2 : faux souvenirs, réactions, paliers de déjà vu, jauge, hors ligne */
+.souvenir{margin:16px 0 0;padding:18px 18px 16px;border-left:4px solid var(--green);background:linear-gradient(135deg,#14261c,var(--bg2));border-radius:4px 16px 16px 4px}
+.souvenir small{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--green)}
+.souvenir p{font-size:20px;line-height:1.4;margin:8px 0 0;font-weight:600}
+.souvenir.flou{border-left-color:var(--muted);background:var(--bg2)}.souvenir.flou small:first-child{color:var(--muted)}
+.souvenir.flou p{color:var(--muted);letter-spacing:.02em}.souvenir.flou small.muted{margin-top:10px;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:14px}
+.reactions{margin-top:16px}.reactions>small{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.emojis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.reac{min-height:52px;font-size:26px;background:var(--bg2);border:1.5px solid var(--line);border-radius:14px;cursor:pointer;line-height:1}
+.reac[aria-pressed=true]{border-color:var(--pink);background:#3a1426;box-shadow:0 0 0 2px rgba(255,79,139,.25) inset}
+.reactions-recues{display:flex;flex-wrap:wrap;gap:8px}.reactions-recues span{background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:20px}
+.reactions-recues b{font-family:var(--mono);font-size:15px;margin-left:2px}
+.oeuf{font-size:19px;line-height:1.45;font-weight:600}
+.ticket{font-family:var(--mono);background:var(--fg);color:var(--ink);max-width:260px;margin:16px auto 0;padding:14px 16px 18px;font-size:14px;
+  -webkit-mask:radial-gradient(circle 6px at 50% 100%,transparent 98%,#000) 0 0/14px 100% repeat-x;mask:radial-gradient(circle 6px at 50% 100%,transparent 98%,#000) 0 0/14px 100% repeat-x}
+.ticket b{display:block;text-align:center;letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px}
+.ticket div{display:flex;justify-content:space-between;border-bottom:1px dashed #0003;padding:2px 0}
+.ticket small{display:block;text-align:center;margin-top:10px}
+.alerte-ligne{color:var(--pink);font-weight:700}
+.trop-tot{color:var(--gold);font-weight:700;font-size:17px;border:1.5px solid var(--gold);border-radius:12px;padding:10px 14px;background:#2a2410}
+.jauge{position:relative;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;overflow:hidden}
+.jauge b{position:relative;font-family:var(--mono);font-size:20px;z-index:1}
+.jauge i{position:absolute;inset:0 auto 0 0;width:calc(var(--n) * 5%);background:linear-gradient(90deg,#1d3a2a,#2a5a3e);opacity:.8}
+#hors-ligne{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:70;background:var(--gold);color:var(--ink);border:0;border-radius:999px;
+  padding:8px 14px;font-family:var(--mono);font-size:13px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.5);min-height:36px;cursor:pointer;white-space:nowrap}
+
 @media (prefers-reduced-motion:no-preference){
   h1{animation:g 7s infinite steps(1)}
   @keyframes g{0%,96%{transform:none}97%{transform:translateX(3px) skewX(-4deg)}98%{transform:translateX(-2px)}}
@@ -169,4 +195,11 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
   @keyframes ap{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
   .echo div{animation:ec .6s ease-out both}.echo div:nth-child(2){animation-delay:.12s}.echo div:nth-child(3){animation-delay:.24s}
   @keyframes ec{from{opacity:0;filter:blur(4px)}}
+  /* ×6 : la carte rejoue son apparition trois fois ; ×13 : glitch court, moins de 3 changements par seconde (REQ-003) */
+  /* « Trop tôt pour compter » : fondu lent, bien sous 3 changements par seconde (REQ-003) */
+  .trop-tot{animation:clignote 1.6s ease-in-out infinite}
+  @keyframes clignote{0%,100%{opacity:1}50%{opacity:.25}}
+  .palier-6 .carte.apparait{animation:ap .7s ease-out 3}
+  .palier-13 .echo{animation:gl13 1.5s steps(1) 1}
+  @keyframes gl13{0%{transform:translateX(-6px) skewX(8deg);filter:hue-rotate(90deg)}40%{transform:translateX(5px) skewX(-6deg);filter:none}80%{transform:translateX(-2px)}100%{transform:none}}
 }

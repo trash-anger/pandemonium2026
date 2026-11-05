@@ -70,7 +70,7 @@ export function pageApp(l: Langue, status = 200): Response {
 
 // ---------- Panneau du MJ (FEAT-020, ADM-1 à ADM-3) ----------
 
-export interface Lot { lot: number; format: string; role: string; n: number; cree_le: string }
+export interface Lot { lot: number; format: string; role: string; n: number; cree_le: string; banc?: number }
 export interface Compte { format: string; role: string; etat: string; n: number }
 export interface EtiquetteVue { code: string; format: string; role: string; etat: string; lot: number; cree_le: string; personnage_id: string | null; faction_id: string | null; pseudo: string | null; nb_etiquettes: number | null }
 
@@ -83,6 +83,8 @@ export function pageAdmin(p: {
   email: string; role: "mj" | "lecteur"; comptes: Compte[]; lots: Lot[]; heures: unknown; parametres: unknown;
   message?: string; erreur?: string; etiquette?: EtiquetteVue | null; recherche?: string;
   joueurs: { personnages: number; scans: number; cartes: number };
+  /** Bouton du banc d'essai (selon l'environnement et le rôle) */
+  banc?: boolean;
 }) {
   const lecture = p.role === "lecteur";
   const total = p.comptes.reduce((a, c) => a + c.n, 0);
@@ -94,7 +96,7 @@ export function pageAdmin(p: {
 
   const lots = p.lots.length
     ? `<table><tr><th>Lot</th><th>Format</th><th>Rôle</th><th>N</th><th>Export</th></tr>${p.lots
-        .map((x) => `<tr><td>#${x.lot}</td><td>${x.format}</td><td>${x.role}</td><td>${x.n}</td><td>${lecture ? "—" : `<a class="ok" href="/admin/export.csv?lot=${x.lot}">CSV</a>`}</td></tr>`)
+        .map((x) => `<tr><td>#${x.lot}</td><td>${x.format}</td><td>${x.role}</td><td>${x.n}</td><td>${x.banc ? "🧪 banc" : lecture ? "—" : `<a class="ok" href="/admin/export.csv?lot=${x.lot}">CSV</a>`}</td></tr>`)
         .join("")}</table>
 ${lecture ? "" : `<p><a class="bouton sec" href="/admin/export.csv?format=petit">CSV de tous les petits</a> <a class="bouton sec" href="/admin/export.csv?format=grand">CSV de tous les grands</a></p>`}`
     : `<p class="muted">Aucune étiquette générée.</p>`;
@@ -114,6 +116,7 @@ ${lecture ? "" : `<form method="post" action="/admin/pin" class="rangee" style="
 
   return page("fr", "Admin · Déjà vu !", `<span class="chip">Maître du jeu</span>
 <p class="muted mono" style="font-size:12px">${esc(p.email)} · ${lecture ? '<span class="err">lecture seule</span>' : "MJ"} · <a class="ok" href="/auth/deconnexion">déconnexion</a></p>
+${p.banc ? `<p><a class="bouton sec" href="/banc">🧪 Banc d'essai</a></p>` : ""}
 ${p.message ? `<p class="ok">${esc(p.message)}</p>` : ""}${p.erreur ? `<p class="err">${esc(p.erreur)}</p>` : ""}
 <h2>Étiquettes</h2><div class="grille">${stats}</div>
 <h2>Partie</h2><div class="grille"><div class="stat"><b>${p.joueurs.personnages}</b><span>personnages</span></div><div class="stat"><b>${p.joueurs.cartes}</b><span>cartes collectées</span></div><div class="stat"><b>${p.joueurs.scans}</b><span>scans</span></div></div>

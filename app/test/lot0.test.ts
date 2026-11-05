@@ -78,12 +78,21 @@ describe("jetons signés", () => {
   });
 });
 
-import { devActif } from "../src/mode";
+import { bancEnvironnement, bancProd, devActif, peutOuvrirBanc } from "../src/mode";
 describe("banc d'essai", () => {
-  it("n'est jamais actif en production, même avec BANC=actif", () => {
-    expect(devActif({ PUBLIC_ORIGIN: "https://p.uyt.re", BANC: "actif" } as never)).toBe(false);
-    expect(devActif({ PUBLIC_ORIGIN: "https://p.uyt.re" } as never)).toBe(false);
-    expect(devActif({ PUBLIC_ORIGIN: "https://deja-vu-apercu.uyt-re.workers.dev", BANC: "actif" } as never)).toBe(true);
-    expect(devActif({ PUBLIC_ORIGIN: "http://localhost:8787" } as never)).toBe(true);
+  it("en production, ne s'ouvre que pour une requête du MJ connecté", () => {
+    const prod = { PUBLIC_ORIGIN: "https://p.uyt.re", BANC: "actif" }, apercu = { PUBLIC_ORIGIN: "https://deja-vu-apercu.uyt-re.workers.dev", BANC: "actif" };
+    expect(peutOuvrirBanc(prod, "mj")).toBe(true);
+    expect(peutOuvrirBanc(prod, "lecteur")).toBe(false);
+    expect(peutOuvrirBanc(apercu, "lecteur")).toBe(true);
+    for (const e of [prod, apercu, { PUBLIC_ORIGIN: "http://localhost:8787" }]) expect(peutOuvrirBanc(e, null)).toBe(false); // jamais sans connexion
+    expect(bancProd({ ...prod, BANC_SESSION: true })).toBe(true);
+    expect(bancProd({ ...apercu, BANC_SESSION: true })).toBe(false); // l'aperçu garde ses pleins pouvoirs
+  });
+
+  it("n'est jamais ouvert sans session, même en local ou avec BANC=actif", () => {
+    expect(bancEnvironnement({ PUBLIC_ORIGIN: "https://p.uyt.re", BANC: "actif" })).toBe(false);
+    expect(bancEnvironnement({ PUBLIC_ORIGIN: "https://deja-vu-apercu.uyt-re.workers.dev", BANC: "actif" })).toBe(true);
+    expect(devActif({ PUBLIC_ORIGIN: "http://localhost:8787" })).toBe(false); // ouvert seulement par une session
   });
 });

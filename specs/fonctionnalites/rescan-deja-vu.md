@@ -2,7 +2,7 @@
 
 [← Fonctionnalités](README.md)
 
-**Statut :** Confirmé · **Sources :** S1, S2 (paliers proposés), S3 (« C'est génial ! J'adore tout ! »)
+**Statut :** Confirmé · **Sources :** S1, S2 (paliers proposés), S3 (« C'est génial ! J'adore tout ! »), S5
 
 ## Objectif
 Revoir quelqu'un est **le cœur du thème**. Scanner de nouveau une personne affiche « Déjà vu. » avec un compteur. Ce n'est pas une erreur, c'est un **badge** (S1).
@@ -17,15 +17,15 @@ Revoir quelqu'un est **le cœur du thème**. Scanner de nouveau une personne aff
 | ID | Règle | Statut |
 |----|-------|--------|
 | RG-005-1 | Un compteur de rescans existe **par paire orientée** (A→B). | Confirmé (S1) ; orientation : Hypothèse |
-| RG-005-2 | Paliers d'easter eggs : ×3 « Boucle détectée », ×6 « Jour de la marmotte », ×13 secret. | Confirmé (proposés en S2, approuvés en S3 : « J'adore tout ») ; contenu exact des easter eggs : [Q-016](../questions-ouvertes.md#q-016) |
+| RG-005-2 | Paliers d'easter eggs : ×3 « Boucle détectée », ×6 « Jour de la marmotte », ×13 secret. | Confirmé (proposés en S2, approuvés en S3 : « J'adore tout ») ; contenu : rédigé par l'assistant, relu par Florian ([DEC-032](../decisions.md#dec-032)) |
 | RG-005-3 | Un rescan ne compte qu'**une fois par fenêtre de 5 minutes** pour une même paire. | Confirmé (S2 → S3) ; valeur ajustable par le MJ (Proposition) |
 | RG-005-4 | Certaines étiquettes peuvent avoir des easter eggs propres, déclenchés après N rescans de ce badge précis. | Confirmé (S1 : « mettre des easter egg si tu scannes un certain nombre de fois certains badges ») |
-| RG-005-5 | Une **Boucle infinie** (joueur qui rescanne beaucoup) **perd des souvenirs**. | Confirmé (S3) ; seuils et définition de « souvenir perdu » : [Q-012](../questions-ouvertes.md#q-012) |
-| RG-005-6 | Une **Célébrité** ou un **Fantôme** (joueur très rescanné) **accumule des souvenirs**. | Confirmé (S3) ; mécanique : [Q-012](../questions-ouvertes.md#q-012) |
+| RG-005-5 | Une **Boucle infinie** (joueur qui rescanne beaucoup) **perd des souvenirs**, selon la proposition ci-dessous. | Confirmé (S3, S5) ; seuils réglables dans l'admin |
+| RG-005-6 | Une **Célébrité** ou un **Fantôme** (joueur très rescanné) **accumule des souvenirs**. | Confirmé (S3, S5) |
 | RG-005-7 | Mission « Fermer la boucle » : en fin de soirée, rescanner la toute première personne scannée. | Confirmé (S2 → S3) |
-| RG-005-8 | Un rescan alimente-t-il la quête collective ? | À préciser ([Q-016](../questions-ouvertes.md#q-016)) |
+| RG-005-8 | Un rescan compté alimente la quête collective, environ un quart d'un nouveau scan. | Confirmé (S5, [DEC-032](../decisions.md#dec-032)) |
 
-> **Proposition pour [Q-012](../questions-ouvertes.md#q-012).** Un « souvenir » serait une unité de score (une jauge de mémoire). La Boucle infinie perd 1 souvenir par rescan au-delà de X dans l'heure. Le joueur rescanné gagne 1 souvenir par rescan reçu. Les **faux souvenirs** déjà obtenus deviendraient flous (texte partiellement effacé, `▒▒▒`) au lieu d'être supprimés. Cette proposition n'est pas validée.
+> **Modèle retenu ([DEC-031](../decisions.md#dec-031)).** Un « souvenir » serait une unité de score (une jauge de mémoire). La Boucle infinie perd 1 souvenir par rescan au-delà de X dans l'heure. Le joueur rescanné gagne 1 souvenir par rescan reçu. Les **faux souvenirs** déjà obtenus deviendraient flous (texte partiellement effacé, `▒▒▒`) au lieu d'être supprimés. Les valeurs de X restent des propositions, réglables dans l'admin.
 
 ## Interface
 « Déjà vu » doit se distinguer visuellement d'un nouveau scan : boucle, écho, répétition du texte. Il faut respecter la préférence de réduction des animations ([REQ-003](../exigences-transversales.md#req-003)).

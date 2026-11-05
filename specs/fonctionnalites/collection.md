@@ -18,8 +18,10 @@ Le but premier du jeu : **collectionner les personnes scannées** pendant la soi
 | RG-004-1 | La collection contient des **personnages distincts** ; un rescan n'ajoute pas de carte ([FEAT-005](rescan-deja-vu.md)). | Confirmé (S1, S3) |
 | RG-004-2 | Se scanner soi-même n'ajoute pas de carte : on voit sa propre fiche et l'indice de son jumeau ([FEAT-007](jumeaux.md)). | Confirmé (S1 : scanner sa propre étiquette donne le message « Ton double existe… ») |
 | RG-004-3 | La collection se classe par ordre d'ajout ; un filtre par série ou rareté est possible. | Proposition |
-| RG-004-4 | La collection est-elle réciproque ? Quand A scanne B, B obtient-il aussi la carte de A ? | À préciser ([Q-013](../questions-ouvertes.md#q-013)) |
-| RG-004-5 | « Perdre des souvenirs » ([RG-005-5](rescan-deja-vu.md)) ne supprime pas de carte, sauf décision contraire. | À préciser ([Q-012](../questions-ouvertes.md#q-012)) |
+| RG-004-4 | La collection **n'est pas réciproque** : quand A scanne B, B n'obtient pas la carte de A. | Confirmé (S5, [DEC-025](../decisions.md#dec-025)) |
+| RG-004-5 | « Perdre des souvenirs » ([RG-005-5](rescan-deja-vu.md)) ne supprime pas de carte. | Confirmé (S5, [DEC-031](../decisions.md#dec-031)) |
+| RG-004-6 | La collection contient des **personnages**, pas des étiquettes : scanner une autre étiquette d'un personnage déjà collectionné est un « Déjà vu ». | Confirmé (S5, S6) |
+| RG-004-7 | Les légendaires et les pièges du MJ apparaissent dans une section à part, « Légendes » ([FEAT-022](costume-mj.md)). | Proposition |
 
 ## Interface
 - **Vide :** « Ton placard est vide. Va scanner du monde. »

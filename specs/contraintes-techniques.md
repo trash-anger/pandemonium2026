@@ -7,27 +7,27 @@ Ce document liste ce qui est **connu et imposé**. Les options d'architecture so
 ## 1. Matériel (S4, fiches Amazon.ca consultées le 2026-11-03)
 
 ### CT-001
-**Imprimante NIIMBOT B1** : thermique (sans encre), **monochrome**, Bluetooth, largeur d'impression de **20 à 48 mm**, batterie de 1500 mAh, reconnaissance RFID des consommables. Elle est livrée avec un rouleau échantillon de 50×30 mm. *Statut : Confirmé (achat).* La fiche propose une variante **B1** et une variante **B1 Pro** ; celle achetée et sa résolution (dpi) restent à vérifier ([Q-026](questions-ouvertes.md#q-026)).
+**Imprimante NIIMBOT B1** : thermique (sans encre), **monochrome**, Bluetooth, largeur d'impression de **20 à 48 mm**, batterie de 1500 mAh, reconnaissance RFID des consommables. Elle est livrée avec un rouleau échantillon de 50×30 mm. *Statut : Confirmé (achat).* Le modèle acheté est la **B1 standard, 203 dpi** (S5, [DEC-028](decisions.md#dec-028)).
 
 ### CT-002
-**Autocollants NIIMBOT 40×30 mm, blancs, 230 par rouleau**, vendus par lot de 3 rouleaux, compatibles B1, B21 et B3S. Si le lot complet a été reçu, cela fait environ **690 étiquettes**, plus le rouleau échantillon de 50×30. *Statut : Confirmé (achat) ; le fini mat ou brillant reste à vérifier* : la règle [RG-001-6](fonctionnalites/etiquettes-impression.md) exige du mat.
+**Autocollants NIIMBOT 40×30 mm, blancs, 230 par rouleau**, vendus par lot de 3 rouleaux, compatibles B1, B21 et B3S. Si le lot complet a été reçu, cela fait environ **690 étiquettes**, plus le rouleau échantillon de 50×30. Florian confirme les **690** petits autocollants, plus **plus de 200 étiquettes plus grandes**, utilisées pour le costume du MJ et distribuées aussi (S7, [DEC-066](decisions.md#dec-066)). Dimensions du grand format à mesurer. *Statut : Confirmé (achat) ; le fini mat ou brillant reste à vérifier* : la règle [RG-001-6](fonctionnalites/etiquettes-impression.md) exige du mat.
 
 ### CT-003
-**Étiquettes manille SatsoniK, 1,85 × 1,25 po (environ 47 × 32 mm), lot de 1000, sans attache, « pré-imprimées »** (le titre de la fiche mentionne « Green Manila »). **Pistolet à étiquettes Mr. Pen**, avec 5 aiguilles et 2000 attaches. *Statut : Confirmé (achat).* **Hypothèse** sur l'usage : l'autocollant QR de 40×30 est collé sur l'étiquette manille de 47×32, puis attaché aux vêtements avec le pistolet, comme une étiquette de prix. Le contenu pré-imprimé est à vérifier ([Q-027](questions-ouvertes.md#q-027)).
+**Étiquettes manille SatsoniK, 1,85 × 1,25 po (environ 47 × 32 mm), lot de 1000, sans attache, « pré-imprimées »** (le titre de la fiche mentionne « Green Manila »). **Pistolet à étiquettes Mr. Pen**, avec 5 aiguilles et 2000 attaches. *Statut : Confirmé (achat).* **Hypothèse** sur l'usage : l'autocollant QR de 40×30 est collé sur l'étiquette manille de 47×32, puis attaché aux vêtements avec le pistolet, comme une étiquette de prix. L'étiquette porte seulement le QR et le logo ([DEC-044](decisions.md#dec-044)).
 
 ### CT-004
-**Application NIIMBOT pour macOS**, déjà téléchargée par Florian (S1). Sa capacité à importer des données en lot (CSV ou Excel) pour générer N QR différents est **à vérifier** ([Q-007](questions-ouvertes.md#q-007)). Sinon, il faudra imprimer des images générées une par une. La fiche indique : « fonctions complètes avec abonnement premium ».
+**Application NIIMBOT pour macOS**, déjà téléchargée par Florian (S1). Elle **importe des données en lot** (CSV ou Excel) pour générer N QR différents (Confirmé, S5, [DEC-028](decisions.md#dec-028)). La fiche indique : « fonctions complètes avec abonnement premium ».
 
 ### CT-007
-**Format du QR.** Les règles se trouvent dans [FEAT-001](fonctionnalites/etiquettes-impression.md) (RG-001-2 à RG-001-7). Note technique (Proposition) : `HTTPS://P.UYT.RE/7KC3` en **majuscules** permet le mode alphanumérique du QR. Le domaine n'est pas sensible à la casse et le code est déjà en majuscules. On obtient ainsi un QR de version 2 (25×25 modules), soit des modules d'environ 0,8 mm à 25 mm de large. Cette taille est compatible avec une imprimante thermique d'environ 200 dpi, sous réserve de [Q-026](questions-ouvertes.md#q-026).
+**Format du QR.** Les règles se trouvent dans [FEAT-001](fonctionnalites/etiquettes-impression.md) (RG-001-2 à RG-001-7). Note technique (Proposition) : `HTTPS://P.UYT.RE/7KC3` en **majuscules** permet le mode alphanumérique du QR. Le domaine n'est pas sensible à la casse et le code est déjà en majuscules. On obtient ainsi un QR de version 2 (25×25 modules), soit des modules d'environ 0,8 mm à 25 mm de large. Cette taille est compatible avec la B1 à 203 dpi (environ 6 points par module).
 
 ## 2. Hébergement et domaine
 
 ### CT-005
-Florian a un **compte Cloudflare** (S1). *Statut : Confirmé.* Les services Cloudflare précis à utiliser **ne sont pas décidés** ([Q-032](questions-ouvertes.md#q-032)).
+Florian a un **compte Cloudflare** (S1). *Statut : Confirmé.* Architecture retenue : option A ci-dessous ([DEC-048](decisions.md#dec-048)).
 
 ### CT-006
-Le **domaine** sera un sous-domaine de **`uyt.re`** (S1). Florian a donné l'exemple `p.uyt.re` (S3). *Statut : Confirmé pour `uyt.re` ; sous-domaine final : [Q-031](questions-ouvertes.md#q-031).*
+Le **domaine** sera un sous-domaine de **`uyt.re`** (S1). *Statut : Confirmé : `p.uyt.re`, admin sur un chemin protégé par Google OAuth ([DEC-047](decisions.md#dec-047)).*
 
 ### CT-009
 **CDN et cache sur le téléphone** pour un maximum de ressources (S3). *Statut : Confirmé.* Voir [FEAT-021](fonctionnalites/pwa-hors-ligne.md).
@@ -54,9 +54,9 @@ Le **domaine** sera un sous-domaine de **`uyt.re`** (S1). Florian a donné l'exe
 ### CT-014
 **Navigateurs intégrés** (Instagram, Snapchat, Messenger…) : stockage isolé et capacités réduites. Voir [FEAT-019](fonctionnalites/recuperation.md).
 
-## 4. Options d'architecture (Propositions, non décidées)
+## 4. Architecture (option A retenue, [DEC-048](decisions.md#dec-048))
 
-Elles sont présentées pour éclairer [Q-032](questions-ouvertes.md#q-032). Aucune n'est retenue.
+Le serveur est la source de vérité ; le téléphone ne garde qu'un cache ([DEC-052](decisions.md#dec-052)). Les photos doivent tenir dans le free tier de R2, ou leur coût doit être estimé avant la fête.
 
 | Besoin | Option A (tout Cloudflare) | Remarques |
 |--------|----------------------------|-----------|
@@ -68,7 +68,7 @@ Elles sont présentées pour éclairer [Q-032](questions-ouvertes.md#q-032). Auc
 | Web Push | Implémentation VAPID compatible WebCrypto dans un Worker | [CT-008](#ct-008) |
 | Tâches planifiées (H−30, révélation) | Alarmes de Durable Object ou Cron Triggers | |
 
-Les choix de framework front et de bibliothèque QR restent libres. Ils sont à décider en [Q-032](questions-ouvertes.md#q-032).
+Front léger (Preact ou vanilla, avec Vite). La bibliothèque de décodage QR reste à choisir.
 
 ## 5. Contraintes de projet
 

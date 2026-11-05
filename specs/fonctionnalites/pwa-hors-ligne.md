@@ -2,7 +2,7 @@
 
 [← Fonctionnalités](README.md)
 
-**Statut :** Confirmé · **Sources :** S2, S3
+**Statut :** Confirmé · **Sources :** S2, S3, S6
 
 ## Objectif
 - Inciter à **installer l'app** sur l'écran d'accueil (S3 : « On incite pour que le monde accepte d'installer l'app »).
@@ -15,7 +15,8 @@
 | RG-021-2 | Toutes les ressources statiques sont mises en cache sur le téléphone dès la première visite (service worker). | Confirmé (S3) |
 | RG-021-3 | Les scans faits hors ligne sont mis en file d'attente et synchronisés **sans doublon**, de façon idempotente. | Proposition |
 | RG-021-4 | Le service worker sert l'interface d'une URL d'étiquette même hors ligne, puis traite le scan au retour du réseau. | Proposition |
-| RG-021-5 | L'installation sur l'écran d'accueil est récompensée par le badge BDG-4 ([FEAT-015](badges-classements.md)). Elle conditionne aussi les notifications iOS ([CT-008](../contraintes-techniques.md#ct-008)). | Proposition |
+| RG-021-5 | L'installation sur l'écran d'accueil est récompensée par le badge « Installé » et un bonus de score ([FEAT-015](badges-classements.md)). Elle conditionne aussi les notifications iOS ([CT-008](../contraintes-techniques.md#ct-008)). | Confirmé (S5) |
+| RG-021-7 | Le stockage local (cookies, localStorage, cache) ne sert qu'à **faciliter le jeu en cas de mauvais réseau**. Toutes les données sont envoyées au cloud dès que possible ; le serveur est la source de vérité. | Confirmé (S6, [DEC-052](../decisions.md#dec-052)) |
 | RG-021-6 | Un indicateur discret « hors ligne, N scans en attente » est affiché quand c'est le cas. | Proposition |
 
 ## Critères d'acceptation

@@ -126,6 +126,9 @@ Les identifiants sont **stables** : une exigence abandonnée passe au statut « 
 | **S2** | Réponse de l'assistant : banque d'idées. Tout ce qui en vient reste une proposition tant que S3 ne le valide pas |
 | **S3** | Second message de Florian : retours détaillés sur S2 et nouvelles idées (factions, D&D, mode, photos…) |
 | **S4** | Fiches produits Amazon.ca des achats, consultées le 2026-11-03 |
+| **S5** | Entretien du 2026-11-05 : réponses de Florian aux questions ouvertes Q-001 à Q-034 |
+| **S6** | Message de Florian du 2026-11-05, après l'entretien : multi-étiquettes, PIN, données dans le cloud, temps d'écran, costumes, légendaires et pièges, jumeaux à 2 h |
+| **S7** | Message et second entretien de Florian du 2026-11-05 : réponses à Q-035 à Q-043, factions, mélange des légendaires, validation carte par carte, surconsommation, admin et frise d'activité |
 
 ## Résumé en une phrase
 

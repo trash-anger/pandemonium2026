@@ -7,7 +7,7 @@
 | ID | Principe | Statut | Source |
 |----|----------|--------|--------|
 | UI-1 | **Mobile d'abord**, utilisable d'une main, dans une salle **sombre** | Hypothèse (contexte) | S1 |
-| UI-2 | **Pas de clavier** dans les parcours principaux | Confirmé | S3 |
+| UI-2 | **Pas de clavier** dans les parcours principaux, sauf le PIN sur pavé numérique | Confirmé | S3, S5 |
 | UI-3 | Tout est **rapide** : un toucher par action quand c'est possible | Confirmé (réactions, création) | S3 |
 | UI-4 | Le thème « Déjà vu » se voit : échos, répétitions, boucles, glitchs | Confirmé (thème) ; traitement graphique : Proposition | S1, S3 |
 | UI-5 | Esthétique d'**étiquette de vêtement et de soldes**, avec des touches D&D | Confirmé (univers) ; direction artistique : Proposition | S3 |
@@ -19,7 +19,7 @@
 |----|-------|-----------------|--------|
 | E-01 | Accueil du jeu : progression globale, bouton Scanner, mission active | [FEAT-009](fonctionnalites/quete-collective.md), [FEAT-013](fonctionnalites/missions-eclair.md) | Proposition |
 | E-02 | Scanner : caméra, lampe, saisie de code | [FEAT-002](fonctionnalites/scan.md) | Confirmé |
-| E-03 | Création du personnage, en 3 ou 4 étapes à pictos | [FEAT-003](fonctionnalites/personnage.md) | Confirmé |
+| E-03 | Création du personnage : écrans successifs, une information par écran, avec retour arrière | [FEAT-003](fonctionnalites/personnage.md) | Confirmé (S7) |
 | E-04 | Résultat de scan : nouvelle carte, Déjà vu, chat noir, Tué dans l'œuf, retrouvailles | FEAT-003 à 008, 010, 014 | Confirmé |
 | E-05 | Ma fiche et mon double : indices du jumeau | [FEAT-007](fonctionnalites/jumeaux.md) | Confirmé |
 | E-06 | Collection : grille, séries | [FEAT-004](fonctionnalites/collection.md), [FEAT-012](fonctionnalites/series-rarete.md) | Confirmé |
@@ -29,7 +29,12 @@
 | E-10 | Révélation finale | [FEAT-009](fonctionnalites/quete-collective.md) | Confirmé |
 | E-11 | Lendemain et carte souvenir | [FEAT-018](fonctionnalites/lendemain-partage.md) | Confirmé |
 | E-12 | Panneau MJ | [FEAT-020](fonctionnalites/admin.md) | Confirmé |
-| E-13 | Vue projecteur | [FEAT-009](fonctionnalites/quete-collective.md) | Proposition |
+| E-17 | Compte à rebours avant la révélation et avant la fin | [FEAT-009](fonctionnalites/quete-collective.md) | Confirmé (S7) |
+| E-18 | Frise d'activité 21 h → 6 h (admin, mobile et web) | [FEAT-020](fonctionnalites/admin.md) | Confirmé (S7) |
+| E-13 | Vue projecteur | [FEAT-009](fonctionnalites/quete-collective.md) | **Abandonné** ([DEC-046](decisions.md#dec-046)) |
+| E-14 | Avertissement avant création : jeu punk, données supprimées, installation recommandée | [FEAT-003](fonctionnalites/personnage.md) | Confirmé (S5) |
+| E-15 | Spectateur : « Va trouver le MJ », carte en lecture seule, lien discret vers le PIN | [FEAT-019](fonctionnalites/recuperation.md) | Confirmé (S6) |
+| E-16 | Écrans de pièges | [FEAT-022](fonctionnalites/costume-mj.md) | Proposition |
 
 ## 3. Navigation
 
@@ -96,10 +101,18 @@ flowchart LR
 **E-03 : Création du personnage, étape costume**
 ```
 ┌──────────────────────────────┐
-│ Étape 2/4 · Ton costume      │
-│ [🧛][🧟][🧙][👽][🤖][🦸][🐺][❓] │  ← catégories (Q-004)
-│ ● ● ● ● ● ● ● ●              │  ← couleur
-│ [Masque] [Maquillage] [Accessoires] │ ← bascules
+│ ← Retour        Étape 2/10   │
+│ Ton costume :                │
+│ choisis ce qui te ressemble  │
+│ [🧟][🧛][🧙][🤖]              │  ← 8 types (FEAT-003)
+│ [🦄][💋][🦸][🤡]              │
+│              [ Suivant → ]   │
+└──────────────────────────────┘
+┌──────────────────────────────┐
+│ ← Retour        Étape 4/10   │
+│ Coche ce que tu portes :     │
+│ 🎭 💄 💇 😈 🪽 🎩            │  ← 12 attributs
+│ 💡 🩸 🪄 🧥 ✨ 🐾            │
 │              [ Suivant → ]   │
 └──────────────────────────────┘
 ```

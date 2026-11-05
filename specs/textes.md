@@ -2,7 +2,7 @@
 
 [← Index](../README.md)
 
-> **Statut : Confirmé** : §1 à §3 validés par Florian (S7) ; §4 à §6 (pitch, tutoriel, accueil, textes du MJ) validés (S10) ; §6.4 (missions personnelles) : **Proposition** ([DEC-032](decisions.md#dec-032), [DEC-042](decisions.md#dec-042)). Tous les textes existent en français et en anglais ([DEC-039](decisions.md#dec-039)). Ton : [univers-et-ton](univers-et-ton.md) ; NSFW soft limité aux allusions ([DEC-049](decisions.md#dec-049)).
+> **Statut : Confirmé** : §1 à §3 validés par Florian (S7) ; §4 à §6 (pitch, tutoriel, accueil, textes du MJ, missions personnelles) validés (S10) ([DEC-032](decisions.md#dec-032), [DEC-042](decisions.md#dec-042)). Tous les textes existent en français et en anglais ([DEC-039](decisions.md#dec-039)). Ton : [univers-et-ton](univers-et-ton.md) ; NSFW soft limité aux allusions ([DEC-049](decisions.md#dec-049)).
 
 **Règle d'écriture.** Les textes ne doivent jamais dépendre du genre d'un joueur : on désigne les joueurs par leur pseudo, on évite les participes et adjectifs accordés à une personne (« arrivé·e », « habillé·e »), et on n'accorde rien avec un attribut de costume dont le genre varie (« un masque », « une cape »). Ainsi, le même gabarit reste correct quelle que soit la combinaison ([CA-006-3](fonctionnalites/faux-souvenirs.md)).
 
@@ -262,7 +262,7 @@ L'accueil affiche toujours **une seule suggestion**, choisie selon la situation 
 
 ## 6. Textes du MJ
 
-> **Statut : Confirmé** (S10), sauf §6.4 : Proposition.
+> **Statut : Confirmé** (S10).
 
 ### 6.1 Mode pause « Fermé pour inventaire »
 - **FR :** « FERMÉ POUR INVENTAIRE. Le MJ fait une pause. Ton scanner est bloqué 2 min. Réouverture dans {minutes} min. »

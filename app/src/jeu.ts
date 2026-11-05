@@ -1,9 +1,11 @@
-// API du jeu, LOT-1 : scan, création du personnage, étiquettes multiples, collection, réintégration par PIN.
-// Specs : FEAT-002, FEAT-003, FEAT-004, FEAT-019. Le serveur est la source de vérité (DEC-052).
+// API du jeu. LOT-1 : scan, création du personnage, étiquettes multiples, collection, réintégration par PIN.
+// LOT-2 : faux souvenirs, jauge de mémoire, réactions, temps d'écran.
+// Specs : FEAT-002 à FEAT-006, FEAT-014, FEAT-019. Le serveur est la source de vérité (DEC-052).
 import { signer, verifier } from "./auth";
 import { ATTRIBUTS, auHasard, CLASSES, COULEURS, FACTIONS, genererPseudo, TYPES, tirerFaction, type Langue } from "./catalogue";
 import { normaliserCode } from "./codes";
-import { HEURES_PAR_DEFAUT, lireConfig, PARAMETRES_PAR_DEFAUT, type Heures } from "./config";
+import { HEURES_PAR_DEFAUT, lireConfig, lireParametres, type Heures } from "./config";
+import { brouiller, estFlou, fauxSouvenir, grainePaire, type PersoSouvenir } from "./souvenirs";
 import { localVersIso } from "./temps";
 import { devActif } from "./mode";
 
@@ -51,8 +53,30 @@ async function heuresIso(db: D1Database) {
 }
 
 async function maxFactions(db: D1Database): Promise<number> {
-  const p = (await lireConfig(db, "parametres")) as typeof PARAMETRES_PAR_DEFAUT;
-  return p?.surconsommation?.max_factions ?? 3;
+  return (await lireParametres(db)).surconsommation.max_factions ?? 3;
+}
+
+// ---------- Faux souvenirs et jauge de mémoire (FEAT-006, barème §3) ----------
+/** Réactions d'Halloween, liste fermée (RG-014-3). */
+export const EMOJIS_REACTION = ["🎃", "👻", "💀", "🦇", "🕷️", "🧛", "🔮", "🖤"];
+const UNE_HEURE_MS = 3_600_000;
+
+const versSouvenir = (p: LignePerso): PersoSouvenir => ({ id: p.id, pseudo: p.pseudo, type: p.type, couleur: p.couleur, attributs: JSON.parse(p.attributs) });
+
+/** Souvenir commun vu par « me » : identique des deux côtés, sauf s'il est flou dans sa propre mémoire. */
+function souvenirVu(me: LignePerso, autre: PersoSouvenir, seuilFlou: number) {
+  const g = grainePaire(me.id, autre.id);
+  const flou = estFlou(me.souvenirs, seuilFlou, g);
+  const texte = (l: Langue) => {
+    const s = fauxSouvenir(versSouvenir(me), autre, l);
+    return flou ? brouiller(s, g) : s;
+  };
+  return { fr: texte("fr"), en: texte("en"), flou };
+}
+
+async function mesReactions(env: EnvJeu, auteur: string, cible: string): Promise<string[]> {
+  const r = await env.DB.prepare("SELECT emoji FROM reactions WHERE auteur_id = ? AND cible_id = ? ORDER BY pose_le").bind(auteur, cible).all<{ emoji: string }>();
+  return r.results.map((x) => x.emoji);
 }
 
 async function empreintePin(env: EnvJeu, sel: string, pin: string) {
@@ -70,6 +94,7 @@ interface LignePerso {
   id: string; pseudo: string; type: string; couleur: string; attributs: string; classe: string;
   photos_ok: number; est_mj: number; surconsommation: number; bloque_jusqu_a: string | null;
   cree_le: string; premier_scanne_le: string | null; langue: string; pin_sel: string; pin_empreinte: string;
+  souvenirs: number; temps_ecran_s: number;
 }
 
 async function personnageDe(req: Request, env: EnvJeu, t: number): Promise<LignePerso | null> {
@@ -183,13 +208,16 @@ async function moi(env: EnvJeu, p: LignePerso, t: number) {
     .bind(p.id).all()).results;
   const badges = (await env.DB.prepare("SELECT badge, obtenu_le FROM badges WHERE personnage_id = ? ORDER BY obtenu_le").bind(p.id).all()).results;
   const nb = await env.DB.prepare("SELECT COUNT(*) AS n FROM collection WHERE possesseur_id = ?").bind(p.id).first<{ n: number }>();
+  // RG-014-5 : le porteur ne voit que les totaux par emoji, jamais les auteurs
+  const reac = (await env.DB.prepare("SELECT emoji, COUNT(*) AS n FROM reactions WHERE cible_id = ? GROUP BY emoji").bind(p.id).all<{ emoji: string; n: number }>()).results;
   return {
     personnage: {
       id: p.id, pseudo: p.pseudo, type: p.type, couleur: p.couleur, attributs: JSON.parse(p.attributs), classe: p.classe,
       photos_ok: !!p.photos_ok, est_mj: !!p.est_mj, surconsommation: !!p.surconsommation,
       bloque_jusqu_a: p.bloque_jusqu_a && p.bloque_jusqu_a > new Date(t).toISOString() ? p.bloque_jusqu_a : null,
-      cree_le: p.cree_le, premier_scanne_le: p.premier_scanne_le,
+      cree_le: p.cree_le, premier_scanne_le: p.premier_scanne_le, souvenirs: p.souvenirs,
     },
+    reactions: Object.fromEntries(EMOJIS_REACTION.map((e) => [e, reac.find((x) => x.emoji === e)?.n ?? 0]).filter(([, n]) => n)),
     etiquettes, badges, nb_cartes: nb?.n ?? 0, droits: droits(p, h, t), heures: h,
     medailles: await medaillesDe(env, p.id, h),
     factions: await factionsDe(env, p.id),
@@ -243,6 +271,8 @@ export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Res
     if (p === "/api/etiquette") return ajouterEtiquette(req, env, t, corps);
     if (p === "/api/reintegrer") return reintegrer(req, env, t, corps);
     if (p === "/api/modifier") return modifier(req, env, t, corps);
+    if (p === "/api/reaction") return reagir(req, env, t, corps);
+    if (p === "/api/ecran") return tempsEcran(req, env, t, corps);
     if (p === "/api/installe") {
       // BDG-4 : l'app signale qu'elle tourne installée (display-mode standalone)
       const me = await personnageDe(req, env, t);
@@ -317,19 +347,67 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
       "SELECT 1 AS x FROM etiquettes a JOIN etiquettes b ON a.faction_id = b.faction_id WHERE a.personnage_id = ? AND b.personnage_id = ? LIMIT 1",
     ).bind(me.id, cible).first();
     const badges = memeFaction && (await donnerBadge(env, me.id, "collegue_de_rayon", t)) ? ["collegue_de_rayon"] : [];
-    return enregistrer("nouvelle_carte", { type: "nouvelle_carte", code: e.code, carte, nb_cartes: nb?.n ?? 1, badges }, cible);
+    const m = (await lireParametres(env.DB)).memoire;
+    return enregistrer("nouvelle_carte", {
+      type: "nouvelle_carte", code: e.code, carte, nb_cartes: nb?.n ?? 1, badges,
+      souvenir: souvenirVu(me, carte!, m.seuil_flou), mes_reactions: [],
+    }, cible);
   }
-  // Rescan : compte une fois par fenêtre de 5 min et par paire (RG-005-3) ; paliers ×3, ×6, ×13 (RG-005-2).
-  // Souvenirs et autres effets au LOT-2 (FEAT-005).
+  return dejaVu(env, t, h, me, carte!, e.code, enregistrer);
+}
+
+/**
+ * Rescan (FEAT-005) : compte une fois par fenêtre de 5 min et par paire (RG-005-3) ; paliers ×3, ×6, ×13 (RG-005-2).
+ * Un rescan compté donne +1 souvenir au scanné ; au-delà de N rescans faits dans l'heure, le scanneur en perd 1 (barème §3).
+ */
+async function dejaVu(
+  env: EnvJeu, t: number, h: Record<keyof Heures, string>, me: LignePerso, carte: PersoSouvenir, code: string,
+  enregistrer: (resultat: string, reponse: object, cible: string | null) => Promise<Response>,
+): Promise<Response> {
+  const iso = new Date(t).toISOString(), cible = carte.id;
+  const m = (await lireParametres(env.DB)).memoire;
+  const dejaRescanne = await env.DB.prepare("SELECT 1 AS x FROM scans WHERE scanneur_id = ? AND resultat IN ('deja_vu', 'deja_vu_repete') LIMIT 1").bind(me.id).first();
   const fenetre = new Date(t - FENETRE_RESCAN_MS).toISOString();
   const maj = await env.DB.prepare(
     "UPDATE collection SET nb_scans = nb_scans + 1, dernier_scan_le = ? WHERE possesseur_id = ? AND personnage_id = ? AND dernier_scan_le <= ?",
   ).bind(iso, me.id, cible, fenetre).run();
+  const compte = maj.meta.changes > 0;
   const n = (await env.DB.prepare("SELECT nb_scans AS n FROM collection WHERE possesseur_id = ? AND personnage_id = ?").bind(me.id, cible).first<{ n: number }>())?.n ?? 2;
   const badges: string[] = [];
-  const palier = PALIERS_RESCAN[n];
-  if (maj.meta.changes > 0 && palier && (await donnerBadge(env, me.id, palier, t))) badges.push(palier);
-  return enregistrer("deja_vu", { type: "deja_vu", code: e.code, carte, n, compte: maj.meta.changes > 0, badges }, cible);
+  const palier = compte && PALIERS_RESCAN[n] ? n : null;
+  if (palier && (await donnerBadge(env, me.id, PALIERS_RESCAN[palier], t))) badges.push(PALIERS_RESCAN[palier]);
+
+  let perte = false;
+  if (compte) {
+    await env.DB.prepare("UPDATE personnages SET souvenirs = souvenirs + 1 WHERE id = ?").bind(cible).run(); // RG-005-6
+    const dansLHeure = await env.DB.prepare("SELECT COUNT(*) AS n FROM scans WHERE scanneur_id = ? AND resultat = 'deja_vu' AND horodatage_serveur > ?")
+      .bind(me.id, new Date(t - UNE_HEURE_MS).toISOString()).first<{ n: number }>();
+    if ((dansLHeure?.n ?? 0) >= m.rescans_par_heure) {
+      // Boucle infinie (RG-005-5) : la jauge ne descend pas sous 0 ; à 0, badge « Amnésie »
+      const r = await env.DB.prepare("UPDATE personnages SET souvenirs = souvenirs - 1 WHERE id = ? AND souvenirs > 0").bind(me.id).run();
+      perte = r.meta.changes > 0;
+      me = { ...me, souvenirs: Math.max(0, me.souvenirs - (perte ? 1 : 0)) };
+      if (me.souvenirs === 0 && (await donnerBadge(env, me.id, "amnesie", t))) badges.push("amnesie");
+    }
+  }
+
+  // RG-005-7 « Fermer la boucle » : en fin de soirée (dernière heure avant la révélation et après), rescanner sa toute première personne
+  if (iso >= new Date(Date.parse(h.revelation) - UNE_HEURE_MS).toISOString()) {
+    const premiere = await env.DB.prepare("SELECT personnage_id AS id FROM collection WHERE possesseur_id = ? ORDER BY premier_scan_le LIMIT 1").bind(me.id).first<{ id: string }>();
+    if (premiere?.id === cible && (await donnerBadge(env, me.id, "fermer_boucle", t))) badges.push("fermer_boucle");
+  }
+
+  // ×13 : la liste des heures de scan, comme un ticket de caisse (textes §2)
+  const heures = palier === 13
+    ? [...(await env.DB.prepare("SELECT horodatage_serveur AS h FROM scans WHERE scanneur_id = ? AND cible_id = ? AND resultat IN ('nouvelle_carte', 'deja_vu') ORDER BY horodatage_serveur")
+        .bind(me.id, cible).all<{ h: string }>()).results.map((x) => x.h), iso].slice(-13)
+    : undefined;
+  return enregistrer(compte ? "deja_vu" : "deja_vu_repete", {
+    type: "deja_vu", code, carte, n, compte, badges, palier, heures,
+    premier_rescan: !dejaRescanne, // CA-005-4 : l'invitation ne s'affiche qu'une fois
+    souvenir: souvenirVu(me, carte, m.seuil_flou), souvenirs: me.souvenirs, perte,
+    mes_reactions: await mesReactions(env, me.id, cible),
+  }, cible);
 }
 
 function valider(c: Record<string, unknown>) {
@@ -374,10 +452,11 @@ async function creer(req: Request, env: EnvJeu, t: number, c: Record<string, unk
   // et l'étiquette n'est réclamée que si le personnage vient d'être inséré. D1 exécute le lot en une transaction.
   const r = await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO personnages (id, pseudo, type, couleur, attributs, classe, photos_ok, pin_sel, pin_empreinte, langue, est_mj, cree_le)
-       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM etiquettes WHERE code = ? AND etat = 'vierge')`,
+      `INSERT INTO personnages (id, pseudo, type, couleur, attributs, classe, photos_ok, pin_sel, pin_empreinte, langue, est_mj, cree_le, souvenirs)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM etiquettes WHERE code = ? AND etat = 'vierge')`,
     ).bind(id, tir.pseudo, v.type, v.couleur, JSON.stringify(v.attributs), tir.classe, c.photos ? 1 : 0, sel,
-      await empreintePin(env, sel, String(c.pin)), langueDe(c.langue), e.role === "personnelle_mj" ? 1 : 0, iso, e.code),
+      await empreintePin(env, sel, String(c.pin)), langueDe(c.langue), e.role === "personnelle_mj" ? 1 : 0, iso,
+      (await lireParametres(env.DB)).memoire.depart, e.code),
     env.DB.prepare(
       "UPDATE etiquettes SET etat = 'reclamee', personnage_id = ?, faction_id = ?, reclamee_le = ? WHERE code = ? AND etat = 'vierge' AND EXISTS (SELECT 1 FROM personnages WHERE id = ?)",
     ).bind(id, tir.faction, iso, e.code, id),
@@ -497,10 +576,51 @@ async function collection(req: Request, env: EnvJeu, t: number): Promise<Respons
      FROM collection c JOIN personnages p ON p.id = c.personnage_id
      WHERE c.possesseur_id = ? ORDER BY c.premier_scan_le DESC`,
   ).bind(me.id).all<Record<string, unknown>>();
+  const seuil = (await lireParametres(env.DB)).memoire.seuil_flou;
+  const reac = (await env.DB.prepare("SELECT cible_id AS c, emoji FROM reactions WHERE auteur_id = ? ORDER BY pose_le").bind(me.id).all<{ c: string; emoji: string }>()).results;
   return json({
-    cartes: r.results.map((x) => ({
-      ...x, attributs: JSON.parse(String(x.attributs)), est_mj: !!x.est_mj,
-      factions: x.factions ? String(x.factions).split(",") : [],
-    })),
+    souvenirs: me.souvenirs,
+    cartes: r.results.map((x) => {
+      const attributs = JSON.parse(String(x.attributs));
+      const id = String(x.id);
+      return {
+        ...x, attributs, est_mj: !!x.est_mj,
+        factions: x.factions ? String(x.factions).split(",") : [],
+        souvenir: souvenirVu(me, { id, pseudo: String(x.pseudo), type: String(x.type), couleur: String(x.couleur), attributs }, seuil),
+        mes_reactions: reac.filter((y) => y.c === id).map((y) => y.emoji),
+      };
+    }),
   });
+}
+
+/** Réaction en un toucher sur une carte de sa collection (FEAT-014) ; actif: false la retire (RG-014-4). */
+async function reagir(req: Request, env: EnvJeu, t: number, c: Record<string, unknown>): Promise<Response> {
+  const me = await personnageDe(req, env, t);
+  if (!me) return erreur("sans_personnage", 401);
+  const cible = String(c.cible ?? ""), emoji = String(c.emoji ?? "");
+  if (!EMOJIS_REACTION.includes(emoji)) return erreur("emoji_invalide");
+  const connue = await env.DB.prepare("SELECT 1 AS x FROM collection WHERE possesseur_id = ? AND personnage_id = ?").bind(me.id, cible).first();
+  if (!connue) return erreur("hors_collection", 403);
+  if (c.actif === false) {
+    await env.DB.prepare("DELETE FROM reactions WHERE auteur_id = ? AND cible_id = ? AND emoji = ?").bind(me.id, cible, emoji).run();
+  } else {
+    await env.DB.prepare("INSERT OR IGNORE INTO reactions (auteur_id, cible_id, emoji, pose_le) VALUES (?, ?, ?, ?)").bind(me.id, cible, emoji, new Date(t).toISOString()).run();
+  }
+  return json({ mes_reactions: await mesReactions(env, me.id, cible) });
+}
+
+/**
+ * Temps d'écran (RG-015-4) : l'app envoie les secondes passées au premier plan depuis son dernier envoi.
+ * Le cumul ne dépasse jamais le temps réellement écoulé depuis la création du personnage (et s'arrête à la fin du jeu).
+ */
+async function tempsEcran(req: Request, env: EnvJeu, t: number, c: Record<string, unknown>): Promise<Response> {
+  const me = await personnageDe(req, env, t);
+  if (!me) return erreur("sans_personnage", 401);
+  const s = Math.floor(Number(c.secondes));
+  if (!Number.isFinite(s) || s <= 0) return json({ temps_ecran_s: me.temps_ecran_s });
+  const h = await heuresIso(env.DB);
+  const plafond = Math.max(0, Math.floor((Math.min(t, Date.parse(h.fin)) - Date.parse(me.cree_le)) / 1000));
+  await env.DB.prepare("UPDATE personnages SET temps_ecran_s = MIN(temps_ecran_s + ?, ?) WHERE id = ?").bind(Math.min(s, 6 * 3600), plafond, me.id).run();
+  const r = await env.DB.prepare("SELECT temps_ecran_s AS s FROM personnages WHERE id = ?").bind(me.id).first<{ s: number }>();
+  return json({ temps_ecran_s: r?.s ?? 0 });
 }

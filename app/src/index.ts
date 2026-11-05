@@ -1,7 +1,7 @@
 // Worker « Déjà vu ! » : application du joueur (/api/*), étiquettes et panneau du MJ.
 import { debutConnexion, deconnexion, retourConnexion, utilisateurConnecte, type EnvAuth } from "./auth";
 import { genererCodes, normaliserCode } from "./codes";
-import { ecrireConfig, lireConfig, type CleConfig } from "./config";
+import { ecrireConfig, lireConfig, lireParametres, type CleConfig } from "./config";
 import { csvNiimbot } from "./csv";
 import { langue, pageAdmin, pageApp, pageConnexion, type Compte, type EtiquetteVue, type Lot } from "./pages";
 import { definirPin, routeApi } from "./jeu";
@@ -153,7 +153,7 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     if (url.pathname === "/admin/partie-zero") {
       if (String(f.get("confirmation")).trim().toUpperCase() !== "ZERO") return retour({ erreur: "Confirmation manquante : rien n'a été effacé." });
       await env.DB.batch([
-        ...["appareils", "scans", "collection", "badges", "pin_essais", "personnages"].map((x) => env.DB.prepare(`DELETE FROM ${x}`)),
+        ...["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "personnages"].map((x) => env.DB.prepare(`DELETE FROM ${x}`)),
         env.DB.prepare("UPDATE etiquettes SET etat = 'vierge', personnage_id = NULL, faction_id = NULL, reclamee_le = NULL WHERE etat = 'reclamee'"),
       ]);
       await journal(env, email, "partie_zero", {});
@@ -216,7 +216,7 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       cartes: (await env.DB.prepare("SELECT COUNT(*) AS n FROM collection").first<{ n: number }>())?.n ?? 0,
     },
     heures: await lireConfig(env.DB, "heures"),
-    parametres: await lireConfig(env.DB, "parametres"),
+    parametres: await lireParametres(env.DB),
     message: url.searchParams.get("message") || undefined,
     erreur: url.searchParams.get("erreur") || undefined,
   });

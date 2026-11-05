@@ -21,6 +21,8 @@ export const PARAMETRES_PAR_DEFAUT = {
   legendaires: { melange_min: 20, dernier_exemplaire: ["21:00", "00:00", "03:00"] },
   pieges: { blocage_min: [1, 5] },
   surconsommation: { max_factions: 3 },
+  // Barème §3 (DEC-031) : jauge de départ, rescans faits par heure glissante avant de perdre des souvenirs, seuil du flou
+  memoire: { depart: 10, rescans_par_heure: 10, seuil_flou: 5 },
 };
 
 export type Heures = typeof HEURES_PAR_DEFAUT;
@@ -44,4 +46,15 @@ export async function ecrireConfig(db: D1Database, cle: CleConfig, valeur: unkno
     )
     .bind(cle, JSON.stringify(valeur))
     .run();
+}
+
+/** Paramètres enregistrés, complétés par les valeurs par défaut des sections ajoutées depuis (ex. memoire au LOT-2). */
+export async function lireParametres(db: D1Database): Promise<typeof PARAMETRES_PAR_DEFAUT> {
+  const p = ((await lireConfig(db, "parametres")) ?? {}) as Partial<typeof PARAMETRES_PAR_DEFAUT>;
+  const r: Record<string, unknown> = { ...PARAMETRES_PAR_DEFAUT };
+  for (const [k, v] of Object.entries(p)) {
+    const d = (PARAMETRES_PAR_DEFAUT as Record<string, unknown>)[k];
+    r[k] = d && typeof d === "object" && !Array.isArray(d) && v && typeof v === "object" ? { ...d, ...v } : v;
+  }
+  return r as typeof PARAMETRES_PAR_DEFAUT;
 }

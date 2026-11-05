@@ -22,7 +22,7 @@ Revoir quelqu'un est **le cœur du thème**. Scanner de nouveau une personne aff
 | RG-005-4 | Certaines étiquettes peuvent avoir des easter eggs propres, déclenchés après N rescans de ce badge précis. | Confirmé (S1 : « mettre des easter egg si tu scannes un certain nombre de fois certains badges ») |
 | RG-005-5 | Une **Boucle infinie** (joueur qui rescanne beaucoup) **perd des souvenirs**, selon la proposition ci-dessous. | Confirmé (S3, S5) ; valeurs : [barème §3](../bareme.md#3-mémoire-et-rôles-gagnés) |
 | RG-005-6 | Une **Célébrité** ou un **Fantôme** (joueur très rescanné) **accumule des souvenirs**. | Confirmé (S3, S5) |
-| RG-005-7 | Mission « Fermer la boucle » : en fin de soirée, rescanner la toute première personne scannée. | Confirmé (S2 → S3) |
+| RG-005-7 | Mission « Fermer la boucle » : en fin de soirée, rescanner la toute première personne scannée. | Confirmé (S2 → S3) ; « fin de soirée » = à partir d'une heure avant la révélation (4 h) : Proposition |
 | RG-005-8 | Un rescan compté alimente la quête collective, environ un quart d'un nouveau scan. | Confirmé (S5, [DEC-032](../decisions.md#dec-032)) |
 
 > **Modèle retenu ([DEC-031](../decisions.md#dec-031)).** Un « souvenir » serait une unité de score (une jauge de mémoire). La Boucle infinie perd 1 souvenir par rescan au-delà de X dans l'heure. Le joueur rescanné gagne 1 souvenir par rescan reçu. Les **faux souvenirs** déjà obtenus deviendraient flous (texte partiellement effacé, `▒▒▒`) au lieu d'être supprimés. Les valeurs de X restent des propositions, réglables dans l'admin.

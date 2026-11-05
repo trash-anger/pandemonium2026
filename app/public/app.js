@@ -162,12 +162,12 @@
         ["👯", "<b>Quelqu'un dans Pandémonium te ressemble un peu trop.</b> Premiers indices à minuit."],
         ["🕔", "<b>5 h : révélation</b> pour tout Pandémonium. Les classements se figent, les médailles restent."]],
       pouls: (j, r) => `⚡ <b>${j} joueur${j > 1 ? "s" : ""}</b> déjà dans la partie${r ? ` · record : <b>${r} carte${r > 1 ? "s" : ""}</b>` : ""}.`,
-      missionTitre: "🎯 Ta première mission", missionSuivante: "🎯 Mission suivante", missionFaite: "✅ Mission accomplie !", missionsToutes: "Toutes les missions de départ sont accomplies. Chapeau.",
+      missionTitre: "🎯 Ta première mission", missionSuivante: "🎯 Mission suivante", missionFaite: "✅ Mission accomplie !", missionsToutes: "Toutes les missions de départ sont accomplies. Chapeau.", missionsActives: "Missions actives", missionMJ: "MJ",
       missionAide: { installe_portail: "Suis les étapes d'installation, puis ouvre l'app depuis ton écran d'accueil.",
         collegue_de_rayon: (f) => `Trouve quelqu'un de ${f} et scanne son étiquette.`,
         boucle_detectee: "Scanne la même personne 3 fois, à 5 minutes d'écart au moins.",
         trans_classe: "Va dans <b>Moi</b> et change de classe avant 1 h." },
-      premierScan: "📷 Scanner ma première personne", scannerQqn: "📷 Scanner quelqu'un",
+      premierScanBouton: "📷 Scanner ma première personne", scannerQqn: "📷 Scanner quelqu'un",
       cestParti: "C'est parti",
       // Accueil (textes §5.2)
       maintenant: "Et maintenant ?",
@@ -293,12 +293,12 @@
         ["👯", "<b>Someone in Pandémonium looks a little too much like you.</b> First clues at midnight."],
         ["🕔", "<b>5 a.m.: the reveal</b> for all of Pandémonium. Rankings freeze, medals stay."]],
       pouls: (j, r) => `⚡ <b>${j} player${j === 1 ? "" : "s"}</b> already in the game${r ? ` · record: <b>${r} card${r === 1 ? "" : "s"}</b>` : ""}.`,
-      missionTitre: "🎯 Your first mission", missionSuivante: "🎯 Next mission", missionFaite: "✅ Mission complete!", missionsToutes: "All starter missions complete. Hats off.",
+      missionTitre: "🎯 Your first mission", missionSuivante: "🎯 Next mission", missionFaite: "✅ Mission complete!", missionsToutes: "All starter missions complete. Hats off.", missionsActives: "Active missions", missionMJ: "GM",
       missionAide: { installe_portail: "Follow the install steps, then open the app from your home screen.",
         collegue_de_rayon: (f) => `Find someone from ${f} and scan their tag.`,
         boucle_detectee: "Scan the same person 3 times, at least 5 minutes apart.",
         trans_classe: "Go to <b>Me</b> and change your class before 1 a.m." },
-      premierScan: "📷 Scan my first person", scannerQqn: "📷 Scan someone",
+      premierScanBouton: "📷 Scan my first person", scannerQqn: "📷 Scan someone",
       cestParti: "Let's go",
       maintenant: "What now?",
       mBloque: (m) => `Scanner locked for ${m} more min. Patience, loyal customer.`,
@@ -576,25 +576,39 @@
     const dispo = (m) => !gagnes.has(m) && (m !== "trans_classe" || d.droits.classe) && (m !== "collegue_de_rayon" || (d.factions || []).length);
     return { premiere: ordre[0], faite: gagnes.has(ordre[0]), courante: ordre.find(dispo) || null };
   }
+  /** Une mission de départ (badge) : emoji, nom, aide personnalisée. */
+  function ligneMission(d, id) {
+    const b = BADGES[id], aide = t.missionAide[id];
+    const fac = (d.factions || []).map((f) => FACTIONS[f]).filter(Boolean).map((f) => `<b>${f.e} ${esc(lib(f))}</b>`).join(L === "en" ? " or " : " ou ");
+    return `<div class="mission"><span class="e">${b[0]}</span><div><b>${L === "en" ? b[2] : b[1]}</b><small>${typeof aide === "function" ? aide(fac) : aide}</small></div></div>`;
+  }
+  /** Missions actives (onglet Collection) : mission du MJ (ADM-19, LOT-6) puis mission de départ. Vide s'il n'y en a aucune. */
+  function blocMissions(d) {
+    const lignes = [];
+    if (d.mission_mj) { // forme attendue au LOT-6 : { titre, condition, fin }
+      const mm = d.mission_mj;
+      lignes.push(`<div class="mission"><span class="e">🏷️</span><div><b>${esc(mm.titre)} <span class="chip or">${t.missionMJ}</span></b><small>${esc(mm.condition)}</small>
+        ${mm.fin ? `<div class="compte" data-fin="${esc(mm.fin)}"></div>` : ""}</div></div>`);
+    }
+    const m = missionDe(d);
+    if (m.courante) lignes.push(ligneMission(d, m.courante));
+    return lignes.length ? `<div class="boite mission-boite"><p class="titre-inst" style="color:var(--pink);font-size:17px">🎯 ${t.missionsActives}</p>${lignes.join('<hr class="sep">')}</div>` : "";
+  }
+
   async function tutoriel() {
     const d = await chargerMoi().catch(() => null);
     const regles = `<ul class="liste tuto">${t.tuto.map(([e, l]) => `<li><span class="e">${e}</span><span>${l}</span></li>`).join("")}</ul>`;
-    if (!d || !d.personnage) return rendre(`<h2>${t.tutoTitre}</h2>${regles}<a class="bouton" href="/saisie" data-nav>${t.premierScan}</a>`);
+    if (!d || !d.personnage) return rendre(`<h2>${t.tutoTitre}</h2>${regles}<a class="bouton" href="/saisie" data-nav>${t.premierScanBouton}</a>`);
     const pe = d.personnage, ty = typeDe(pe.type), cl = CLASSES[pe.classe];
     const mesFactions = (d.factions || []).map((f) => FACTIONS[f]).filter(Boolean);
     const m = missionDe(d);
-    let mission = `<p class="petit">${t.missionsToutes}</p>`;
-    if (m.courante) {
-      const b = BADGES[m.courante], aide = t.missionAide[m.courante];
-      const fac = mesFactions.map((f) => `<b>${f.e} ${esc(lib(f))}</b>`).join(L === "en" ? " or " : " ou ");
-      mission = `${m.faite ? `<p class="ok petit" style="margin:0 0 6px">${t.missionFaite}</p>` : ""}
-        <div class="mission"><span class="e">${b[0]}</span><div><b>${L === "en" ? b[2] : b[1]}</b><small>${typeof aide === "function" ? aide(fac) : aide}</small></div></div>`;
-    }
+    const mission = (m.courante ? (m.faite ? `<p class="ok petit" style="margin:0 0 6px">${t.missionFaite}</p>` : "") + ligneMission(d, m.courante) : "")
+      || `<p class="petit">${t.missionsToutes}</p>`;
     rendre(`<p class="perso-ligne"><span>${ty.e}</span> <b>${esc(pe.pseudo)}</b> · ${mesFactions.map((f) => f.e).join(" ")}${cl ? ` · ${esc(L === "en" ? cl[1] : cl[0])}` : ""}</p>
       <h2 style="margin-top:4px">${t.tutoTitre}</h2>
       ${d.partie && d.partie.joueurs > 1 ? `<p class="pouls">${t.pouls(d.partie.joueurs, d.partie.record)}</p>` : ""}
       <div class="boite mission-boite"><p class="titre-inst" style="color:var(--pink)">${m.faite || !m.courante ? t.missionSuivante : t.missionTitre}</p>${mission}</div>
-      <a class="bouton" href="/saisie" data-nav style="margin-top:0">${d.nb_cartes ? t.scannerQqn : t.premierScan}</a>
+      <a class="bouton" href="/saisie" data-nav style="margin-top:0">${d.nb_cartes ? t.scannerQqn : t.premierScanBouton}</a>
       ${regles}`, { onglet: "moi" });
   }
   // BDG-4 : l'app installée se signale une fois (le badge s'affiche dans Médailles)
@@ -833,12 +847,13 @@
 
   // ---------- Collection (FEAT-004) ----------
   async function collection() {
-    if (!etat.moi && !(await chargerMoi())) return aller("/", true);
+    if (!(await chargerMoi())) return aller("/", true);
     rendre(`<h2>${t.collectionTitre}</h2><p class="chargement">${t.lecture}</p>`, { onglet: "collection" });
     let r;
     try { r = await api("/api/collection"); } catch (e) { return ecranErreur(e, collection); }
-    if (!r.cartes.length) return rendre(`<h2>${t.collectionTitre}</h2><p class="maintenant">${t.vide}</p><a class="bouton" href="/saisie" data-nav>📷 ${t.scanner}</a>`, { onglet: "collection" });
-    rendre(`<h2>${t.collectionTitre} · ${r.cartes.length}</h2><div class="grille-cartes">${r.cartes.map((c, i) => `<button class="mini" data-i="${i}" style="--teinte:${couleurDe(c.couleur).hex}">
+    const missions = etat.moi && etat.moi.personnage ? blocMissions(etat.moi) : "";
+    if (!r.cartes.length) return rendre(`<h2>${t.collectionTitre}</h2>${missions}<p class="maintenant">${t.vide}</p><a class="bouton" href="/saisie" data-nav>📷 ${t.scanner}</a>`, { onglet: "collection" });
+    rendre(`<h2>${t.collectionTitre} · ${r.cartes.length}</h2>${missions}<div class="grille-cartes">${r.cartes.map((c, i) => `<button class="mini" data-i="${i}" style="--teinte:${couleurDe(c.couleur).hex}">
         ${c.nb_scans > 1 ? `<span class="n">×${c.nb_scans}</span>` : ""}<div class="e">${typeDe(c.type).e}</div><div class="pseudo">${esc(c.pseudo)}</div></button>`).join("")}</div>`, { onglet: "collection" });
     app.querySelectorAll(".mini").forEach((x) => (x.onclick = () => {
       const c = r.cartes[+x.dataset.i];

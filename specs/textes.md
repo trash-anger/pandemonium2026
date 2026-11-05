@@ -298,6 +298,8 @@ Ordre de l'écran :
 > 🕔 **5 h : révélation** pour tout Pandémonium. Les classements se figent, les médailles restent.
 6. **Bouton :** « 📷 Scanner ma première personne » (puis « 📷 Scanner quelqu'un »), qui ouvre directement le scanner.
 
+**Onglet Collection** : en tête, un encadré « 🎯 Missions actives » / "Active missions" liste la mission personnelle confiée par le MJ ([ADM-19](fonctionnalites/admin.md), LOT-6), marquée « MJ » avec son compte à rebours, puis la mission de départ en cours. L'encadré disparaît quand il n'y a aucune mission active.
+
 **Missions de départ** : les badges les plus faciles à démarrer. Chaque joueur commence par une mission différente (rotation selon son identifiant) ; une mission indisponible ou déjà gagnée passe à la suivante. Si l'app est déjà installée (badge acquis ou app ouverte depuis l'écran d'accueil), la mission « Téléporteur installé » n'est jamais distribuée : le joueur reçoit d'office une autre mission.
 
 | Mission | Badge | Aide FR | Aide EN |

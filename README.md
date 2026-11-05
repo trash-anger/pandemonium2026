@@ -87,6 +87,7 @@ Le costume de Florian est fait de fausses étiquettes de vêtements. Il les port
 | 10 | [Décisions](specs/decisions.md) | Journal des décisions (`DEC-xxx`) |
 | 11 | [Questions ouvertes](specs/questions-ouvertes.md) | Arbitrages nécessaires (`Q-xxx`) |
 | 12 | [Plan d'implémentation](specs/plan-implementation.md) | Lots progressifs et traçabilité |
+| 13 | [Textes du jeu](specs/textes.md) | Libellés, easter eggs et faux souvenirs (FR/EN) |
 
 ## Conventions
 

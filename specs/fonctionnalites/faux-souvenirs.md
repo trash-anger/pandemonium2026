@@ -30,7 +30,7 @@ Chaque scan entre deux personnes génère un **souvenir commun absurde**, comme 
 | `{détail_B}` | « L'autre avait du maquillage vert, mais en solde. » | attributs de B |
 | `{chute}` | « Personne n'en a jamais reparlé. » | hash de la paire |
 
-Environ **40 gabarits**, en français et en anglais, rédigés par l'assistant et relus par Florian ([DEC-042](../decisions.md#dec-042)). Ton : allusions, rien d'explicite ([DEC-049](../decisions.md#dec-049)).
+Environ **40 gabarits**, en français et en anglais, rédigés par l'assistant et relus par Florian ([DEC-042](../decisions.md#dec-042)) : voir [textes §3](../textes.md#3-faux-souvenirs). Ton : allusions, rien d'explicite ([DEC-049](../decisions.md#dec-049)).
 
 ## Propositions non validées (S2)
 - **Ta vie antérieure :** en fin de soirée, tous les souvenirs d'un joueur forment une biographie chronologique.

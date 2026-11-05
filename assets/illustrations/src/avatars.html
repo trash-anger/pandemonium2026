@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<link rel="stylesheet" href="kit.css">
+<style>
+body{width:1360px;height:870px;padding:56px 56px 0}
+h2{font-size:15px;letter-spacing:.2em;color:var(--pink);font-family:var(--mono);font-weight:700;text-transform:uppercase}
+h1{font-size:46px;margin:10px 0 6px}
+.sub{color:var(--muted);font-size:17px;margin-bottom:34px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:26px 30px}
+.pack{position:relative;height:290px;border-radius:18px;padding:22px 16px 16px;
+  background:linear-gradient(160deg,#ff6f9f 0%,#ff4f8b 40%,#a80036 100%);
+  box-shadow:0 16px 34px rgba(0,0,0,.6), inset 0 0 0 2px rgba(255,255,255,.15)}
+.pack:nth-child(even){background:linear-gradient(160deg,#2a2633 0%,#1e1a27 60%,#0b0a0f 100%);box-shadow:0 16px 34px rgba(0,0,0,.6),inset 0 0 0 2px rgba(255,79,139,.6)}
+.hole{position:absolute;top:10px;left:50%;width:42px;height:12px;margin-left:-21px;border-radius:8px;background:var(--bg)}
+.blister{position:relative;margin:12px auto 0;width:186px;height:170px;border-radius:40px 40px 26px 26px;
+  background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,.06) 40%,rgba(255,255,255,.12));
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.45),inset 0 -14px 26px rgba(0,0,0,.25);display:grid;place-items:center;overflow:hidden}
+.blister::after{content:"";position:absolute;left:18px;top:10px;width:30px;height:120px;border-radius:20px;background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,0));transform:rotate(14deg)}
+.name{margin-top:14px;display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.name b{font-family:var(--display);font-size:17px;text-transform:uppercase;letter-spacing:.01em;color:#fff}
+.pack:nth-child(even) .name b{color:var(--fg)}
+.name i{font-style:normal;font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--gold);padding:3px 6px;font-weight:700;white-space:nowrap}
+.meta{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:rgba(255,255,255,.75);margin-top:5px}
+.emo{position:absolute;right:12px;top:24px;font-size:22px}
+.g1{transform:translateX(-3px);filter:drop-shadow(4px 0 0 rgba(61,255,138,.6)) drop-shadow(-4px 0 0 rgba(255,79,139,.6))}
+</style></head>
+<body class="scan">
+<h2>Proposition graphique · rayon costumes</h2>
+<h1 class="disp glitch-soft">8 types, 8 avatars en blister</h1>
+<p class="sub">Le type choisi à la création devient l'avatar du personnage. Brillant, rose, emballé comme un jouet en solde.</p>
+<div class="grid" id="g"></div>
+<script src="kit.js"></script>
+<script>
+const g=document.getElementById('g');
+Object.entries(TYPES).forEach(([k,t],i)=>{
+  g.insertAdjacentHTML('beforeend',`<div class="pack"><div class="hole"></div><span class="emo">${t.emoji}</span>
+  <div class="blister"><div class="${i===3?'g1':''}">${avatar(k,'a'+i,150)}</div></div>
+  <div class="name"><b>${t.fr}</b><i>${t.price}</i></div>
+  <div class="meta">SÉRIE A-H 2026 · RÉF. ${String(i+1).padStart(2,'0')}/08</div></div>`);
+});
+</script>
+</body></html>

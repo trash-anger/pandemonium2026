@@ -2,15 +2,44 @@
 
 Ces visuels illustrent le concept en tête du [README](../../README.md).
 
-**Statut : proposition à valider.** Ils ont été générés pour ce dépôt (HTML/SVG rendus en images) par l'assistant de spécification. Ce ne sont **pas** des photos réelles, des captures d'une application existante ni des maquettes validées. Les QR codes encodent des URL d'exemple (`https://p.uyt.re/<code>`) qui ne mènent encore à rien.
+**Statut : proposition graphique** (S11). Ils ont été générés pour ce dépôt par l'assistant de spécification, en HTML, CSS et SVG rendus en images. Ce ne sont **pas** des photos réelles, des captures d'une application existante ni des maquettes validées. Les QR codes sont factices. La direction graphique définitive sera travaillée dans une phase ultérieure.
 
-| Fichier | Illustre | Aide à comprendre | Source | Licence |
-|---------|----------|-------------------|--------|---------|
-| `hero.webp` | [Vision](../../specs/vision.md), [Univers et ton](../../specs/univers-et-ton.md) | L'idée d'ensemble : des étiquettes de vêtements à QR code | Générée (Claude) | Apache 2.0, comme le dépôt |
-| `scene.webp` | [FEAT-002](../../specs/fonctionnalites/scan.md), [FEAT-004](../../specs/fonctionnalites/collection.md), [FEAT-006](../../specs/fonctionnalites/faux-souvenirs.md) | Le geste : scanner l'étiquette portée par quelqu'un d'autre | Générée (Claude) | Apache 2.0 |
-| `etiquette.webp` | [FEAT-001](../../specs/fonctionnalites/etiquettes-impression.md) | L'objet physique : recto (QR d'un pouce et code court), verso humoristique | Générée (Claude) | Apache 2.0 |
-| `ecrans.webp` | [FEAT-003](../../specs/fonctionnalites/personnage.md), [FEAT-005](../../specs/fonctionnalites/rescan-deja-vu.md), [FEAT-008](../../specs/fonctionnalites/chat-noir.md), [FEAT-010](../../specs/fonctionnalites/duel.md), [FEAT-014](../../specs/fonctionnalites/reactions.md) | Quatre moments du jeu à l'écran | Générée (Claude) | Apache 2.0 |
-| `roles.webp` | [FEAT-003](../../specs/fonctionnalites/personnage.md), [FEAT-005](../../specs/fonctionnalites/rescan-deja-vu.md), [FEAT-007](../../specs/fonctionnalites/jumeaux.md), [FEAT-008](../../specs/fonctionnalites/chat-noir.md), [FEAT-015](../../specs/fonctionnalites/badges-classements.md) | Les rôles cachés et les rôles gagnés, à la manière du Loup-garou ([Q-034](../../specs/questions-ouvertes.md#q-034)) | Générée (Claude) | Apache 2.0 |
-| `constellation.webp` | [FEAT-009](../../specs/fonctionnalites/quete-collective.md), [FEAT-011](../../specs/fonctionnalites/factions.md) | La quête collective et la révélation finale | Générée (Claude) | Apache 2.0 |
+## Direction graphique proposée
 
-Les emoji des images sont rendus avec la police Noto Color Emoji (licence OFL). Les textes, les noms de personnages et les chiffres sont fictifs : 3 h, 500 connexions et les factions A, B, C restent à préciser ([Q-001](../../specs/questions-ouvertes.md#q-001), [Q-021](../../specs/questions-ouvertes.md#q-021), [Q-014](../../specs/questions-ouvertes.md#q-014)).
+Inspirée du [teaser](../../teaser/README.md) :
+
+- **Couleurs** : fond presque noir (`#0b0a0f`), crème (`#efe9df`), rose soldes (`#ff4f8b`), vert Matrice (`#3dff8a`), manille (`#d9b98a`) et doré (`#ffd166`) pour les légendaires et le jumeau.
+- **Glitch** : titres en Arial Black décalés de rose et de vert, tranches découpées, lignes de balayage.
+- **Surveillance de magasin** : cadre « REC · CAM 07 », boîtes de détection, horodatage.
+- **Avatars** : un avatar brillant par type de costume, emballé comme un jouet en blister avec un prix soldé.
+- **Consommation, Halloween et D&D** : bandeaux de soldes, tickets de caisse, factions à alignement.
+
+## Fichiers
+
+| Fichier | Illustre | Source |
+|---------|----------|--------|
+| `hero.webp` | [Vision](../../specs/vision.md), [Univers et ton](../../specs/univers-et-ton.md) | `src/hero.html` |
+| `scene.webp` | [FEAT-002](../../specs/fonctionnalites/scan.md), [FEAT-004](../../specs/fonctionnalites/collection.md), [FEAT-006](../../specs/fonctionnalites/faux-souvenirs.md) : le geste, scanner l'étiquette portée par quelqu'un d'autre | `src/scene.html` |
+| `avatars.webp` | [FEAT-003](../../specs/fonctionnalites/personnage.md), [textes §1.1](../../specs/textes.md#11-types-de-costume-feat-003) | `src/avatars.html` |
+| `etiquette.webp` | [FEAT-001](../../specs/fonctionnalites/etiquettes-impression.md), [FEAT-022](../../specs/fonctionnalites/costume-mj.md) | `src/etiquette.html` |
+| `ecrans.webp` | [FEAT-003](../../specs/fonctionnalites/personnage.md), [Interface §2bis](../../specs/interface.md#2bis-accueil-et-tutoriel), [FEAT-006](../../specs/fonctionnalites/faux-souvenirs.md), [FEAT-008](../../specs/fonctionnalites/chat-noir.md) | `src/ecrans.html` |
+| `roles.webp` | [FEAT-007](../../specs/fonctionnalites/jumeaux.md), [FEAT-008](../../specs/fonctionnalites/chat-noir.md), [FEAT-011](../../specs/fonctionnalites/factions.md), [FEAT-015](../../specs/fonctionnalites/badges-classements.md), [FEAT-022](../../specs/fonctionnalites/costume-mj.md) | `src/roles.html` |
+| `constellation.webp` | [FEAT-009](../../specs/fonctionnalites/quete-collective.md) (RG-009-13 à RG-009-16) | `src/constellation.html` |
+
+Licence : Apache 2.0, comme le dépôt. Les emoji sont rendus avec la police du système. Les noms, chiffres et pseudos sont fictifs. La silhouette d'étiquette dans `constellation.webp` remplace le dessin caché, que Florian définira plus tard.
+
+## Régénérer
+
+Il faut Google Chrome et `cwebp` (`brew install webp`). Depuis `src/` :
+
+```sh
+./render.sh hero 1360 640
+./render.sh scene 1360 700
+./render.sh avatars 1360 870
+./render.sh etiquette 1360 700
+./render.sh ecrans 1360 760
+./render.sh roles 1360 790
+./render.sh constellation 1360 780
+```
+
+`kit.css` contient la palette et les effets communs ; `kit.js` dessine les 8 avatars (`avatar(type)`) et les QR factices.

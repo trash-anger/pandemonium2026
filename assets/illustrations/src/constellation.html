@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<link rel="stylesheet" href="kit.css">
+<style>
+body{width:1360px;height:780px;background:radial-gradient(ellipse at 50% 55%,#1d1020,var(--bg) 70%)}
+#c{position:absolute;left:0;top:0}
+.hud{position:absolute;left:44px;top:36px;z-index:5}
+.hud .big{font-family:var(--display);font-size:46px;line-height:1;text-shadow:-3px 0 var(--pink),3px 0 var(--green)}
+.bar{width:330px;height:8px;border-radius:4px;background:#2a2633;margin-top:16px;overflow:hidden}
+.bar i{display:block;height:100%;width:80%;background:linear-gradient(90deg,var(--pink),var(--green))}
+.small{font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--muted);margin-top:8px}
+.ctrl{position:absolute;right:44px;top:40px;display:flex;flex-direction:column;gap:10px;z-index:5}
+.ctrl span{font-family:var(--mono);font-size:13px;background:rgba(21,19,28,.9);border:1.5px solid #3a3445;padding:9px 14px;border-radius:10px;letter-spacing:.06em}
+.ctrl span.on{border-color:var(--pink);color:var(--pink)}
+.loupe{position:absolute;right:60px;bottom:52px;width:300px;height:300px;border-radius:50%;overflow:hidden;z-index:6;
+  border:3px solid var(--pink);box-shadow:0 0 40px rgba(255,79,139,.4);background:#100c14}
+.loupe .zl{position:absolute;left:0;right:0;top:12px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--pink);letter-spacing:.14em;z-index:2}
+.leg{position:absolute;left:44px;bottom:40px;z-index:5;font-family:var(--mono);font-size:12.5px;color:var(--muted);line-height:1.9;letter-spacing:.06em}
+.leg b{color:var(--fg)}
+.sw{display:inline-block;width:22px;height:0;vertical-align:middle;margin-right:8px;border-top:2px solid var(--pink)}
+</style></head>
+<body class="scan">
+<canvas id="c" width="2720" height="1560" style="width:1360px;height:780px"></canvas>
+<div class="hud">
+  <span class="chip">05:00 · Révélation</span>
+  <div class="big" style="margin-top:14px">La constellation</div>
+  <div class="bar"><i></i></div>
+  <div class="small">PALIER 4/5 · 6 870 CONNEXIONS · IMAGE NETTE À 80 %</div>
+</div>
+<div class="ctrl"><span class="on">◎ Me retrouver</span><span>⤢ Vue d'ensemble</span><span>＋ ／ －</span></div>
+<div class="loupe"><div class="zl">ZOOM ×6</div><canvas id="z" width="600" height="600" style="width:300px;height:300px"></canvas></div>
+<div class="leg">
+  <div><span class="sw"></span><b>tes rencontres</b> s'allument, le reste s'atténue</div>
+  <div><span class="sw" style="border-top:2px dashed var(--gold)"></span><b>ton jumeau</b>, retrouvé</div>
+  <div>● couleur = faction · le dessin caché se forme avec les paliers</div>
+</div>
+<script src="kit.js"></script>
+<script>
+let s=42;const R=()=>((s=(s*9301+49297)%233280)/233280);
+const W=1360,H=780,FC=['#9ec5ff','#ff7a3d','#3dff8a','#ff4f8b','#b58cff'];
+// contour d'une étiquette de prix (dessin caché, simple placeholder)
+const cx=640,cy=410,tw=300,th=420;
+const outline=[[cx-tw/2,cy-th/2+70],[cx-tw/2+70,cy-th/2],[cx+tw/2-70,cy-th/2],[cx+tw/2,cy-th/2+70],[cx+tw/2,cy+th/2],[cx-tw/2,cy+th/2],[cx-tw/2,cy-th/2+70]];
+function onOutline(t){let L=[],tot=0;for(let i=0;i<outline.length-1;i++){const a=outline[i],b=outline[i+1],l=Math.hypot(b[0]-a[0],b[1]-a[1]);L.push(l);tot+=l}
+ let d=t*tot;for(let i=0;i<L.length;i++){if(d<=L[i]){const a=outline[i],b=outline[i+1],k=d/L[i];return[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k]}d-=L[i]}return outline[0]}
+const N=340,nodes=[];
+const groups=[];for(let g=0;g<26;g++)groups.push([160+R()*1040,120+R()*580]);
+for(let i=0;i<N;i++){const g=groups[i%26];let x=g[0]+(R()-.5)*170,y=g[1]+(R()-.5)*150,form=false;
+ if(R()<.62){const p=onOutline(R());const k=.93;x=x*(1-k)+p[0]*k+(R()-.5)*9;y=y*(1-k)+p[1]*k+(R()-.5)*9;form=true}
+ nodes.push({x,y,g:i%26,f:Math.floor(R()*5),form})}
+// hole of the tag
+for(let i=0;i<14;i++){const a=i/14*Math.PI*2;nodes.push({x:cx+Math.cos(a)*26,y:cy-th/2+80+Math.sin(a)*26,g:0,f:Math.floor(R()*5),form:true})}
+const edges=[];
+for(let i=0;i<nodes.length;i++){for(let k=0;k<4;k++){let j=Math.floor(R()*nodes.length);
+ const d=Math.hypot(nodes[i].x-nodes[j].x,nodes[i].y-nodes[j].y);if(d<170||R()<.05)edges.push([i,j])}}
+const me=nodes.findIndex((n,i)=>i>40&&n.form&&n.x<cx-60&&n.y>cy);
+const twin=nodes.findIndex((n,i)=>n.form&&n.x>cx+100&&n.y<cy);
+const c=document.getElementById('c').getContext('2d');c.scale(2,2);
+function draw(ctx,dim){
+ edges.forEach(([a,b])=>{const A=nodes[a],B=nodes[b];const mine=a===me||b===me;
+  ctx.strokeStyle=mine?'rgba(255,79,139,.9)':`rgba(170,164,182,${dim})`;ctx.lineWidth=mine?1.6:.6;
+  ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.stroke()});
+ nodes.forEach((n,i)=>{ctx.fillStyle=FC[n.f];ctx.globalAlpha=n.form?.95:.55;ctx.beginPath();ctx.arc(n.x,n.y,n.form?2.8:2.2,0,7);ctx.fill()});
+ ctx.globalAlpha=1}
+draw(c,.09);
+// jumeau
+const M=nodes[me],T=nodes[twin];
+c.setLineDash([6,6]);c.strokeStyle='#ffd166';c.lineWidth=2;c.beginPath();c.moveTo(M.x,M.y);c.quadraticCurveTo((M.x+T.x)/2,Math.min(M.y,T.y)-120,T.x,T.y);c.stroke();c.setLineDash([]);
+c.fillStyle='#ffd166';c.beginPath();c.arc(T.x,T.y,6,0,7);c.fill();
+c.font='600 12px ui-monospace,Menlo';c.fillText('TON JUMEAU',T.x+10,T.y-8);
+// toi
+const g=c.createRadialGradient(M.x,M.y,0,M.x,M.y,34);g.addColorStop(0,'rgba(255,79,139,.9)');g.addColorStop(1,'rgba(255,79,139,0)');
+c.fillStyle=g;c.beginPath();c.arc(M.x,M.y,34,0,7);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(M.x,M.y,7,0,7);c.fill();
+c.font='900 16px Arial Black';c.fillStyle='#efe9df';c.fillText('TOI',M.x-52,M.y+5);
+// loupe : zoom sur toi, avec emoji et pseudos
+const z=document.getElementById('z').getContext('2d');z.scale(2,2);
+const Z=6,P=n=>[(n.x-M.x)*Z+150,(n.y-M.y)*Z+150];
+edges.forEach(([a,b])=>{const mine=a===me||b===me;const A=P(nodes[a]),B=P(nodes[b]);
+ z.strokeStyle=mine?'rgba(255,79,139,.9)':'rgba(170,164,182,.18)';z.lineWidth=mine?2:1;z.beginPath();z.moveTo(A[0],A[1]);z.lineTo(B[0],B[1]);z.stroke()});
+const emo=['🤖','🧙','🦄','🧟','💋','🦸','🤡'],names=['Robot Argent','Mage Rose','Bestiole Dorée','Mort-vivant Vert','Uniforme Noir','Héros Bleu','OVNI Arc-en-ciel'];
+const near=nodes.map((n,i)=>({n,i,d:Math.hypot(n.x-M.x,n.y-M.y)})).filter(o=>o.i!==me&&o.d<24).sort((a,b)=>a.d-b.d);
+let used=[];near.forEach((o,k)=>{const [x,y]=P(o.n);
+ z.fillStyle=FC[o.n.f];z.beginPath();z.arc(x,y,6,0,7);z.fill();
+ if(y>50&&used.every(u=>Math.hypot(u[0]-x,u[1]-y)>46)&&k<6){used.push([x,y]);
+  z.font='20px sans-serif';z.fillText(emo[o.i%7],x-10,y-10);
+  z.fillStyle='#efe9df';z.font='600 12px system-ui';z.fillText(names[o.i%7],x+10,y+18)}});
+z.fillStyle='rgba(255,79,139,.35)';z.beginPath();z.arc(150,150,22,0,7);z.fill();
+z.fillStyle=FC[M.f];z.beginPath();z.arc(150,150,10,0,7);z.fill();
+z.font='26px sans-serif';z.fillText('🧛',137,128);
+z.fillStyle='#fff';z.font='900 13px Arial Black';z.fillText('TOI',166,146);
+z.font='600 12px system-ui';z.fillText('Vampire Bordeaux',166,162);
+</script>
+</body></html>

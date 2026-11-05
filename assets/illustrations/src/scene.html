@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<link rel="stylesheet" href="kit.css">
+<style>
+body{width:1360px;height:700px;background:
+  radial-gradient(ellipse at 18% 0%,rgba(255,79,139,.35),transparent 45%),
+  radial-gradient(ellipse at 85% 10%,rgba(61,255,138,.18),transparent 45%),
+  radial-gradient(ellipse at 50% 120%,#2a1222,var(--bg) 65%)}
+.floor{position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(transparent,rgba(255,79,139,.08));border-top:1px solid rgba(255,79,139,.25)}
+.flags{position:absolute;left:0;right:0;top:0;height:60px}
+.p{position:absolute;bottom:40px}
+.mtag{position:absolute;width:84px;height:104px;background:var(--manille);padding:20px 10px 0;z-index:4;
+  clip-path:polygon(18% 0,82% 0,100% 13%,100% 100%,0 100%,0 13%);box-shadow:3px 4px 0 rgba(0,0,0,.4)}
+.mtag i{position:absolute;top:7px;left:50%;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#07060a}
+.mtag b{display:block;text-align:center;font-family:var(--mono);font-size:10px;color:var(--ink);margin-top:3px;letter-spacing:.15em}
+.phone{position:absolute;width:250px;height:470px;border-radius:36px;background:#0b0a0f;padding:10px;z-index:6;
+  box-shadow:0 0 0 3px #3a3445,0 30px 60px rgba(0,0,0,.7),0 0 60px rgba(61,255,138,.25)}
+.scr{width:100%;height:100%;border-radius:28px;background:var(--bg2);padding:34px 16px 16px;overflow:hidden;position:relative}
+.k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--pink);font-weight:700}
+.memo{font-size:16.5px;line-height:1.35;font-weight:700;margin-top:8px}
+.memo::before{content:"“";display:block;font-family:var(--display);font-size:46px;line-height:.6;color:var(--pink);margin-bottom:4px}
+.card{display:flex;gap:9px;align-items:center;margin-top:16px;background:var(--paper);color:var(--ink);border-radius:12px;padding:8px}
+.beam{position:absolute;z-index:3;pointer-events:none}
+.bubble{position:absolute;font-family:var(--display);font-size:26px;padding:12px 18px;background:var(--pink);color:var(--ink);border-radius:16px;z-index:7;transform:rotate(-4deg)}
+.bubble::after{content:"";position:absolute;bottom:-14px;left:30px;border:14px solid transparent;border-top-color:var(--pink);border-bottom:0}
+.lbl{position:absolute;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.12em;z-index:5}
+</style></head>
+<body class="scan">
+<svg class="flags" viewBox="0 0 1360 60" preserveAspectRatio="none"><path d="M0 8 Q340 46 680 12 Q1020 46 1360 8" stroke="#3a3445" stroke-width="2" fill="none"/>
+<g id="fl"></g></svg>
+<div class="floor"></div>
+
+<!-- personne scannée : vampire, étiquette sur la poitrine -->
+<div class="p" id="v" style="left:110px"></div>
+<div class="mtag" style="left:300px;top:520px;transform:rotate(-7deg)"><i></i><div id="q"></div><b>7KC3</b></div>
+<div class="mtag" style="left:1010px;top:526px;transform:rotate(6deg)"><i></i><div id="q2"></div><b>M4XR</b></div>
+<div class="lbl" style="left:150px;bottom:16px">VAMPIRE BORDEAUX −40 %</div>
+
+<!-- scanneur : robot, téléphone tendu -->
+<div class="p" id="r" style="left:960px"></div>
+<div class="lbl" style="left:1030px;bottom:16px">ROBOT ARGENT GLITCH</div>
+<svg class="beam" style="left:0;top:0" width="1360" height="700"><defs>
+  <linearGradient id="bm" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#3dff8a" stop-opacity=".55"/><stop offset="1" stop-color="#3dff8a" stop-opacity=".05"/></linearGradient></defs>
+  <path d="M592 200 L582 470 L384 628 L298 520Z" fill="url(#bm)"/>
+  <path d="M1010 600 Q900 600 820 500" stroke="#c9c7d8" stroke-width="30" fill="none" stroke-linecap="round"/><circle cx="815" cy="494" r="24" fill="#e9e9f2"/>
+</svg>
+<div class="phone" style="left:580px;top:90px;transform:rotate(4deg)"><div class="scr">
+  <div class="k">NOUVELLE PIÈCE AJOUTÉE</div>
+  <p class="memo">1997, un lave-auto à Laval. Vous portiez déjà ces costumes. Personne n'en a jamais reparlé.</p>
+  <div class="card"><div id="a" style="width:48px;height:48px;border-radius:12px;background:#1e1a27;display:grid;place-items:center;overflow:hidden"></div>
+    <div><b style="font-size:13px">Vampire Bordeaux −40 %</b><div style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;margin-top:2px">🔥 LES SOLDÉS CHAOTIQUES</div></div></div>
+  <div style="display:flex;justify-content:space-around;font-size:20px;margin-top:16px">🎃 👻 🦇 🕷️</div>
+</div></div>
+<div class="bubble" style="left:110px;top:150px">Attends… on se connaît ?</div>
+
+<script src="kit.js"></script>
+<script>
+v.innerHTML=avatar('vampire','s1',330);
+r.innerHTML=`<div style="transform:scaleX(-1)">${avatar('robot','s2',330)}</div>`;
+q.innerHTML=fakeQR(5,64,'#18161d','#d9b98a');q2.innerHTML=fakeQR(8,64,'#18161d','#d9b98a');
+a.innerHTML=avatar('vampire','s3',48);
+let f='';for(let i=0;i<34;i++){const x=i*40+10,y=8+Math.sin(i/34*Math.PI*2)*-8+ (i%17)/17*0;const yy=x<680?8+38*Math.sin(x/680*Math.PI)*0.9:12+34*Math.sin((x-680)/680*Math.PI)*0.9;
+ f+=`<path d="M${x} ${yy} l14 0 l-7 18z" fill="${['#ff4f8b','#3dff8a','#ffd166','#9ec5ff'][i%4]}" opacity=".8"/>`}
+document.getElementById('fl').innerHTML=f;
+</script>
+</body></html>

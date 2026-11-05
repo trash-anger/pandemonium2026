@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<link rel="stylesheet" href="kit.css">
+<style>
+body{width:1360px;height:700px;padding:52px 60px}
+h2{font-size:15px;letter-spacing:.2em;color:var(--pink);font-family:var(--mono);font-weight:700}
+h1{font-size:42px;margin:8px 0 34px}
+.row{display:flex;gap:56px;align-items:flex-end}
+.col{display:flex;flex-direction:column;align-items:center;gap:18px}
+/* 1 mm = 7 px */
+.lab{position:relative;background:var(--manille);color:var(--ink);border-radius:8px;box-shadow:0 18px 30px rgba(0,0,0,.6),inset 0 0 0 1px rgba(0,0,0,.15);
+  background-image:radial-gradient(rgba(0,0,0,.05) 1px,transparent 1px);background-size:5px 5px;display:flex;align-items:center;justify-content:center;gap:14px}
+.s{width:280px;height:210px}
+.l{width:280px;height:350px;flex-direction:column;gap:12px;clip-path:polygon(16% 0,84% 0,100% 9%,100% 100%,0 100%,0 9%)}
+.l::before{content:"";position:absolute;top:16px;left:50%;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:var(--bg);box-shadow:inset 0 0 0 4px #b9986a}
+.logo{font-family:var(--display);font-size:22px;line-height:.9;letter-spacing:-.02em;text-align:center}
+.logo small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;font-weight:700;margin-top:4px}
+.code{font-family:var(--mono);font-weight:700;font-size:20px;letter-spacing:.24em}
+.dim{font-family:var(--mono);color:var(--muted);font-size:14px;letter-spacing:.1em;text-align:center;line-height:1.6}
+.dim b{color:var(--fg);font-size:18px}
+.mj{flex:1;height:470px;position:relative;border-left:1px dashed #3a3445;padding-left:44px}
+.mj h3{font-family:var(--display);font-size:24px}
+.mj p{color:var(--muted);font-size:15px;line-height:1.5;margin-top:8px;max-width:420px}
+.rack{position:absolute;left:44px;right:0;top:150px;height:300px}
+.bar{position:absolute;left:0;right:10px;top:0;height:6px;border-radius:3px;background:linear-gradient(#c9c7d8,#6e6a85)}
+.mt{position:absolute;top:0;width:56px;transform-origin:50% 0}
+.mt .str{width:2px;height:40px;background:#efe9df;margin:0 auto}
+.mt .t{width:56px;height:70px;background:var(--manille);clip-path:polygon(16% 0,84% 0,100% 12%,100% 100%,0 100%,0 12%);display:grid;place-items:center;font-family:var(--display);color:var(--ink);font-size:24px}
+.mt.me .t{background:var(--pink);color:#fff}
+.legend{position:absolute;left:44px;bottom:0;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.08em;line-height:1.7}
+.legend span{color:var(--green)}.legend em{color:var(--pink);font-style:normal}
+</style></head>
+<body class="scan">
+<h2>L'OBJET PHYSIQUE · À L'ÉCHELLE</h2>
+<h1 class="disp glitch-soft">Une étiquette = un personnage</h1>
+<div class="row">
+  <div class="col">
+    <div class="lab s"><div id="q1"></div><div><div class="logo">DÉJÀ<br>VU&nbsp;!</div><div class="code" style="margin-top:12px">7KC3</div></div></div>
+    <div class="dim"><b>40 × 30 mm</b><br>≈ 690 autocollants<br>distribués</div>
+  </div>
+  <div class="col">
+    <div class="lab l"><div style="height:22px"></div><div id="q2"></div><div class="code">M4XR</div><div class="logo">DÉJÀ VU&nbsp;!</div></div>
+    <div class="dim"><b>40 × 50 mm</b><br>200+ grandes étiquettes<br>costume du MJ et distribution</div>
+  </div>
+  <div class="mj">
+    <h3 class="glitch-soft">Le costume du MJ</h3>
+    <p>Son étiquette personnelle, 10 légendaires et 5 pièges. Rien ne les distingue : les effets sont mélangés toutes les 20 minutes.</p>
+    <div class="rack"><div class="bar"></div><div id="tags"></div></div>
+    <div class="legend"><span>■</span> légendaire ou <em>■</em> piège ? Il faut scanner pour savoir.<br>QR d'un pouce · code court en secours · pas de verso</div>
+  </div>
+</div>
+<script src="kit.js"></script>
+<script>
+q1.innerHTML=fakeQR(5,178,'#18161d','#d9b98a');
+q2.innerHTML=fakeQR(9,178,'#18161d','#d9b98a');
+let h='';for(let i=0;i<7;i++){const r=[-6,4,-3,0,-5,3,-7][i];
+ h+=`<div class="mt ${i==3?'me':''}" style="left:${4+i*74}px;transform:rotate(${r}deg)"><div class="str"></div><div class="t">${i==3?'MJ':'?'}</div></div>`}
+tags.innerHTML=h;
+</script>
+</body></html>

@@ -2,7 +2,7 @@
 
 [← Fonctionnalités](README.md)
 
-**Statut :** Confirmé · **Sources :** S1, S3, S5, S6
+**Statut :** Confirmé ; scanner intégré **dans le périmètre de samedi** ([DEC-076](../decisions.md#dec-076)) · **Sources :** S1, S3, S5, S6, S8
 
 ## Objectif
 Permettre de scanner une étiquette **de deux façons** : avec l'appareil photo natif du téléphone (premier contact) et avec un **scanner intégré à l'app**. Le scanner intégré garde le joueur dans le même navigateur, ce qui préserve son personnage ([FEAT-019](recuperation.md)). Il permet aussi d'utiliser la **lampe de poche** et de prendre la photo du mur ([FEAT-017](mur-deja-vu.md)).

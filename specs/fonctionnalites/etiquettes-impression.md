@@ -2,7 +2,7 @@
 
 [← Fonctionnalités](README.md)
 
-**Statut :** Confirmé (principe) ; Hypothèse pour la chaîne d'impression · **Sources :** S1, S3, S4, S5, S7
+**Statut :** Confirmé (principe) ; Hypothèse pour la chaîne d'impression · **Sources :** S1, S3, S4, S5, S7, S8
 
 ## Objectif
 Produire des étiquettes physiques **uniques** qui forment le costume de Florian, qu'il peut distribuer, et qui se scannent de façon fiable dans une salle sombre.
@@ -11,7 +11,7 @@ Produire des étiquettes physiques **uniques** qui forment le costume de Florian
 Florian (préparation), tous les joueurs (lecture).
 
 ## Périmètre
-- **Inclus :** génération des codes, des URL et des QR ; rôles d'étiquette fixés avant la fête (personnelle du MJ, légendaire, piège, série) ; export CSV pour l'import en lot de l'app Niimbot ; impression sur la B1 (203 dpi), en **deux formats** : environ 690 petits autocollants et plus de 200 étiquettes plus grandes ([DEC-066](../decisions.md#dec-066)). Les jumeaux, triplés et chats noirs sont attribués pendant la soirée, aux joueurs.
+- **Inclus :** génération des codes, des URL et des QR ; rôles d'étiquette fixés avant la fête (personnelle du MJ, légendaire, piège, série) ; export CSV pour l'import en lot de l'app Niimbot ; impression sur la B1 (203 dpi), en **deux formats** : environ 690 petits autocollants et plus de 200 étiquettes plus grandes, de **40×50 mm** ([DEC-066](../decisions.md#dec-066)). Les jumeaux, triplés et chats noirs sont attribués pendant la soirée, aux joueurs.
 - **Exclu :** commande d'étiquettes supplémentaires.
 
 ## Règles métier
@@ -28,7 +28,7 @@ Florian (préparation), tous les joueurs (lecture).
 | RG-001-9 | Le rôle d'une étiquette (légendaire, piège, série…) se définit **en configuration** ; on peut le modifier sans réimprimer. Jumeaux et chats noirs ne sont plus des rôles d'étiquette ([DEC-021](../decisions.md#dec-021)). | Confirmé (S1, S5) | S1, S5 |
 | RG-001-12 | L'étiquette manille porte seulement le QR et le logo, sans verso. | Confirmé (S5, [DEC-044](../decisions.md#dec-044)) | S5 |
 | RG-001-13 | Une étiquette est jouable dès qu'on la scanne ; il n'y a pas d'activation par le MJ. | Confirmé (S7, [DEC-063](../decisions.md#dec-063)) | S7 |
-| RG-001-14 | Le grand format sert aux étiquettes du costume du MJ (personnelle, légendaires, pièges) ; le reste du grand format est distribué comme les petites. Le gabarit est décliné pour les deux formats. | Confirmé (S7) | S7 |
+| RG-001-14 | Le grand format sert aux étiquettes du costume du MJ (personnelle, légendaires, pièges) ; le reste du grand format est distribué comme les petites. Le gabarit est décliné pour les deux formats : 40×30 mm et 40×50 mm. | Confirmé (S7, S8) | S7, S8 |
 | RG-001-10 | Le visuel de l'étiquette parodie une étiquette de vêtement (taille, composition, entretien, prix soldé). | Proposition, alignée sur l'univers mode (S3) | S2, S3 |
 | RG-001-11 | Le niveau de correction d'erreur du QR est élevé (M ou Q) tout en gardant les modules lisibles à 25 mm. | Proposition | — |
 
@@ -55,4 +55,4 @@ flowchart LR
 - **CA-001-4 :** Changer le rôle d'une étiquette en configuration ne change ni son code ni son QR.
 
 ## Dépendances et questions
-Quantité : environ 800 autocollants pour 300 à 400 joueurs, un joueur pouvant avoir plusieurs étiquettes ([DEC-019](../decisions.md#dec-019)). Formats : petit (40×30 mm) et grand (dimensions à mesurer).
+Quantité : environ 800 autocollants pour 300 à 400 joueurs, un joueur pouvant avoir plusieurs étiquettes ([DEC-019](../decisions.md#dec-019)). Formats : petit (40×30 mm) et grand (40×50 mm).

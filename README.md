@@ -87,7 +87,8 @@ Le costume de Florian est fait de fausses étiquettes de vêtements. Il les port
 | 10 | [Décisions](specs/decisions.md) | Journal des décisions (`DEC-xxx`) |
 | 11 | [Questions ouvertes](specs/questions-ouvertes.md) | Arbitrages nécessaires (`Q-xxx`) |
 | 12 | [Plan d'implémentation](specs/plan-implementation.md) | Lots progressifs et traçabilité |
-| 13 | [Textes du jeu](specs/textes.md) | Libellés, easter eggs et faux souvenirs (FR/EN) |
+| 13 | [Textes du jeu](specs/textes.md) | Libellés, easter eggs, faux souvenirs, pitch et tutoriel (FR/EN) |
+| 14 | [Barème](specs/bareme.md) | Valeurs de score et d'équilibrage, réglables dans l'admin |
 
 ## Conventions
 
@@ -130,6 +131,9 @@ Les identifiants sont **stables** : une exigence abandonnée passe au statut « 
 | **S5** | Entretien du 2026-11-05 : réponses de Florian aux questions ouvertes Q-001 à Q-034 |
 | **S6** | Message de Florian du 2026-11-05, après l'entretien : multi-étiquettes, PIN, données dans le cloud, temps d'écran, costumes, légendaires et pièges, jumeaux à 2 h |
 | **S7** | Message et second entretien de Florian du 2026-11-05 : réponses à Q-035 à Q-043, factions, mélange des légendaires, validation carte par carte, surconsommation, admin et frise d'activité |
+| **S8** | Message de Florian du 2026-11-05, après la relecture d'ensemble : création en 4 écrans, faction au hasard, emoji = type, notifications et scanner dans le périmètre, grand format 40×50 mm, distribution en groupe |
+| **S9** | Message de Florian du 2026-11-05 : barème validé, préréglages et suggestions au MJ, mode pause, sanctions graduées, invités qui se connaissent ; questions sur le graphe D3.js |
+| **S10** | Message de Florian du 2026-11-05 : confirmation de classements et badges, missions personnelles confiées par le MJ, validation du pitch, du tutoriel et des textes du MJ |
 
 ## Résumé en une phrase
 

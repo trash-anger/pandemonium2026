@@ -17,6 +17,7 @@ Chaque scan entre deux personnes génère un **souvenir commun absurde**, comme 
 | RG-006-5 | Le choix des éléments est déterministe, calculé à partir des identifiants de la paire triés. | Proposition (implémentation) |
 | RG-006-6 | Les gabarits mélangent les univers [Déjà vu, mode, D&D et Matrix](../univers-et-ton.md), et le NSFW soft est permis. | Confirmé (S3) |
 | RG-006-7 | Les retrouvailles de jumeaux produisent un souvenir **spécial**, plus long ([FEAT-007](jumeaux.md)). | Proposition (S2) |
+| RG-006-9 | Sur l'écran de nouvelle carte, le faux souvenir est l'**élément principal**, affiché en premier et en grand. Au moment de la distribution à un groupe, les membres sont invités à se scanner entre eux pour découvrir leurs premiers faux souvenirs ensemble. | Confirmé (S8) |
 | RG-006-8 | Un souvenir peut devenir « flou » selon [RG-005-5](rescan-deja-vu.md). | Confirmé (S5, [DEC-031](../decisions.md#dec-031)) |
 
 ## Structure de gabarit (Proposition)

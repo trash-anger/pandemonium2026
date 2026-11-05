@@ -2,7 +2,7 @@
 
 [← Fonctionnalités](README.md)
 
-**Statut :** Confirmé (besoin) ; faisabilité selon la plateforme · **Sources :** S1, S2
+**Statut :** Confirmé, **dans le périmètre de samedi** ([DEC-076](../decisions.md#dec-076)) ; faisabilité selon la plateforme · **Sources :** S1, S2, S8
 
 ## Objectif
 Prévenir les joueurs d'événements globaux même quand ils ne regardent pas l'app. Le cas premier est **l'annonce de la fin, 30 minutes avant, à tout le monde** (S1).
@@ -18,6 +18,8 @@ Prévenir les joueurs d'événements globaux même quand ils ne regardent pas l'
 | « Tu es un chat noir » ([FEAT-008](chat-noir.md)) | Confirmé (S7) |
 | Remise en rayon du « Dernier exemplaire » à 21 h, minuit et 3 h ([FEAT-022](costume-mj.md)) | Proposition |
 | Message du MJ ([FEAT-020](admin.md)) | Proposition |
+| **Au MJ** : suggestion de réglage ([ADM-16](admin.md)) | Confirmé (S9) |
+| Sanction reçue ([ADM-18](admin.md)) | Confirmé (S9) |
 | Défi en duel ([FEAT-010](duel.md)) | Proposition |
 | Message du lendemain ([FEAT-018](lendemain-partage.md)) | Proposition |
 

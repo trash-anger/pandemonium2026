@@ -35,7 +35,7 @@ Ces termes sont définis ici et nulle part ailleurs.
 | **Boucle infinie** | Joueur qui rescanne beaucoup. Il perd des souvenirs. | Confirmé (S3, S5) |
 | **Célébrité** | Joueur très scanné par les autres. Il accumule des souvenirs. | Confirmé (S3) |
 | **Fantôme** | Joueur très scanné qui scanne peu lui-même. Il accumule des souvenirs. | Confirmé (S3, S5) |
-| **Faction** | L'une des 5 équipes inspirées de D&D et de la consommation, choisie pour chaque étiquette ; 3 au maximum par personnage. | Confirmé (S3, S5, S7) |
+| **Faction** | L'une des 5 équipes inspirées de D&D et de la consommation, tirée au hasard pour chaque étiquette ; 3 au maximum par personnage. | Confirmé (S3, S5, S7, S8) |
 | **Série** | Ensemble d'étiquettes à collectionner au complet pour obtenir un bonus ; invisible jusqu'au scan. | Confirmé (S3, S5) |
 | **Rareté** | Niveau d'une étiquette : commune, rare ou légendaire. | Proposition (S2), cohérente avec S1 |
 | **Quête collective** | Progression commune à tous les joueurs, découpée en paliers et conclue par une révélation finale. | Confirmé (S1, S3) |

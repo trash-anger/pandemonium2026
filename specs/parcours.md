@@ -33,10 +33,11 @@ flowchart TD
 ## 2. Parcours détaillés
 
 ### P-1 : Recevoir une étiquette et créer son personnage
-1. Florian remet une étiquette à quelqu'un. Il peut l'attacher au costume avec le pistolet à étiquettes ([CT-003](contraintes-techniques.md#ct-003)). C'est une Hypothèse.
+1. Florian remet des étiquettes, souvent à **un groupe de 4 ou 5 personnes** d'un coup, avec un court [pitch](textes.md#4-pitch-de-distribution) (S8). Il peut l'attacher au costume avec le pistolet à étiquettes ([CT-003](contraintes-techniques.md#ct-003)). C'est une Hypothèse.
 2. La personne la scanne **tout de suite** : c'est le rituel de remise (Proposition, S2). L'étiquette devient jouable à ce scan.
-3. L'app affiche l'avertissement (jeu punk et anticapitaliste, données supprimées, installation recommandée), puis lance la création du personnage, un écran par information, avec retour arrière possible ([FEAT-003](fonctionnalites/personnage.md)). Si la personne a déjà un personnage, l'app demande si l'étiquette est à elle.
-4. Elle explique ensuite le jeu en un écran, propose d'installer l'app ([FEAT-021](fonctionnalites/pwa-hors-ligne.md)) puis d'activer le scanner intégré ([FEAT-002](fonctionnalites/scan.md)).
+3. L'app lance la création en 4 écrans : avertissement, type, détails, carte ([FEAT-003](fonctionnalites/personnage.md)). Si la personne a déjà un personnage, l'app demande si l'étiquette est à elle.
+4. Le groupe se scanne aussitôt entre soi : chacun découvre ses **premiers faux souvenirs** ([RG-006-9](fonctionnalites/faux-souvenirs.md)).
+5. L'app explique ensuite le jeu en un écran de tutoriel, propose d'installer l'app ([FEAT-021](fonctionnalites/pwa-hors-ligne.md)) puis d'activer le scanner intégré ([FEAT-002](fonctionnalites/scan.md)).
 
 ### P-2 : Collectionner quelqu'un
 1. Le joueur A scanne l'étiquette du joueur B, depuis l'app ou depuis l'appareil photo.

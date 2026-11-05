@@ -49,7 +49,7 @@ Configuration de la soirée. **Statut : Hypothèse.**
 |-------|-------------|--------------------|
 | `code` | Code court, par exemple `7KC3` | Unique ; [RG-001-3](fonctionnalites/etiquettes-impression.md), [RG-001-4](fonctionnalites/etiquettes-impression.md) |
 | `role` | `normale`, `personnelle_mj`, `speciale_mj` (légendaire ou piège selon le mélange en cours) | [RG-001-9](fonctionnalites/etiquettes-impression.md), [FEAT-022](fonctionnalites/costume-mj.md) |
-| `faction_id` | Choisie par le porteur à la réclamation | [FEAT-011](fonctionnalites/factions.md) |
+| `faction_id` | Tirée au hasard à la réclamation, non modifiable | [FEAT-011](fonctionnalites/factions.md) |
 | `rarete` | `commune`, `rare`, `legendaire` | [RG-012-3](fonctionnalites/series-rarete.md) |
 | `serie_id` | Nullable | [FEAT-012](fonctionnalites/series-rarete.md) |
 | `etat` | `vierge`, `reclamee`, `desactivee` | §3 |
@@ -64,7 +64,7 @@ Jeton anonyme stocké dans le navigateur. **Statut : Proposition.** Aucune donn�
 | Champ | Description | Règle |
 |-------|-------------|-------|
 | `pseudo` | Généré ou saisi | [RG-003-4](fonctionnalites/personnage.md) ; modération [REQ-013](exigences-transversales.md#req-013) |
-| `emoji` | Liste fermée | S1 |
+| `emoji` | Emoji du type de costume (pas de choix séparé) | S8 |
 | `costume.type` | 8 types fermés | [FEAT-003](fonctionnalites/personnage.md) |
 | `costume.couleur` | Couleur dominante, 12 choix ; sans lien avec la faction | [DEC-059](decisions.md#dec-059) |
 | `costume.attributs` | 12 booléens | [FEAT-003](fonctionnalites/personnage.md) ; figés à minuit |
@@ -98,7 +98,7 @@ Paires mutuelles validées dans la fenêtre de temps ([RG-007-7](fonctionnalites
 | Entité | Rôle | Statut |
 |--------|------|--------|
 | `Serie` | Nom, symbole, membres | Confirmé (S3) |
-| `Faction` | Nom, couleur, score, masquée (équilibrage) | Confirmé (S3, S5, S7) ; 5 factions ([FEAT-011](fonctionnalites/factions.md)) |
+| `Faction` | Nom, couleur d'interface, devise, score | Confirmé (S3, S5, S7) ; 5 factions ([FEAT-011](fonctionnalites/factions.md)) |
 | `BlocageScan` | personnage, cause (piège ou surconsommation), début, fin | Confirmé (S5, S7) |
 | `AttributionEffet` | étiquette spéciale, effet (L-x ou T-x), début, fin ; renouvelée toutes les 20 min | Confirmé (S7) |
 | `EffetObtenu` | personnage, effet, date ; un effet ne s'obtient qu'une fois | Confirmé (S7) |

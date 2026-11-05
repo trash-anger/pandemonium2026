@@ -17,7 +17,7 @@ Revoir quelqu'un est **le cœur du thème**. Scanner de nouveau une personne aff
 | ID | Règle | Statut |
 |----|-------|--------|
 | RG-005-1 | Un compteur de rescans existe **par paire orientée** (A→B). | Confirmé (S1) ; orientation : Hypothèse |
-| RG-005-2 | Paliers d'easter eggs : ×3 « Boucle détectée », ×6 « Jour de la marmotte », ×13 secret. | Confirmé (proposés en S2, approuvés en S3 : « J'adore tout ») ; contenu : rédigé par l'assistant, relu par Florian ([DEC-032](../decisions.md#dec-032)) |
+| RG-005-2 | Paliers d'easter eggs : ×3 « Boucle détectée », ×6 « Jour de la marmotte », ×13 secret. | Confirmé (proposés en S2, approuvés en S3 : « J'adore tout ») ; contenu : [textes §2](../textes.md#2-easter-eggs-de-rescan-rg-005-2), à relire par Florian ([DEC-032](../decisions.md#dec-032)) |
 | RG-005-3 | Un rescan ne compte qu'**une fois par fenêtre de 5 minutes** pour une même paire. | Confirmé (S2 → S3) ; valeur ajustable par le MJ (Proposition) |
 | RG-005-4 | Certaines étiquettes peuvent avoir des easter eggs propres, déclenchés après N rescans de ce badge précis. | Confirmé (S1 : « mettre des easter egg si tu scannes un certain nombre de fois certains badges ») |
 | RG-005-5 | Une **Boucle infinie** (joueur qui rescanne beaucoup) **perd des souvenirs**, selon la proposition ci-dessous. | Confirmé (S3, S5) ; seuils réglables dans l'admin |

@@ -48,6 +48,7 @@ La création se fait sur des **écrans successifs**, une information par écran.
 Jusqu'à **minuit**, le joueur peut modifier son personnage depuis sa fiche ; ensuite, la description est figée pour les indices des jumeaux ([DEC-041](../decisions.md#dec-041)).
 
 ## Listes
+Libellés définitifs en français et en anglais : [textes §1](../textes.md#1-libellés-de-la-création-du-personnage).
 
 ### Types de costume (8, Confirmé pour le nombre, S6 ; libellés : Proposition)
 | Emoji | Type | Exemples |

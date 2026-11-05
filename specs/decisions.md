@@ -80,4 +80,4 @@ Format : **ID · Décision · Raison · Statut · Source · Exigences liées**. 
 | <a id="dec-072"></a>DEC-072 | Création du personnage sur écrans successifs, avec retour arrière ; attribut 9 = accessoire tenu à la main ou à la ceinture | Ergonomie | Acceptée | S7 | [FEAT-003](fonctionnalites/personnage.md) |
 
 ## Décisions en attente
-Aucune. Les questions Q-001 à Q-043 ont été tranchées le 5 novembre 2026 (S5, S6, S7). Restent à rédiger ou à mesurer : le dessin caché de la constellation, les textes (easter eggs, faux souvenirs), les classes D&D, les dimensions du grand format.
+Aucune. Les questions Q-001 à Q-043 ont été tranchées le 5 novembre 2026 (S5, S6, S7). Restent à faire : le dessin caché de la constellation, les dimensions du grand format, et la relecture par Florian des [textes](textes.md) (libellés, classes D&D, easter eggs, faux souvenirs).

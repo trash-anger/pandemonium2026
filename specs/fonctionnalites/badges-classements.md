@@ -2,7 +2,7 @@
 
 [← Fonctionnalités](README.md)
 
-**Statut :** Confirmé · **Sources :** S1, S2, S3, S5, S6, S7
+**Statut :** Confirmé · **Sources :** S1, S2, S3, S5, S6, S7, S8, S10
 
 ## Objectif
 Récompenser des styles de jeu variés, pas seulement le volume de scans, et permettre de **se comparer** (S1 : « avoir un leaderboard »).
@@ -15,8 +15,8 @@ Récompenser des styles de jeu variés, pas seulement le volume de scans, et per
 | LB-3 | **Fantôme** | Très scanné, mais scanne peu lui-même | Confirmé (S3, S5) ; formule réglable dans l'admin |
 | LB-4 | **Boucle infinie** | Nombre de rescans comptés | Confirmé (S3) |
 | LB-5 | **Business.wo.man** | Durée cumulée, application ouverte au premier plan, mesurée côté client et envoyée régulièrement au cloud | Confirmé (S3, S6) |
-| LB-6 | **Pont** | Joueur qui relie le plus de groupes (centralité) | Proposition (S2) |
-| LB-7 | **Premier jumeau réuni** | Horodatage des retrouvailles | Proposition (S2) |
+| LB-6 | **Pont** | Joueur qui relie le plus de groupes (centralité) | Confirmé (S10) |
+| LB-7 | **Premier jumeau réuni** | Horodatage des retrouvailles | Confirmé (S10) |
 | LB-8 | **Faction** | Score par faction | Confirmé (S7) ; [FEAT-011](factions.md) |
 | LB-9 | **Classements par faction** | Les classements LB-1 à LB-5, restreints à chaque faction | Confirmé (S7) |
 
@@ -26,16 +26,20 @@ Récompenser des styles de jeu variés, pas seulement le volume de scans, et per
 | BDG-1 | Tueur de poussin | [RG-003-6](personnage.md) | Confirmé |
 | BDG-2 | Jumeaux retrouvés | [RG-007-10](jumeaux.md) | Confirmé |
 | BDG-3 | Boucle détectée / Jour de la marmotte / ×13 secret | [RG-005-2](rescan-deja-vu.md) | Confirmé |
-| BDG-4 | Installé le Portail | App installée sur l'écran d'accueil ([FEAT-021](pwa-hors-ligne.md)) | Proposition (S2) |
+| BDG-4 | Installé le Portail | App installée sur l'écran d'accueil ([FEAT-021](pwa-hors-ligne.md)) | Confirmé (S5, S10) |
 | BDG-5 | Fermer la boucle | [RG-005-7](rescan-deja-vu.md) | Confirmé |
-| BDG-6 | Patient zéro | Premier joueur corrompu par un chat noir | Proposition |
-| BDG-6b | Dernier survivant | Dernier joueur corrompu par un chat noir | Proposition |
+| BDG-6 | Patient zéro | Premier joueur corrompu par un chat noir | Confirmé (S10) |
+| BDG-6b | Dernier survivant | Joueur jamais corrompu qui a fait le plus de nouvelles cartes au moment de la révélation (départage des derniers non corrompus) | Confirmé (S10) |
 | BDG-7 | Série complète | [RG-012-2](series-rarete.md) | Confirmé (principe) |
-| BDG-8 | Installé | App installée sur l'écran d'accueil ; remplace BDG-4 | Confirmé (S5) |
-| BDG-9 | Garde-robe du MJ | [RG-022-3](costume-mj.md) | Proposition |
+| BDG-8 | Installé | Fusionné avec BDG-4 « Installé le Portail » | Abandonné (doublon, S10) |
+| BDG-9 | Garde-robe du MJ | [RG-022-3](costume-mj.md) | Confirmé (S10) |
 | BDG-10 | Anticapitaliste | Légendaire L-5 ([FEAT-022](costume-mj.md)) | Confirmé (S7) |
 | BDG-11 | Achat compulsif | Ajouter une étiquette à son personnage ([RG-003-6](personnage.md)) | Confirmé (S7) |
 | BDG-12 | Surconsommation | Plus de 3 étiquettes ([RG-003-10](personnage.md)) | Confirmé (S7) |
+| BDG-14 | Trans-classe | Changer de classe D&D ([RG-003-12](personnage.md)) | Confirmé (S8) |
+| BDG-15 | Amnésie | Jauge de souvenirs à 0 ([barème §3](../bareme.md#3-mémoire-et-rôles-gagnés)) | Confirmé (S10) |
+| BDG-16 | Employé du mois | Réussir une mission confiée par le MJ ([ADM-19](admin.md)) | Proposition |
+| BDG-17 | Client difficile | Sanction de niveau 1 ([ADM-18](admin.md)) | Confirmé (S9) |
 | BDG-13 | Badges de faction | En fin de partie, un badge par faction pour chaque classement pertinent (par exemple « Célébrité de la Friperie »), en plus du badge global | Confirmé (S7, [RG-011-7](factions.md)) |
 
 ## Règles métier

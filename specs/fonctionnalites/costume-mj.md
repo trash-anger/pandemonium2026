@@ -29,6 +29,7 @@ On collectionne **l'effet**, pas l'étiquette. Rescanner une même étiquette ap
 | RG-022-7 | Le MJ n'a pas de jumeau et n'est pas chat noir. | Proposition |
 | RG-022-8 | Les écrans de piège respectent [REQ-003](../exigences-transversales.md#req-003) (pas de flash dangereux). | Proposition, requise |
 | RG-022-9 | Les effets sont **redistribués au hasard toutes les 20 min** entre les 15 étiquettes spéciales. | Confirmé (S7) |
+| RG-022-10 | Le MJ peut transformer **toutes** ses étiquettes en pièges pendant une pause (mode « Fermé pour inventaire », [ADM-17](admin.md)). | Confirmé (S9) |
 
 ## Cartes légendaires (10, Confirmé, S7)
 | # | Carte | Effet |

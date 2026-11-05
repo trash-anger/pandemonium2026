@@ -2,7 +2,7 @@
 
 [← Index](../README.md)
 
-> **Statut : Confirmé** : relu et validé par Florian le 2026-11-05 (S7) ([DEC-032](decisions.md#dec-032), [DEC-042](decisions.md#dec-042)). Tous les textes existent en français et en anglais ([DEC-039](decisions.md#dec-039)). Ton : [univers-et-ton](univers-et-ton.md) ; NSFW soft limité aux allusions ([DEC-049](decisions.md#dec-049)).
+> **Statut : Confirmé** : §1 à §3 validés par Florian (S7) ; §4 à §6 (pitch, tutoriel, accueil, textes du MJ) validés (S10) ; §6.4 (missions personnelles) : **Proposition** ([DEC-032](decisions.md#dec-032), [DEC-042](decisions.md#dec-042)). Tous les textes existent en français et en anglais ([DEC-039](decisions.md#dec-039)). Ton : [univers-et-ton](univers-et-ton.md) ; NSFW soft limité aux allusions ([DEC-049](decisions.md#dec-049)).
 
 **Règle d'écriture.** Les textes ne doivent jamais dépendre du genre d'un joueur : on désigne les joueurs par leur pseudo, on évite les participes et adjectifs accordés à une personne (« arrivé·e », « habillé·e »), et on n'accorde rien avec un attribut de costume dont le genre varie (« un masque », « une cape »). Ainsi, le même gabarit reste correct quelle que soit la combinaison ([CA-006-3](fonctionnalites/faux-souvenirs.md)).
 
@@ -198,7 +198,105 @@ Ils sont plus longs et s'affichent au moment des retrouvailles. `{C}` désigne l
 | J-2 | {A} et {B} faisaient partie d'un lot de deux, −50 % sur le second article. Depuis, la question reste ouverte : qui était en solde ? Vous pouvez enfin la régler. | {A} and {B} were sold as a two-pack, 50% off the second one. Since then, each of you has believed you were the discounted one. You can finally settle it. |
 | J-3 (triplés) | {A}, {B} et {C} : trois articles identiques, trois rayons différents, une seule étiquette d'origine. Le lot est complet. Ni repris, ni échangé. | {A}, {B} and {C}: three identical items, three different aisles, one original tag. The set is complete. No returns, no exchanges. |
 
-## 4. Vérifications à faire avant la fête
+## 4. Pitch de distribution
+
+> **Statut : Confirmé** (S10). Florian distribue souvent les étiquettes **à des groupes de 4 ou 5 personnes** d'un coup. Le pitch se dit à voix haute, dans le bruit : phrases courtes, une idée par phrase.
+
+### 4.1 Version groupe (environ 30 s)
+**FR**
+> « Bonsoir ! Je suis le maître du jeu. Je vous offre chacun **une étiquette**. C'est **votre personnage**.
+> **Scannez-la tout de suite**, chacun la sienne : trente secondes, quatre écrans, pas de compte.
+> Ensuite, **scannez-vous entre vous** : chaque personne scannée rejoint votre collection, avec un **faux souvenir** commun complètement absurde.
+> Revoir quelqu'un, c'est un **déjà vu** : ça rapporte aussi.
+> Certains d'entre vous ont un **jumeau caché** dans la salle. Et méfiez-vous des **chats noirs**.
+> Révélation à **5 h**. Allez-y, scannez ! »
+
+**EN**
+> "Hi! I'm the game master. Here's a **tag** for each of you. It's **your character**.
+> **Scan it right now**, each your own: thirty seconds, four screens, no account.
+> Then **scan each other**: everyone you scan joins your collection, with a totally absurd **fake shared memory**.
+> Seeing someone again is a **déjà vu**: that scores too.
+> Some of you have a **hidden twin** in the room. And watch out for **black cats**.
+> Reveal at **5 a.m.** Go on, scan!"
+
+### 4.2 Version éclair (environ 10 s)
+- **FR :** « Une étiquette, un personnage. Scanne-la, puis scanne tout le monde. Révélation à 5 h. »
+- **EN :** "One tag, one character. Scan it, then scan everyone. Reveal at 5 a.m."
+
+### 4.3 Rituel de remise
+1. Florian donne une étiquette à chaque membre du groupe, et attend qu'ils la scannent : ça évite qu'une étiquette soit réclamée par quelqu'un d'autre.
+2. Une fois les personnages créés, il les invite à **se scanner entre eux** sur-le-champ : le groupe découvre ses **premiers faux souvenirs** ensemble, et c'est ce qui donne envie de continuer.
+3. Phrase de clôture, si quelqu'un en demande plusieurs : « Une par personne. Au-delà de trois, la Matrice punit la surconsommation. »
+
+## 5. Tutoriel et accueil
+
+### 5.1 Tutoriel (un seul écran, après la création)
+**FR**
+> **Comment jouer**
+> 📷 **Scanne** les étiquettes des autres : chaque personne rejoint ta collection.
+> 🔁 **Revois-les** : chaque déjà vu compte.
+> 👯 **Cherche ton jumeau** : des indices arrivent à partir de minuit.
+> 🕔 **Révélation à 5 h** pour toute la salle.
+> [ C'est parti ]
+
+**EN**
+> **How to play**
+> 📷 **Scan** other people's tags: each person joins your collection.
+> 🔁 **See them again**: every déjà vu counts.
+> 👯 **Find your twin**: clues start at midnight.
+> 🕔 **Reveal at 5 a.m.** for the whole room.
+> [ Let's go ]
+
+### 5.2 Ligne « Et maintenant ? » de l'écran d'accueil
+L'accueil affiche toujours **une seule suggestion**, choisie selon la situation du joueur, par ordre de priorité ([interface §2bis](interface.md#2bis-accueil-et-tutoriel)) :
+
+| Situation | FR | EN |
+|-----------|----|----|
+| Piège ou blocage en cours | « Scanner bloqué encore {minutes} min. Patience, client fidèle. » | "Scanner locked for {minutes} more min. Patience, loyal customer." |
+| Compte à rebours de la révélation | « Révélation dans {minutes} min. Dernière chance de faire grimper la quête ! » | "Reveal in {minutes} min. Last chance to push the quest!" |
+| Chat noir qui vient d'apprendre son rôle | « Tu es un chat noir. Ne le dis à personne. Contamine 3 personnes en 10 min. » | "You're a black cat. Tell no one. Infect 3 people in 10 min." |
+| Jumeau attribué, pas encore retrouvé | « Ton double est quelque part. Dernier indice : {indice}. » | "Your double is out there. Latest clue: {clue}." |
+| Aucune carte encore | « Scanne ta première personne : ton premier faux souvenir t'attend. » | "Scan your first person: your first fake memory awaits." |
+| Joueur corrompu | « Tu glitches. Chaque scan peut contaminer. » | "You're glitching. Every scan can infect." |
+| Par défaut | « Scanne quelqu'un que tu ne connais pas. » | "Scan someone you don't know." |
+
+## 6. Textes du MJ
+
+> **Statut : Confirmé** (S10), sauf §6.4 : Proposition.
+
+### 6.1 Mode pause « Fermé pour inventaire »
+- **FR :** « FERMÉ POUR INVENTAIRE. Le MJ fait une pause. Ton scanner est bloqué 2 min. Réouverture dans {minutes} min. »
+- **EN :** "CLOSED FOR STOCKTAKING. The GM is on a break. Your scanner is locked for 2 min. Reopening in {minutes} min."
+
+### 6.2 Sanctions
+| Niveau | FR | EN |
+|--------|----|----|
+| 1 Avertissement | « Le MJ t'a à l'œil. Prochaine fois, ce sera moins drôle. Badge : Client difficile. » | "The GM is watching you. Next time it won't be funny. Badge: Difficult Customer." |
+| 2 Retour en caisse | « Retour en caisse. Ton scanner est bloqué 5 min. » | "Back to checkout. Your scanner is locked for 5 min." |
+| 3 Article défectueux | « Article défectueux. Tu glitches pendant 10 min et tu as perdu des souvenirs. » | "Defective item. You're glitching for 10 min and you've lost memories." |
+| 4 Rappel de produit | « Rappel de produit. Scanner bloqué 30 min, points de faction retirés, mémoire effacée. » | "Product recall. Scanner locked for 30 min, faction points removed, memory wiped." |
+| 5 Interdit de magasin | « Interdit de magasin. Ton personnage est suspendu. Va voir le MJ. » | "Banned from the store. Your character is suspended. Go see the GM." |
+
+### 6.3 Suggestions au MJ (notifications)
+- « Les connexions vont {facteur} fois plus vite que prévu. Passer au préréglage {préréglage} ? » / "Connections are running {factor}× faster than expected. Switch to the {preset} preset?"
+- « {pourcentage} % de corrompus depuis 20 min. Baisser la transmission à {valeur} % ? » / "{percent}% infected for 20 min. Lower transmission to {value}%?"
+- « Moins de 10 % de corrompus. Relancer un foyer ? » / "Under 10% infected. Restart an outbreak?"
+
+### 6.4 Missions personnelles
+| # | FR | EN |
+|---|----|----|
+| Annonce | « Le MJ te confie une mission. Tu as {minutes} min. » | "The GM has a mission for you. You have {minutes} min." |
+| M-1 | « Ramène-moi des clients : scanne 3 personnes que tu n'as jamais scannées. » | "Bring me customers: scan 3 people you've never scanned." |
+| M-2 | « Tournée des factions : scanne un membre de chacune des 5 factions. » | "Faction tour: scan a member of each of the 5 factions." |
+| M-3 | « Service après-vente : retrouve et rescanne ta toute première rencontre de la soirée. » | "After-sales service: find and rescan the very first person you met tonight." |
+| M-4 | « Contrôle qualité : trouve quelqu'un avec {attr_1} et {attr_2}, et scanne-le. » | "Quality control: find someone wearing {attr_1} and {attr_2}, and scan them." |
+| M-5 | « Livraison express : envoie-moi 2 personnes qui ne m'ont jamais scanné. » | "Express delivery: send me 2 people who've never scanned me." |
+| M-6 | « Solde privée : tes 5 prochaines nouvelles cartes comptent double. Cadeau de la maison. » | "Private sale: your next 5 new cards count double. On the house." |
+| M-7 | « Mission spéciale du MJ. Il t'a dit quoi faire. » | "Special GM mission. You know what to do." |
+| Réussite | « Mission accomplie. Badge : Employé du mois. » | "Mission accomplished. Badge: Employee of the Month." |
+| Échec | « Temps écoulé. Le MJ ne t'en veut pas. Pas trop. » | "Time's up. The GM isn't mad. Not too mad." |
+
+## 7. Vérifications à faire avant la fête
 - Relire un échantillon de 50 souvenirs générés, dans les deux langues ([CA-006-3](fonctionnalites/faux-souvenirs.md)).
 - Vérifier qu'aucun gabarit n'accorde un mot avec le genre d'un joueur ou d'un attribut.
 - Vérifier que les noms de lieux réels (Laval, Galeries d'Anjou, Costco, Dollarama) restent utilisés sur le ton de la blague, sans rien de dénigrant.

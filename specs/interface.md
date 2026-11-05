@@ -17,9 +17,10 @@
 
 | ID | Écran | Fonctionnalités | Statut |
 |----|-------|-----------------|--------|
-| E-01 | Accueil du jeu : progression globale, bouton Scanner, mission active | [FEAT-009](fonctionnalites/quete-collective.md), [FEAT-013](fonctionnalites/missions-eclair.md) | Proposition |
+| E-01 | Accueil du jeu : voir §2bis | [FEAT-009](fonctionnalites/quete-collective.md) | Confirmé (S8) ; contenu : Proposition |
 | E-02 | Scanner : caméra, lampe, saisie de code | [FEAT-002](fonctionnalites/scan.md) | Confirmé |
-| E-03 | Création du personnage : écrans successifs, une information par écran, avec retour arrière | [FEAT-003](fonctionnalites/personnage.md) | Confirmé (S7) |
+| E-03 | Création du personnage en 4 écrans : avertissement, type, détails (couleur et attributs), carte (pseudo, faction, classe, photo, PIN) ; retour arrière possible | [FEAT-003](fonctionnalites/personnage.md) | Confirmé (S7, S8) |
+| E-19 | Tutoriel : un seul écran, 4 lignes | [textes §5](textes.md#5-tutoriel-et-accueil) | Confirmé (S8) |
 | E-04 | Résultat de scan : nouvelle carte, Déjà vu, chat noir, Tué dans l'œuf, retrouvailles | FEAT-003 à 008, 010, 014 | Confirmé |
 | E-05 | Ma fiche et mon double : indices du jumeau | [FEAT-007](fonctionnalites/jumeaux.md) | Confirmé |
 | E-06 | Collection : grille, séries | [FEAT-004](fonctionnalites/collection.md), [FEAT-012](fonctionnalites/series-rarete.md) | Confirmé |
@@ -35,6 +36,23 @@
 | E-14 | Avertissement avant création : jeu punk, données supprimées, installation recommandée | [FEAT-003](fonctionnalites/personnage.md) | Confirmé (S5) |
 | E-15 | Spectateur : « Va trouver le MJ », carte en lecture seule, lien discret vers le PIN | [FEAT-019](fonctionnalites/recuperation.md) | Confirmé (S6) |
 | E-16 | Écrans de pièges | [FEAT-022](fonctionnalites/costume-mj.md) | Proposition |
+
+## 2bis. Accueil et tutoriel
+
+**Principe (Confirmé, S8) :** très simple, rapide, compréhensible sans explication. Un joueur doit savoir quoi faire en moins de 5 secondes. La partie graphique sera travaillée plus tard : ici, seul le contenu compte.
+
+**Tutoriel :** un seul écran, quatre lignes (scanner, revoir, jumeau, révélation à 5 h), un bouton « C'est parti ». Textes : [textes §5.1](textes.md#5-tutoriel-et-accueil).
+
+**Écran d'accueil (E-01), de haut en bas :**
+1. Barre de progression de la quête collective, avec le prochain palier ([barème](bareme.md)).
+2. Compte à rebours, seulement quand il y en a un (révélation, fin, blocage).
+3. **Une seule ligne « Et maintenant ? »**, qui suggère l'action la plus utile du moment ([textes §5.2](textes.md#5-tutoriel-et-accueil)).
+4. Un très gros bouton **Scanner**.
+5. En dessous, discrètement : ma carte, ma collection (nombre de cartes), mon jumeau (si attribué).
+
+Les classements, le mur et les badges sont dans la barre d'onglets, pas sur l'accueil.
+
+**Écran de nouvelle carte (E-04) :** le **faux souvenir** est l'élément principal, affiché en premier et en grand. C'est le moment drôle qui donne envie de continuer (S8).
 
 ## 3. Navigation
 
@@ -101,7 +119,7 @@ flowchart LR
 **E-03 : Création du personnage, étape costume**
 ```
 ┌──────────────────────────────┐
-│ ← Retour        Étape 2/10   │
+│ ← Retour        Étape 2/4    │
 │ Ton costume :                │
 │ choisis ce qui te ressemble  │
 │ [🧟][🧛][🧙][🤖]              │  ← 8 types (FEAT-003)
@@ -109,8 +127,10 @@ flowchart LR
 │              [ Suivant → ]   │
 └──────────────────────────────┘
 ┌──────────────────────────────┐
-│ ← Retour        Étape 4/10   │
-│ Coche ce que tu portes :     │
+│ ← Retour        Étape 3/4    │
+│ Couleur dominante :          │
+│ ●●●●●●●●●●●●                 │  ← 12 couleurs
+│ Coche ce qu'on voit de loin :│
 │ 🎭 💄 💇 😈 🪽 🎩            │  ← 12 attributs
 │ 💡 🩸 🪄 🧥 ✨ 🐾            │
 │              [ Suivant → ]   │

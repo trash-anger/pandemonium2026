@@ -20,7 +20,7 @@ Revoir quelqu'un est **le cœur du thème**. Scanner de nouveau une personne aff
 | RG-005-2 | Paliers d'easter eggs : ×3 « Boucle détectée », ×6 « Jour de la marmotte », ×13 secret. | Confirmé (proposés en S2, approuvés en S3 : « J'adore tout ») ; contenu : [textes §2](../textes.md#2-easter-eggs-de-rescan-rg-005-2), validé par Florian ([DEC-032](../decisions.md#dec-032)) |
 | RG-005-3 | Un rescan ne compte qu'**une fois par fenêtre de 5 minutes** pour une même paire. | Confirmé (S2 → S3) ; valeur ajustable par le MJ (Proposition) |
 | RG-005-4 | Certaines étiquettes peuvent avoir des easter eggs propres, déclenchés après N rescans de ce badge précis. | Confirmé (S1 : « mettre des easter egg si tu scannes un certain nombre de fois certains badges ») |
-| RG-005-5 | Une **Boucle infinie** (joueur qui rescanne beaucoup) **perd des souvenirs**, selon la proposition ci-dessous. | Confirmé (S3, S5) ; seuils réglables dans l'admin |
+| RG-005-5 | Une **Boucle infinie** (joueur qui rescanne beaucoup) **perd des souvenirs**, selon la proposition ci-dessous. | Confirmé (S3, S5) ; valeurs : [barème §3](../bareme.md#3-mémoire-et-rôles-gagnés) |
 | RG-005-6 | Une **Célébrité** ou un **Fantôme** (joueur très rescanné) **accumule des souvenirs**. | Confirmé (S3, S5) |
 | RG-005-7 | Mission « Fermer la boucle » : en fin de soirée, rescanner la toute première personne scannée. | Confirmé (S2 → S3) |
 | RG-005-8 | Un rescan compté alimente la quête collective, environ un quart d'un nouveau scan. | Confirmé (S5, [DEC-032](../decisions.md#dec-032)) |

@@ -10,7 +10,7 @@ Ce document liste ce qui est **connu et imposé**. Les options d'architecture so
 **Imprimante NIIMBOT B1** : thermique (sans encre), **monochrome**, Bluetooth, largeur d'impression de **20 à 48 mm**, batterie de 1500 mAh, reconnaissance RFID des consommables. Elle est livrée avec un rouleau échantillon de 50×30 mm. *Statut : Confirmé (achat).* Le modèle acheté est la **B1 standard, 203 dpi** (S5, [DEC-028](decisions.md#dec-028)).
 
 ### CT-002
-**Autocollants NIIMBOT 40×30 mm, blancs, 230 par rouleau**, vendus par lot de 3 rouleaux, compatibles B1, B21 et B3S. Si le lot complet a été reçu, cela fait environ **690 étiquettes**, plus le rouleau échantillon de 50×30. Florian confirme les **690** petits autocollants, plus **plus de 200 étiquettes plus grandes**, utilisées pour le costume du MJ et distribuées aussi (S7, [DEC-066](decisions.md#dec-066)). Dimensions du grand format à mesurer. *Statut : Confirmé (achat) ; le fini mat ou brillant reste à vérifier* : la règle [RG-001-6](fonctionnalites/etiquettes-impression.md) exige du mat.
+**Autocollants NIIMBOT 40×30 mm, blancs, 230 par rouleau**, vendus par lot de 3 rouleaux, compatibles B1, B21 et B3S. Si le lot complet a été reçu, cela fait environ **690 étiquettes**, plus le rouleau échantillon de 50×30. Florian confirme les **690** petits autocollants, plus **plus de 200 étiquettes plus grandes**, utilisées pour le costume du MJ et distribuées aussi (S7, [DEC-066](decisions.md#dec-066)). Le grand format mesure **40×50 mm** (S8). *Statut : Confirmé (achat) ; le fini mat ou brillant reste à vérifier* : la règle [RG-001-6](fonctionnalites/etiquettes-impression.md) exige du mat.
 
 ### CT-003
 **Étiquettes manille SatsoniK, 1,85 × 1,25 po (environ 47 × 32 mm), lot de 1000, sans attache, « pré-imprimées »** (le titre de la fiche mentionne « Green Manila »). **Pistolet à étiquettes Mr. Pen**, avec 5 aiguilles et 2000 attaches. *Statut : Confirmé (achat).* **Hypothèse** sur l'usage : l'autocollant QR de 40×30 est collé sur l'étiquette manille de 47×32, puis attaché aux vêtements avec le pistolet, comme une étiquette de prix. L'étiquette porte seulement le QR et le logo ([DEC-044](decisions.md#dec-044)).
@@ -67,6 +67,7 @@ Le serveur est la source de vérité ; le téléphone ne garde qu'un cache ([DEC
 | Photos du mur | R2 | [FEAT-017](fonctionnalites/mur-deja-vu.md) |
 | Web Push | Implémentation VAPID compatible WebCrypto dans un Worker | [CT-008](#ct-008) |
 | Tâches planifiées (H−30, révélation) | Alarmes de Durable Object ou Cron Triggers | |
+| Graphe de la révélation | D3.js (`d3-force`, `d3-zoom`), rendu Canvas ; positions calculées côté serveur | Proposition (S9) ; [RG-009-13](fonctionnalites/quete-collective.md) |
 
 Front léger (Preact ou vanilla, avec Vite). La bibliothèque de décodage QR reste à choisir.
 

@@ -1,12 +1,10 @@
-// Worker « Déjà vu ! » — LOT-0 : étiquettes, page provisoire, panneau du MJ.
+// Worker « Déjà vu ! » : application du joueur (/api/*), étiquettes et panneau du MJ.
 import { debutConnexion, deconnexion, retourConnexion, utilisateurConnecte, type EnvAuth } from "./auth";
 import { genererCodes, normaliserCode } from "./codes";
-import { ecrireConfig, lireConfig, HEURES_PAR_DEFAUT, type CleConfig, type Heures } from "./config";
+import { ecrireConfig, lireConfig, type CleConfig } from "./config";
 import { csvNiimbot } from "./csv";
-import {
-  langue, pageAccueil, pageAdmin, pageConnexion, pageEtiquette, pageInconnue,
-  type Compte, type EtiquetteVue, type Lot,
-} from "./pages";
+import { langue, pageAdmin, pageApp, pageConnexion, type Compte, type EtiquetteVue, type Lot } from "./pages";
+import { definirPin, routeApi } from "./jeu";
 import { localVersIso } from "./temps";
 import { avecAgent, devActif, routeDev } from "./dev";
 
@@ -39,10 +37,16 @@ async function servir(req: Request, env: Env, url: URL): Promise<Response> {
         const saisie = url.searchParams.get("code");
         if (saisie !== null) {
           const code = normaliserCode(saisie);
-          return code ? Response.redirect(`${url.origin}/${code}${suffixeLangue(url)}`, 302) : pageInconnue(langue(req), saisie);
+          if (!code) return pageApp(langue(req), 404);
+          const q = new URLSearchParams({ s: "m" });
+          const l = url.searchParams.get("lang");
+          if (l === "fr" || l === "en") q.set("lang", l);
+          return Response.redirect(`${url.origin}/${code}?${q}`, 302);
         }
-        return pageAccueil(langue(req));
+        return pageApp(langue(req));
       }
+      if (chemin.startsWith("/api/")) return routeApi(req, env, url);
+      if (["/collection", "/moi", "/saisie", "/tuto", "/badges", "/medailles"].includes(chemin)) return pageApp(langue(req));
       if (chemin === "/auth/connexion") return debutConnexion(env);
       if (chemin === "/auth/retour") return retourConnexion(req, env);
       if (chemin === "/auth/deconnexion") return deconnexion(env);
@@ -50,7 +54,7 @@ async function servir(req: Request, env: Env, url: URL): Promise<Response> {
 
       const m = chemin.match(/^\/([^/]{4,6})\/?$/);
       if (m) return etiquette(req, env, m[1]);
-      return pageInconnue(langue(req), "");
+      return pageApp(langue(req), 404);
     } catch (e) {
       console.error(e);
       return new Response("Erreur interne", { status: 500 });
@@ -59,13 +63,16 @@ async function servir(req: Request, env: Env, url: URL): Promise<Response> {
 }
 
 async function etiquette(req: Request, env: Env, brut: string): Promise<Response> {
-  const code = normaliserCode(decodeURIComponent(brut));
-  if (!code) return pageInconnue(langue(req), brut);
-  if (code !== brut) return Response.redirect(new URL(`/${code}${suffixeLangue(new URL(req.url))}`, req.url).toString(), 301);
-  const e = await env.DB.prepare("SELECT etat FROM etiquettes WHERE code = ?").bind(code).first<{ etat: string }>();
-  if (!e) return pageInconnue(langue(req), code);
-  const heures = (await lireConfig(env.DB, "heures")) as Heures;
-  return pageEtiquette(langue(req), code, e.etat, localVersIso(heures.debut || HEURES_PAR_DEFAUT.debut));
+  // La page de l'étiquette est l'application : elle traite le scan via /api/scan.
+  let code: string | null = null;
+  try { code = normaliserCode(decodeURIComponent(brut)); } catch { /* encodage invalide */ }
+  if (!code) return pageApp(langue(req), 404);
+  if (code !== brut) {
+    const u = new URL(req.url);
+    return Response.redirect(`${u.origin}/${code}${u.search}`, 301);
+  }
+  const e = await env.DB.prepare("SELECT 1 AS x FROM etiquettes WHERE code = ?").bind(code).first();
+  return pageApp(langue(req), e ? 200 : 404);
 }
 
 async function admin(req: Request, env: Env, url: URL): Promise<Response> {
@@ -111,6 +118,34 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       return retour({ code, message: `Étiquette ${code} mise à jour.` });
     }
 
+    if (url.pathname === "/admin/pin") {
+      const code = normaliserCode(String(f.get("code") || "")), pin = String(f.get("pin") || "");
+      const e = code ? await env.DB.prepare("SELECT personnage_id FROM etiquettes WHERE code = ?").bind(code).first<{ personnage_id: string | null }>() : null;
+      if (!e?.personnage_id || !/^\d{4}$/.test(pin)) return retour({ code: code || "", erreur: "PIN invalide ou étiquette sans personnage" });
+      await definirPin(env, e.personnage_id, pin);
+      await env.DB.prepare("DELETE FROM pin_essais WHERE code IN (SELECT code FROM etiquettes WHERE personnage_id = ?)").bind(e.personnage_id).run();
+      await journal(env, email, "pin", { code });
+      return retour({ code: code!, message: `PIN réinitialisé pour le personnage de ${code}.` });
+    }
+
+    if (url.pathname === "/admin/detacher") {
+      const code = normaliserCode(String(f.get("code") || ""));
+      if (!code) return retour({ erreur: "Code invalide" });
+      await env.DB.prepare("UPDATE etiquettes SET etat = 'vierge', personnage_id = NULL, faction_id = NULL, reclamee_le = NULL WHERE code = ?").bind(code).run();
+      await journal(env, email, "detacher", { code });
+      return retour({ code, message: `Étiquette ${code} détachée : elle est de nouveau vierge.` });
+    }
+
+    if (url.pathname === "/admin/partie-zero") {
+      if (String(f.get("confirmation")).trim().toUpperCase() !== "ZERO") return retour({ erreur: "Confirmation manquante : rien n'a été effacé." });
+      await env.DB.batch([
+        ...["appareils", "scans", "collection", "badges", "pin_essais", "personnages"].map((x) => env.DB.prepare(`DELETE FROM ${x}`)),
+        env.DB.prepare("UPDATE etiquettes SET etat = 'vierge', personnage_id = NULL, faction_id = NULL, reclamee_le = NULL WHERE etat = 'reclamee'"),
+      ]);
+      await journal(env, email, "partie_zero", {});
+      return retour({ message: "Partie remise à zéro." });
+    }
+
     if (url.pathname === "/admin/config") {
       const cle = String(f.get("cle")) as CleConfig;
       if (cle !== "heures" && cle !== "parametres") return retour({ erreur: "Clé inconnue" });
@@ -153,21 +188,24 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
   const recherche = url.searchParams.get("code") || "";
   const code = recherche ? normaliserCode(recherche) : null;
   const etiquette = code
-    ? await env.DB.prepare("SELECT code, format, role, etat, lot, cree_le FROM etiquettes WHERE code = ?").bind(code).first<EtiquetteVue>()
+    ? await env.DB.prepare(
+        `SELECT e.code, e.format, e.role, e.etat, e.lot, e.cree_le, e.personnage_id, e.faction_id, p.pseudo,
+           (SELECT COUNT(*) FROM etiquettes x WHERE x.personnage_id = e.personnage_id) AS nb_etiquettes
+         FROM etiquettes e LEFT JOIN personnages p ON p.id = e.personnage_id WHERE e.code = ?`,
+      ).bind(code).first<EtiquetteVue>()
     : null;
   return pageAdmin({
     email, role: u.role, comptes, lots, etiquette, recherche,
+    joueurs: {
+      personnages: (await env.DB.prepare("SELECT COUNT(*) AS n FROM personnages").first<{ n: number }>())?.n ?? 0,
+      scans: (await env.DB.prepare("SELECT COUNT(*) AS n FROM scans").first<{ n: number }>())?.n ?? 0,
+      cartes: (await env.DB.prepare("SELECT COUNT(*) AS n FROM collection").first<{ n: number }>())?.n ?? 0,
+    },
     heures: await lireConfig(env.DB, "heures"),
     parametres: await lireConfig(env.DB, "parametres"),
     message: url.searchParams.get("message") || undefined,
     erreur: url.searchParams.get("erreur") || undefined,
   });
-}
-
-/** Conserve ?lang= lors des redirections. */
-function suffixeLangue(url: URL): string {
-  const l = url.searchParams.get("lang");
-  return l === "fr" || l === "en" ? `?lang=${l}` : "";
 }
 
 async function journal(env: Env, qui: string, action: string, details: unknown) {

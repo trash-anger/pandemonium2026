@@ -1,14 +1,27 @@
 // Banc d'essai local (jamais actif en production) : page /banc, API de simulation /__dev/*,
 // et agent injecté dans les pages du jeu pour recevoir les injections du banc (postMessage).
 import bancHtml from "../banc/banc.html";
+import { auHasard, ATTRIBUTS, CLASSES, COULEURS, FACTIONS, genererPseudo, TYPES } from "./catalogue";
 import { genererCodes } from "./codes";
+import { definirPin, nouvelAppareil, sha256 } from "./jeu";
 
 export interface EnvDev {
   DB: D1Database;
   PUBLIC_ORIGIN: string;
+  SESSION_SECRET?: string;
+  /** « actif » sur le Worker d'aperçu des PR (wrangler.jsonc, env apercu) */
+  BANC?: string;
 }
 
-export const devActif = (env: EnvDev) => env.PUBLIC_ORIGIN.startsWith("http://localhost");
+const TABLES_PARTIE = ["appareils", "scans", "collection", "badges", "pin_essais", "personnages"]; // appareils avant personnages (clé étrangère)
+
+async function persoDuJeton(env: EnvDev, jeton: unknown): Promise<string | null> {
+  if (typeof jeton !== "string" || !jeton) return null;
+  const r = await env.DB.prepare("SELECT personnage_id AS id FROM appareils WHERE empreinte = ?").bind(await sha256(jeton)).first<{ id: string }>();
+  return r?.id ?? null;
+}
+
+export { devActif } from "./mode";
 
 const json = (v: unknown, status = 200) =>
   new Response(JSON.stringify(v), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
@@ -28,7 +41,57 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
 
   // ----- Simulation : modifie le vrai état du serveur -----
   if (p === "/__dev/reinitialiser" && req.method === "POST") {
-    await env.DB.batch([env.DB.prepare("DELETE FROM etiquettes"), env.DB.prepare("DELETE FROM config"), env.DB.prepare("DELETE FROM journal_mj")]);
+    await env.DB.batch(["etiquettes", "config", "journal_mj", ...TABLES_PARTIE].map((x) => env.DB.prepare(`DELETE FROM ${x}`)));
+    return json({ ok: true });
+  }
+  if (p === "/__dev/partie-zero" && req.method === "POST") {
+    // Efface les personnages et remet les étiquettes réclamées à l'état vierge
+    await env.DB.batch([
+      ...TABLES_PARTIE.map((x) => env.DB.prepare(`DELETE FROM ${x}`)),
+      env.DB.prepare("UPDATE etiquettes SET etat = 'vierge', personnage_id = NULL, faction_id = NULL, reclamee_le = NULL WHERE etat = 'reclamee'"),
+    ]);
+    return json({ ok: true });
+  }
+  const corps = req.method === "POST" ? ((await req.clone().json().catch(() => ({}))) as Record<string, unknown>) : {};
+  if (p === "/__dev/personnage" && req.method === "POST") {
+    // Personnage complet en un clic (PIN 1234), lié à une étiquette vierge tirée au hasard
+    const e = await env.DB.prepare("SELECT code FROM etiquettes WHERE etat = 'vierge' AND role = 'normale' ORDER BY random() LIMIT 1").first<{ code: string }>();
+    if (!e) return json({ erreur: "Plus d'étiquette vierge : clique « Stock de test »." }, 404);
+    const id = crypto.randomUUID().slice(0, 12), type = auHasard(TYPES), couleur = auHasard(COULEURS), iso = new Date(Number(corps.maintenant) || Date.now()).toISOString();
+    const attributs = ATTRIBUTS.filter(() => Math.random() < 0.3);
+    await env.DB.prepare("INSERT INTO personnages (id, pseudo, type, couleur, attributs, classe, pin_sel, pin_empreinte, langue, cree_le) VALUES (?, ?, ?, ?, ?, ?, '', '', ?, ?)")
+      .bind(id, genererPseudo(type, couleur, corps.langue === "en" ? "en" : "fr"), type, couleur, JSON.stringify(attributs), auHasard(CLASSES), corps.langue === "en" ? "en" : "fr", iso).run();
+    await definirPin(env, id, "1234");
+    await env.DB.prepare("UPDATE etiquettes SET etat = 'reclamee', personnage_id = ?, faction_id = ?, reclamee_le = ? WHERE code = ?").bind(id, auHasard(FACTIONS), iso, e.code).run();
+    return json({ code: e.code, jeton: await nouvelAppareil(env, id, Date.now()) });
+  }
+  if (p === "/__dev/code-de" && req.method === "POST") {
+    const id = await persoDuJeton(env, corps.jeton);
+    const e = id ? await env.DB.prepare("SELECT code FROM etiquettes WHERE personnage_id = ? ORDER BY random() LIMIT 1").bind(id).first<{ code: string }>() : null;
+    return e ? json(e) : json({ erreur: "Ce téléphone n'a pas de personnage." }, 404);
+  }
+  if (p === "/__dev/ajouter-etiquettes" && req.method === "POST") {
+    // Monte le personnage à N étiquettes (factions distinctes) pour tester la surconsommation
+    const id = await persoDuJeton(env, corps.jeton);
+    if (!id) return json({ erreur: "Ce téléphone n'a pas de personnage." }, 404);
+    const miennes = (await env.DB.prepare("SELECT faction_id AS f FROM etiquettes WHERE personnage_id = ?").bind(id).all<{ f: string }>()).results.map((x) => x.f);
+    const libres = FACTIONS.filter((f) => !miennes.includes(f));
+    const n = Math.max(0, Number(corps.n ?? 3) - miennes.length);
+    const codes = (await env.DB.prepare("SELECT code FROM etiquettes WHERE etat = 'vierge' AND role = 'normale' ORDER BY random() LIMIT ?").bind(n).all<{ code: string }>()).results;
+    const iso = new Date().toISOString();
+    await env.DB.batch(codes.map((c, i) => env.DB.prepare("UPDATE etiquettes SET etat = 'reclamee', personnage_id = ?, faction_id = ?, reclamee_le = ? WHERE code = ?").bind(id, libres[i % libres.length], iso, c.code)));
+    return json({ ajoutees: codes.length });
+  }
+  if (p === "/__dev/premier-scan" && req.method === "POST") {
+    // Simule « un autre joueur m'a scanné » : fige le costume (RG-003-11)
+    const id = await persoDuJeton(env, corps.jeton);
+    if (!id) return json({ erreur: "Ce téléphone n'a pas de personnage." }, 404);
+    await env.DB.prepare("UPDATE personnages SET premier_scanne_le = ? WHERE id = ?").bind(new Date().toISOString(), id).run();
+    return json({ ok: true });
+  }
+  if (p === "/__dev/pin-bloquer" && req.method === "POST") {
+    await env.DB.prepare("INSERT INTO pin_essais (code, echecs, bloque_jusqu_a) VALUES (?, 0, ?) ON CONFLICT (code) DO UPDATE SET bloque_jusqu_a = excluded.bloque_jusqu_a")
+      .bind(String(corps.code), new Date(Date.now() + 15 * 60_000).toISOString()).run();
     return json({ ok: true });
   }
   if (p === "/__dev/stock" && req.method === "POST") {
@@ -59,7 +122,8 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
   }
   if (p === "/__dev/etat") {
     const comptes = (await env.DB.prepare("SELECT role, etat, COUNT(*) AS n FROM etiquettes GROUP BY role, etat").all()).results;
-    return json({ comptes });
+    const n = async (x: string) => (await env.DB.prepare(`SELECT COUNT(*) AS n FROM ${x}`).first<{ n: number }>())?.n;
+    return json({ comptes, personnages: await n("personnages"), scans: await n("scans"), collection: await n("collection") });
   }
   return json({ erreur: "Route de dev inconnue" }, 404);
 }
@@ -69,8 +133,15 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
 const AGENT = String.raw`(function(){
 if (window.parent === window) return;
 var envoyer = function(type, d){ try{ window.parent.postMessage(Object.assign({source:"dv-app", type:type}, d||{}), "*"); }catch(e){} };
+var suffixe = /^T\d$/.test(window.name) ? "-" + window.name : "";
+var CLE_H = "dv-banc-horloge" + suffixe, CLE_J = "dv-appareil" + suffixe;
 var vraiNow = Date.now.bind(Date), decalage = 0, vitesse = 1, ancre = vraiNow();
 Date.now = function(){ var r = vraiNow(); return ancre + decalage + (r - ancre) * vitesse; };
+var VraiDate = Date;
+// new Date() sans argument suit aussi l'horloge simulée
+window.Date = new Proxy(VraiDate, { construct: function(c, a){ return a.length ? new c(...a) : new c(Date.now()); } });
+function reglerHorloge(iso, v, depuis){ var r = vraiNow(); ancre = r; decalage = iso ? Date.parse(iso) + (depuis ? (r - depuis) * (v||1) : 0) - r : 0; vitesse = iso ? (v || 1) : 1; }
+try { var hs = JSON.parse(localStorage.getItem(CLE_H) || "null"); if (hs) reglerHorloge(hs.iso, hs.vitesse, hs.regle); } catch(e){}
 var css = document.createElement("style");
 css.textContent = ".dv-reduit *{animation:none!important;transition:none!important}"
  + ".dv-banniere{position:fixed;left:10px;right:10px;top:10px;z-index:9999;background:#ff4f8b;color:#18161d;font:800 15px/1.35 system-ui;padding:12px 14px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.6);transform:translateY(-140%);transition:transform .35s}"
@@ -90,7 +161,15 @@ function glitch(s){
 }
 window.addEventListener("message", function(ev){
   var m = ev.data; if (!m || m.source !== "dv-banc") return;
-  if (m.type === "horloge") { var r = vraiNow(); ancre = r; decalage = m.iso ? Date.parse(m.iso) - r : 0; vitesse = m.vitesse || 1; envoyer("log", {texte:"horloge → " + (m.iso || "réelle") + " ×" + vitesse}); }
+  if (m.type === "horloge") {
+    reglerHorloge(m.iso, m.vitesse, 0);
+    try { m.iso ? localStorage.setItem(CLE_H, JSON.stringify({iso:m.iso, vitesse:m.vitesse||1, regle:vraiNow()})) : localStorage.removeItem(CLE_H); } catch(e){}
+    envoyer("log", {texte:"horloge → " + (m.iso || "réelle") + " ×" + vitesse});
+    if (m.recharger) location.reload();
+  }
+  else if (m.type === "identite") { var j = null; try { j = localStorage.getItem(CLE_J); } catch(e){} envoyer("identite", {jeton:j, demande:m.demande}); }
+  else if (m.type === "adopter") { try { localStorage.setItem(CLE_J, m.jeton); localStorage.removeItem("dv-moi" + suffixe); } catch(e){} location.href = m.url || "/"; }
+  else if (m.type === "oublier") { try { ["dv-appareil","dv-moi","dv-brouillon"].forEach(function(k){ localStorage.removeItem(k + suffixe); }); } catch(e){} envoyer("log", {texte:"stockage local vidé"}); location.href = m.url || "/"; }
   else if (m.type === "reduit") { document.documentElement.classList.toggle("dv-reduit", !!m.actif); }
   else if (m.type === "aller") { location.href = m.url; }
   else if (m.type === "recharger") { location.reload(); }

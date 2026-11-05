@@ -46,7 +46,8 @@ export async function verifier<T>(secret: string, jeton: string): Promise<T | nu
   const ok = await crypto.subtle.verify("HMAC", await cle(secret), octetsSig, enc.encode(corps));
   if (!ok) return null;
   try {
-    return JSON.parse(deb64url(corps)) as T;
+    // Décodage UTF-8 : le contenu peut contenir des accents (pseudos)
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(deb64url(corps), (c) => c.charCodeAt(0)))) as T;
   } catch {
     return null;
   }

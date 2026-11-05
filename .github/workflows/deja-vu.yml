@@ -1,0 +1,102 @@
+# Pipeline de l'application « Déjà vu ! » (app/)
+# - Pull request : tests, puis déploiement sur l'aperçu isolé (Worker et base D1 « deja-vu-apercu »)
+#   et lien commenté dans la PR. Les données de production ne sont jamais touchées.
+# - Fusion dans main : tests, migrations de la base de production, déploiement sur https://p.uyt.re.
+# Secrets GitHub requis : CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
+name: Déjà vu
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["app/**", ".github/workflows/deja-vu.yml"]
+  push:
+    branches: [main]
+    paths: ["app/**", ".github/workflows/deja-vu.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: deja-vu-${{ github.event_name == 'push' && 'production' || 'apercu' }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  apercu:
+    # Seulement pour les branches du dépôt (les forks n'ont pas accès aux secrets)
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: tests
+    runs-on: ubuntu-latest
+    environment:
+      name: apercu
+      url: https://deja-vu-apercu.uyt-re.workers.dev
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - run: npx wrangler d1 migrations apply deja-vu-apercu --env apercu --remote
+      - run: npx wrangler deploy --env apercu
+      - name: Lien dans la PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const corps = [
+              "### Aperçu déployé",
+              "",
+              "| | |",
+              "|---|---|",
+              "| Jeu | https://deja-vu-apercu.uyt-re.workers.dev |",
+              "| Banc d'essai | https://deja-vu-apercu.uyt-re.workers.dev/banc |",
+              "| Admin | https://deja-vu-apercu.uyt-re.workers.dev/admin |",
+              "",
+              `Commit ${context.sha.slice(0, 7)}. Base de données d'aperçu, séparée de la production. L'aperçu montre la dernière PR poussée.`,
+            ].join("\n");
+            const { data } = await github.rest.issues.listComments({ ...context.repo, issue_number: context.issue.number });
+            const ancien = data.find((c) => c.user.type === "Bot" && c.body.startsWith("### Aperçu déployé"));
+            if (ancien) await github.rest.issues.updateComment({ ...context.repo, comment_id: ancien.id, body: corps });
+            else await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body: corps });
+
+  production:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: tests
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://p.uyt.re
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - run: npx wrangler d1 migrations apply deja-vu --remote
+      - run: npx wrangler deploy

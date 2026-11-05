@@ -20,7 +20,27 @@
     "PUBLIC_ORIGIN": "https://p.uyt.re"
   },
   "dev": { "host": "localhost:8787" },
+  // Aperçu des PR (GitHub Actions) : Worker et base séparés, banc d'essai actif, jamais les données de production.
+  "env": {
+    "apercu": {
+      "name": "deja-vu-apercu",
+      "routes": [],
+      "workers_dev": true,
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "deja-vu-apercu",
+          "database_id": "07cafb7a-705e-47e4-9e7c-5222c212fd40",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "vars": {
+        "PUBLIC_ORIGIN": "https://deja-vu-apercu.uyt-re.workers.dev",
+        "BANC": "actif"
+      }
+    }
+  },
   "observability": { "enabled": true }
-  // Secrets (wrangler secret put) : GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
-  // SESSION_SECRET, ADMIN_EMAILS (adresses séparées par des virgules).
+  // Secrets (wrangler secret put [--env apercu]) : GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+  // SESSION_SECRET, ADMIN_EMAILS, LECTEURS_EMAILS (adresses séparées par des virgules).
 }

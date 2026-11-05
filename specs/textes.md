@@ -2,7 +2,7 @@
 
 [← Index](../README.md)
 
-> **Statut : Proposition, à relire par Florian** ([DEC-032](decisions.md#dec-032), [DEC-042](decisions.md#dec-042)). Tous les textes existent en français et en anglais ([DEC-039](decisions.md#dec-039)). Ton : [univers-et-ton](univers-et-ton.md) ; NSFW soft limité aux allusions ([DEC-049](decisions.md#dec-049)).
+> **Statut : Confirmé** : relu et validé par Florian le 2026-11-05 (S7) ([DEC-032](decisions.md#dec-032), [DEC-042](decisions.md#dec-042)). Tous les textes existent en français et en anglais ([DEC-039](decisions.md#dec-039)). Ton : [univers-et-ton](univers-et-ton.md) ; NSFW soft limité aux allusions ([DEC-049](decisions.md#dec-049)).
 
 **Règle d'écriture.** Les textes ne doivent jamais dépendre du genre d'un joueur : on désigne les joueurs par leur pseudo, on évite les participes et adjectifs accordés à une personne (« arrivé·e », « habillé·e »), et on n'accorde rien avec un attribut de costume dont le genre varie (« un masque », « une cape »). Ainsi, le même gabarit reste correct quelle que soit la combinaison ([CA-006-3](fonctionnalites/faux-souvenirs.md)).
 

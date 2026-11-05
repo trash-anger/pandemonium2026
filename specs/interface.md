@@ -50,7 +50,7 @@
 4. Un très gros bouton **Scanner**.
 5. En dessous, discrètement : ma carte, ma collection (nombre de cartes), mon jumeau (si attribué).
 
-Les classements, le mur et les badges sont dans la barre d'onglets, pas sur l'accueil.
+Les classements, le mur et les badges sont dans la barre d'onglets, pas sur l'accueil. Jusqu'au LOT-3, l'onglet 🏅 « Badges » occupe la place des classements ; une pastille rose signale un badge pas encore vu ([textes §1.6](textes.md#16-badges-feat-015)).
 
 **Écran de nouvelle carte (E-04) :** le **faux souvenir** est l'élément principal, affiché en premier et en grand. C'est le moment drôle qui donne envie de continuer (S8).
 

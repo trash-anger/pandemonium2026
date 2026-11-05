@@ -55,11 +55,27 @@
     rodeur: ["Rôdeur de Friperie", "Thrift-Store Ranger", "Perception (des bonnes affaires)", "Perception (of bargains)"],
     voleur: ["Voleur d'Étiquettes", "Tag Thief", "Dextérité", "Dexterity"],
   };
+  // Badges (FEAT-015, textes §1.6) : [emoji, nom FR, nom EN, condition FR, condition EN, secret]
+  // L'ordre est celui de l'écran ; un badge secret n'apparaît qu'une fois gagné.
   const BADGES = {
-    tueur_de_poussin: ["🐣", "Tueur de poussin", "Chick Killer", "Une étiquette vierge tuée dans l'œuf.", "A blank tag nipped in the bud."],
-    achat_compulsif: ["🛍️", "Achat compulsif", "Impulse Buy", "Une étiquette de plus pour ton personnage.", "One more tag for your character."],
-    surconsommation: ["🧾", "Surconsommation", "Overconsumption", "Plus de 3 étiquettes. Le système te remercie.", "More than 3 tags. The system thanks you."],
-    trans_classe: ["🔀", "Trans-classe", "Class Shifter", "Changement de classe enregistré.", "Class change recorded."],
+    tueur_de_poussin: ["🐣", "Tueur de poussin", "Chick Killer", "Laisser une étiquette vierge qui n'était pas à toi.", "Pass on a blank tag that wasn't yours."],
+    achat_compulsif: ["🛍️", "Achat compulsif", "Impulse Buy", "Ajouter une étiquette à ton personnage.", "Add a tag to your character."],
+    surconsommation: ["🧾", "Surconsommation", "Overconsumption", "Prendre plus de 3 étiquettes. À éviter.", "Take more than 3 tags. Don't."],
+    trans_classe: ["🔀", "Trans-classe", "Class Shifter", "Changer de classe avant 1 h.", "Change class before 1 a.m."],
+    installe_portail: ["📲", "Installé le Portail", "Portal Installed", "Installer l'app sur ton écran d'accueil.", "Install the app on your home screen."],
+    boucle_detectee: ["🔁", "Boucle détectée", "Loop Detected", "Revoir la même personne 3 fois.", "See the same person 3 times."],
+    jour_marmotte: ["🕰️", "Jour de la marmotte", "Groundhog Day", "Revoir la même personne 6 fois.", "See the same person 6 times."],
+    client_maudit: ["🧿", "Client maudit", "Cursed Customer", "Ce badge n'existe pas. Tu ne l'as jamais eu.", "This badge doesn't exist. You never got it.", true],
+    jumeaux_retrouves: ["👯", "Jumeaux retrouvés", "Twins Reunited", "Retrouver ton double.", "Find your double."],
+    fermer_boucle: ["⭕", "Fermer la boucle", "Close the Loop", "En fin de soirée, rescanner ta toute première personne.", "At the end of the night, rescan your very first person."],
+    patient_zero: ["🦠", "Patient zéro", "Patient Zero", "Être la première personne corrompue par un chat noir.", "Be the first person corrupted by a black cat."],
+    dernier_survivant: ["🛡️", "Dernier survivant", "Last Survivor", "Jamais corrompu, et le plus de nouvelles cartes à la révélation.", "Never corrupted, with the most new cards at the reveal."],
+    amnesie: ["🫥", "Amnésie", "Amnesia", "Vider complètement ta jauge de souvenirs.", "Empty your memory gauge completely."],
+    serie_complete: ["🧩", "Série complète", "Full Set", "Compléter une série.", "Complete a set."],
+    garde_robe_mj: ["👔", "Garde-robe du MJ", "GM's Wardrobe", "Collectionner les 10 légendaires du MJ.", "Collect all 10 of the GM's legendaries."],
+    anticapitaliste: ["✊", "Anticapitaliste", "Anti-capitalist", "Trouver un bon de réduction très particulier.", "Find a very special discount voucher."],
+    employe_du_mois: ["🏷️", "Employé du mois", "Employee of the Month", "Réussir une mission confiée par le MJ.", "Complete a mission from the GM."],
+    client_difficile: ["⚠️", "Client difficile", "Difficult Customer", "Recevoir un avertissement du MJ. Pas fier.", "Get a warning from the GM. Not proud."],
   };
   const lib = (o) => (L === "en" ? o.en : o.fr);
   const typeDe = (id) => TYPES.find((t) => t.id === id) || TYPES[7];
@@ -156,7 +172,10 @@
       langue: "Language / Langue", commentJouer: "Comment jouer",
       pinRappel: "Ton PIN te permet de retrouver ton personnage : rescanne une de tes étiquettes depuis un autre navigateur, puis touche « Réintégrer le jeu avec mon PIN ».",
       enregistre: "Enregistré.", mj: "MJ",
-      ongAccueil: "Accueil", ongCollection: "Collection", ongClassements: "Classements", ongMoi: "Moi",
+      ongAccueil: "Accueil", ongCollection: "Collection", ongClassements: "Classements", ongBadges: "Badges", ongMoi: "Moi",
+      badgesTitre: "Badges", badgesGagnes: "Gagnés", badgesAVenir: "À débloquer",
+      badgesVide: "Aucun badge pour l'instant. Ils se gagnent en jouant… ou en faisant des bêtises.",
+      voirBadges: (n) => `Mes badges (${n})`, gagneA: (h) => `gagné à ${h}`,
       integre: "Tu es dans le navigateur d'une app. Ouvre plutôt cette page dans Safari ou Chrome pour garder ton personnage.",
       pied: "Pandémonium · Montréal · 7 novembre 2026",
     },
@@ -240,7 +259,10 @@
       langue: "Language / Langue", commentJouer: "How to play",
       pinRappel: "Your PIN gets your character back: scan one of your tags in another browser, then tap “Rejoin the game with my PIN”.",
       enregistre: "Saved.", mj: "GM",
-      ongAccueil: "Home", ongCollection: "Collection", ongClassements: "Rankings", ongMoi: "Me",
+      ongAccueil: "Home", ongCollection: "Collection", ongClassements: "Rankings", ongBadges: "Badges", ongMoi: "Me",
+      badgesTitre: "Badges", badgesGagnes: "Earned", badgesAVenir: "To unlock",
+      badgesVide: "No badges yet. You earn them by playing… or by misbehaving.",
+      voirBadges: (n) => `My badges (${n})`, gagneA: (h) => `earned at ${h}`,
       integre: "You're inside an app's browser. Open this page in Safari or Chrome instead to keep your character.",
       pied: "Pandémonium · Montréal · November 7, 2026",
     },
@@ -294,7 +316,7 @@
   }
   function onglets(actif) {
     const o = (id, href, e, l) => `<a href="${href}" data-nav class="${id === "scan" ? "scan" : ""}"${actif === id ? ' aria-current="page"' : ""}><span class="e">${e}</span>${l}</a>`;
-    return `<nav class="onglets">${o("accueil", "/", "🏠", t.ongAccueil)}${o("collection", "/collection", "🗂️", t.ongCollection)}${o("scan", "/saisie", "📷", t.scanner)}<span title="LOT-3"><span class="e">🏆</span>${t.ongClassements}</span>${o("moi", "/moi", "👤", t.ongMoi)}</nav>`;
+    return `<nav class="onglets">${o("accueil", "/", "🏠", t.ongAccueil)}${o("collection", "/collection", "🗂️", t.ongCollection)}${o("scan", "/saisie", "📷", t.scanner)}${o("badges", "/badges", "🏅", t.ongBadges + (badgesNonVus() ? '<i class="pastille"></i>' : ""))}${o("moi", "/moi", "👤", t.ongMoi)}</nav>`;
   }
   function toast(texte) {
     const d = document.createElement("div"); d.className = "toast apparait"; d.textContent = texte;
@@ -331,7 +353,7 @@
   }
   const badgeGagne = (id) => {
     const b = BADGES[id]; if (!b) return "";
-    return `<div class="badge-gagne apparait"><span class="e">${b[0]}</span><div><small>${t.badgeGagne}</small><b>${L === "en" ? b[2] : b[1]}</b><small>${L === "en" ? b[4] : b[3]}</small></div></div>`;
+    return `<a class="badge-gagne apparait" href="/badges" data-nav style="color:inherit;text-decoration:none"><span class="e">${b[0]}</span><div><small>${t.badgeGagne}</small><b>${L === "en" ? b[2] : b[1]}</b><small>${L === "en" ? b[4] : b[3]}</small></div></a>`;
   };
   const formulaireCode = (valeur = "") => `<form class="boite" id="f-code" autocomplete="off">
       <label class="mono petit muted" for="code">${t.saisir}</label>
@@ -371,6 +393,7 @@
       if (p === "/moi") return fiche();
       if (p === "/saisie") return saisie();
       if (p === "/tuto") return tutoriel();
+      if (p === "/badges") return badges();
       const m = p.match(/^\/([^/]{1,12})\/?$/);
       if (m) return scanner(decodeURIComponent(m[1]).toUpperCase());
       return inconnue("");
@@ -645,6 +668,26 @@
     }));
   }
 
+  // ---------- Badges (FEAT-015) ----------
+  const CLE_VUS = "dv-badges-vus" + SUFFIXE;
+  function badgesNonVus() {
+    const vus = lireJson(CLE_VUS) || [];
+    return ((etat.moi && etat.moi.badges) || []).some((b) => !vus.includes(b.badge));
+  }
+  async function badges() {
+    if (!(await chargerMoi())) return aller("/", true);
+    const gagnes = etat.moi.badges || [];
+    ecrire(CLE_VUS, JSON.stringify(gagnes.map((b) => b.badge)));
+    const ids = new Set(gagnes.map((b) => b.badge));
+    const heure = (iso) => new Date(iso).toLocaleTimeString(L === "en" ? "en-CA" : "fr-CA", { hour: "2-digit", minute: "2-digit" });
+    const ligne = (id, b, quand) => `<li class="badge${quand ? " gagne" : ""}"><span class="e">${b[0]}</span><div><b>${L === "en" ? b[2] : b[1]}</b>
+      <small>${L === "en" ? b[4] : b[3]}</small>${quand ? `<small class="mono or">${t.gagneA(heure(quand))}</small>` : ""}</div></li>`;
+    const aVenir = Object.entries(BADGES).filter(([id, b]) => !ids.has(id) && !b[5]);
+    rendre(`<h2>${t.badgesTitre} · ${gagnes.length}/${gagnes.length + aVenir.length}</h2>
+      <h3>${t.badgesGagnes}</h3>${gagnes.length ? `<ul class="liste-badges">${gagnes.map((g) => ligne(g.badge, BADGES[g.badge] || ["🏅", g.badge, g.badge, "", ""], g.obtenu_le)).join("")}</ul>` : `<p class="muted">${t.badgesVide}</p>`}
+      <h3>${t.badgesAVenir}</h3><ul class="liste-badges">${aVenir.map(([id, b]) => ligne(id, b, null)).join("")}</ul>`, { onglet: "badges" });
+  }
+
   // ---------- Fiche (E-05 ; RG-003-11, RG-003-12, REQ-010) ----------
   async function fiche() {
     if (!(await chargerMoi())) return aller("/", true);
@@ -655,7 +698,7 @@
       <h3>${t.costumeTitre}</h3>${dr.costume ? `<button class="bouton sec" id="b-costume">${t.modifierCostume}</button>` : `<p class="muted">🔒 ${t.costumeFige}</p>`}
       <h3>${t.confidentialite}</h3><label class="case"><input type="checkbox" id="c-photos" ${pe.photos_ok ? "checked" : ""}><span>${t.photos}</span></label>
       <h3>${t.mesEtiquettes}</h3><ul class="liste">${d.etiquettes.map((e) => `<li><span class="mono">${esc(e.code)}</span> · ${esc(factionLib(e.faction))}</li>`).join("")}</ul>
-      <h3>${t.mesBadges}</h3>${d.badges.length ? `<div class="badges">${d.badges.map((x) => { const b = BADGES[x.badge] || ["🏅", x.badge, x.badge]; return `<span>${b[0]} ${L === "en" ? b[2] : b[1]}</span>`; }).join("")}</div>` : `<p class="muted">${t.aucunBadge}</p>`}
+      <h3>${t.mesBadges}</h3><a class="bouton sec" href="/badges" data-nav style="margin-top:0">🏅 ${t.voirBadges(d.badges.length)}</a>
       <p class="petit muted">🔢 ${t.pinRappel}</p>
       <h3>${t.langue}</h3><div class="duo"><button class="bouton ${L === "fr" ? "" : "sec"}" data-l="fr">Français</button><button class="bouton ${L === "en" ? "" : "sec"}" data-l="en">English</button></div>
       <a class="bouton sec" href="/tuto" data-nav>${t.commentJouer}</a>`, { onglet: "moi" });

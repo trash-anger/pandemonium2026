@@ -79,6 +79,30 @@ Pour l'instant, ce n'est que de la saveur ; la caractéristique favorite servira
 | Rôdeur de Friperie | Thrift-Store Ranger | Perception (des bonnes affaires) |
 | Voleur d'Étiquettes | Tag Thief | Dextérité |
 
+### 1.6 Badges ([FEAT-015](fonctionnalites/badges-classements.md))
+**Statut : Proposition** (libellés anglais et conditions affichées). Écran « Badges » de la barre d'onglets : badges gagnés avec l'heure, puis badges à débloquer avec leur condition. Un badge secret n'apparaît qu'une fois gagné.
+
+| Badge | FR | EN | Condition affichée FR | Condition affichée EN |
+|-------|----|----|----------------------|-----------------------|
+| BDG-1 | 🐣 Tueur de poussin | Chick Killer | Laisser une étiquette vierge qui n'était pas à toi. | Pass on a blank tag that wasn't yours. |
+| BDG-11 | 🛍️ Achat compulsif | Impulse Buy | Ajouter une étiquette à ton personnage. | Add a tag to your character. |
+| BDG-12 | 🧾 Surconsommation | Overconsumption | Prendre plus de 3 étiquettes. À éviter. | Take more than 3 tags. Don't. |
+| BDG-14 | 🔀 Trans-classe | Class Shifter | Changer de classe avant 1 h. | Change class before 1 a.m. |
+| BDG-4 | 📲 Installé le Portail | Portal Installed | Installer l'app sur ton écran d'accueil. | Install the app on your home screen. |
+| BDG-3 | 🔁 Boucle détectée | Loop Detected | Revoir la même personne 3 fois. | See the same person 3 times. |
+| BDG-3 | 🕰️ Jour de la marmotte | Groundhog Day | Revoir la même personne 6 fois. | See the same person 6 times. |
+| BDG-3 | 🧿 Client maudit (secret) | Cursed Customer | Ce badge n'existe pas. Tu ne l'as jamais eu. | This badge doesn't exist. You never got it. |
+| BDG-2 | 👯 Jumeaux retrouvés | Twins Reunited | Retrouver ton double. | Find your double. |
+| BDG-5 | ⭕ Fermer la boucle | Close the Loop | En fin de soirée, rescanner ta toute première personne. | At the end of the night, rescan your very first person. |
+| BDG-6 | 🦠 Patient zéro | Patient Zero | Être la première personne corrompue par un chat noir. | Be the first person corrupted by a black cat. |
+| BDG-6b | 🛡️ Dernier survivant | Last Survivor | Jamais corrompu, et le plus de nouvelles cartes à la révélation. | Never corrupted, with the most new cards at the reveal. |
+| BDG-15 | 🫥 Amnésie | Amnesia | Vider complètement ta jauge de souvenirs. | Empty your memory gauge completely. |
+| BDG-7 | 🧩 Série complète | Full Set | Compléter une série. | Complete a set. |
+| BDG-9 | 👔 Garde-robe du MJ | GM's Wardrobe | Collectionner les 10 légendaires du MJ. | Collect all 10 of the GM's legendaries. |
+| BDG-10 | ✊ Anticapitaliste | Anti-capitalist | Trouver un bon de réduction très particulier. | Find a very special discount voucher. |
+| BDG-16 | 🏷️ Employé du mois | Employee of the Month | Réussir une mission confiée par le MJ. | Complete a mission from the GM. |
+| BDG-17 | ⚠️ Client difficile | Difficult Customer | Recevoir un avertissement du MJ. Pas fier. | Get a warning from the GM. Not proud. |
+
 ## 2. Easter eggs de rescan ([RG-005-2](fonctionnalites/rescan-deja-vu.md))
 
 ### ×3 : « Boucle détectée » / "Loop detected"

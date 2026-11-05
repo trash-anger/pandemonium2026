@@ -8,7 +8,12 @@ export const ATTRIBUTS = ["masque", "maquillage", "perruque", "cornes", "ailes",
 export const FACTIONS = ["ordre", "chaos", "friperie", "influence", "necro"] as const;
 export const CLASSES = ["barbare", "barde", "clerc", "druide", "magicien", "paladin", "rodeur", "voleur"] as const;
 
-export const BADGES = ["tueur_de_poussin", "achat_compulsif", "surconsommation", "trans_classe"] as const;
+// Identifiants des badges (FEAT-015) ; libellés et conditions dans public/app.js (textes §1.6)
+export const BADGES = [
+  "tueur_de_poussin", "achat_compulsif", "surconsommation", "trans_classe", "installe_portail", "boucle_detectee",
+  "jour_marmotte", "client_maudit", "jumeaux_retrouves", "fermer_boucle", "patient_zero", "dernier_survivant",
+  "amnesie", "serie_complete", "garde_robe_mj", "anticapitaliste", "employe_du_mois", "client_difficile",
+] as const;
 
 export type Langue = "fr" | "en";
 

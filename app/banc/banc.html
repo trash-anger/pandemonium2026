@@ -250,7 +250,7 @@ const TESTS = [
       ["Surconsommation (3 étiquettes, puis Oui)", async () => { for (const id of cibles()) { const j = await identite(id); await api("/__dev/ajouter-etiquettes", { jeton: j, n: 3 }); } aller("/" + (await codeAuHasard())); }],
       ["Tuer un poussin (répondre Non)", async () => aller("/" + (await codeAuHasard()))]]],
     ["B5", "Modifications avant et après minuit, 1 h, premier scan", "LOT-1", [
-      ["Ma fiche", () => aller("/moi")],
+      ["Ma fiche", () => aller("/moi")], ["Mes badges", () => aller("/badges")],
       ["Premier scan subi (costume figé)", async () => { for (const id of cibles()) await api("/__dev/premier-scan", { jeton: await identite(id) }); aller("/moi"); }]]],
   ]],
   ["C. Collection et déjà vu", [

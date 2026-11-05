@@ -1,0 +1,26 @@
+{
+  // Worker du jeu « Déjà vu ! » (LOT-0 : étiquettes, page provisoire, admin).
+  // L'identifiant de compte se passe par CLOUDFLARE_ACCOUNT_ID, pas dans le dépôt.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "deja-vu",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "public" },
+  "routes": [{ "pattern": "p.uyt.re", "custom_domain": true }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "deja-vu",
+      "database_id": "a6172fc5-f157-481e-9ba8-6f95bcefbe5f",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "PUBLIC_ORIGIN": "https://p.uyt.re"
+  },
+  "dev": { "host": "localhost:8787" },
+  "observability": { "enabled": true }
+  // Secrets (wrangler secret put) : GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+  // SESSION_SECRET, ADMIN_EMAILS (adresses séparées par des virgules).
+}

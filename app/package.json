@@ -1,0 +1,25 @@
+{
+  "name": "deja-vu",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:local": "wrangler d1 migrations apply deja-vu --local",
+    "db:remote": "wrangler d1 migrations apply deja-vu --remote",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "apercu": "node scripts/apercu-etiquettes.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261104.1",
+    "qrcode": "1.5.4",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0",
+    "wrangler": "4.157.0"
+  },
+  "allowScripts": {
+    "workerd@1.20261103.1": true,
+    "esbuild@0.28.2": true
+  }
+}

@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Banc d'essai · Déjà vu !</title>
+<link rel="icon" href="/favicon.svg">
+<style>
+:root{--bg:#0b0a0f;--bg2:#15131c;--bg3:#1e1a27;--fg:#efe9df;--muted:#aaa4b6;--pink:#ff4f8b;--green:#3dff8a;--gold:#ffd166;--line:#3a3445;
+--mono:ui-monospace,"SF Mono",Menlo,monospace;--sans:system-ui,-apple-system,sans-serif;--display:"Arial Black",Impact,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:var(--sans)}
+body{display:grid;grid-template-rows:auto 1fr;overflow:hidden}
+header{display:flex;gap:18px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--bg2)}
+header h1{font-family:var(--display);font-size:20px;margin:0;text-shadow:-2px 0 var(--pink),2px 0 var(--green)}
+.grp{display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.horloge{font-family:var(--mono);font-size:15px;color:var(--green);margin-left:auto}
+.corps{display:grid;grid-template-columns:1fr 860px;min-height:0}
+.scene{display:flex;gap:34px;justify-content:center;align-items:flex-start;padding:26px;overflow:auto;background:radial-gradient(ellipse at 50% 0%,#2a1222,var(--bg) 65%)}
+.tel{display:flex;flex-direction:column;gap:8px}
+.tel.cible .cadre{box-shadow:0 0 0 3px var(--pink),0 0 40px rgba(255,79,139,.35)}
+.barre{display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px}
+.barre b{color:var(--pink);font-size:14px;cursor:pointer}
+.barre input{flex:1;min-width:0}
+.cadre{border-radius:46px;padding:12px;background:#000;box-shadow:0 0 0 3px #2a2633,0 24px 50px rgba(0,0,0,.6)}
+.cadre iframe{display:block;border:0;border-radius:34px;background:var(--bg)}
+input,select,button{font:inherit;color:inherit;background:var(--bg3);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+button{cursor:pointer;font-size:13px}button:hover:not(:disabled){border-color:var(--pink)}
+button.p{background:var(--pink);color:#18161d;border-color:var(--pink);font-weight:800}
+button.on{border-color:var(--green);color:var(--green)}
+button:disabled{opacity:.38;cursor:not-allowed}
+aside{display:grid;grid-template-rows:1fr 260px;border-left:1px solid var(--line);min-height:0;background:var(--bg2)}
+.tests{overflow:auto;padding:6px 18px 20px}
+h2{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--pink);text-transform:uppercase;margin:20px 0 6px;position:sticky;top:0;background:var(--bg2);padding:6px 0;z-index:1}
+.t{display:grid;grid-template-columns:44px 1fr;gap:4px 10px;padding:8px 0;border-bottom:1px solid #26222f}
+.t .id{font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:2px}
+.t .titre{font-size:14px}.t .titre i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--gold);border:1px solid #6b5a2a;border-radius:6px;padding:1px 5px;margin-left:6px}
+.t .acts{grid-column:2;display:flex;flex-wrap:wrap;gap:6px}
+.journal{border-top:1px solid var(--line);display:grid;grid-template-rows:auto 1fr;min-height:0}
+.journal .tete{display:flex;justify-content:space-between;align-items:center;padding:6px 18px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--muted)}
+#log{overflow:auto;margin:0;padding:4px 18px 12px;font-family:var(--mono);font-size:12px;line-height:1.55;color:var(--muted)}
+#log .T1{color:#ff9cc0}#log .T2{color:#9ff7c4}#log .T3{color:#ffe29a}#log .T4{color:#b7d3ff}#log .banc{color:var(--fg)}#log .err{color:#ff6b6b}
+</style></head>
+<body>
+<header>
+  <h1>BANC D'ESSAI</h1>
+  <div class="grp">Téléphones <span id="nbs"></span></div>
+  <div class="grp">Cible <span id="cibles"></span></div>
+  <div class="grp">Zoom <span id="zooms"></span></div>
+  <div class="grp"><label><input type="checkbox" id="reduit"> animations réduites</label></div>
+  <div class="horloge" id="horloge">horloge réelle</div>
+</header>
+<div class="corps">
+  <div class="scene" id="scene"></div>
+  <aside>
+    <div class="tests" id="tests"></div>
+    <div class="journal"><div class="tete"><span>JOURNAL (A5)</span><button id="vider">vider</button></div><pre id="log"></pre></div>
+  </aside>
+</div>
+<script>
+// ---------- État ----------
+const APPAREILS = { "iPhone SE": [375, 667], "iPhone 15": [390, 844], "Pixel 7": [412, 915], "Petit Android": [360, 740] };
+const etat = {
+  n: 2, cible: "tous",
+  tels: [
+    { app: "iPhone 15", lang: "fr", url: "/" }, { app: "Pixel 7", lang: "en", url: "/" },
+    { app: "iPhone SE", lang: "fr", url: "/" }, { app: "Petit Android", lang: "fr", url: "/" },
+  ],
+  horloge: { iso: null, vitesse: 1, libelle: "horloge réelle" }, reduit: false, zoom: 1.25,
+};
+try { Object.assign(etat, JSON.parse(localStorage.getItem("dv-banc") || "{}")); } catch {}
+const sauver = () => { try { localStorage.setItem("dv-banc", JSON.stringify(etat)); } catch {} };
+const $ = (s) => document.querySelector(s);
+
+// ---------- Journal ----------
+function log(qui, texte, cls) {
+  const l = document.createElement("div"); l.className = cls || qui;
+  l.textContent = `${new Date().toTimeString().slice(0, 8)}  ${qui.padEnd(4)} ${texte}`;
+  $("#log").prepend(l);
+}
+$("#vider").onclick = () => ($("#log").textContent = "");
+
+// ---------- Téléphones ----------
+const avecLang = (url, lang) => { const u = new URL(url, location.origin); u.searchParams.set("lang", lang); return u.pathname + u.search; };
+function rendreScene() {
+  const sc = $("#scene"); sc.innerHTML = "";
+  for (let i = 0; i < etat.n; i++) {
+    const t = etat.tels[i], [w, h] = APPAREILS[t.app], id = "T" + (i + 1);
+    const el = document.createElement("div");
+    el.className = "tel" + (etat.cible === "tous" || etat.cible === id ? " cible" : "");
+    el.innerHTML = `<div class="barre"><b title="Cibler ce téléphone">${id}</b>
+      <select>${Object.keys(APPAREILS).map((a) => `<option${a === t.app ? " selected" : ""}>${a}</option>`).join("")}</select>
+      <button class="lang">${t.lang.toUpperCase()}</button><button class="rel" title="Recharger">↻</button></div>
+      <div class="barre"><input value="${t.url}" spellcheck="false"><button class="go">aller</button></div>
+      <div class="cadre" style="zoom:${etat.zoom}"><iframe name="${id}" width="${w}" height="${h}" src="${avecLang(t.url, t.lang)}"></iframe></div>`;
+    el.querySelector("b").onclick = () => { etat.cible = id; sauver(); rendreCibles(); rendreScene(); };
+    el.querySelector("select").onchange = (e) => { t.app = e.target.value; sauver(); rendreScene(); };
+    el.querySelector(".lang").onclick = () => { t.lang = t.lang === "fr" ? "en" : "fr"; sauver(); rendreScene(); };
+    el.querySelector(".rel").onclick = () => envoyer(id, { type: "recharger" });
+    el.querySelector(".go").onclick = () => aller(el.querySelector("input").value, id);
+    el.querySelector("input").onkeydown = (e) => e.key === "Enter" && aller(e.target.value, id);
+    sc.appendChild(el);
+  }
+}
+function rendreNbs() {
+  $("#nbs").innerHTML = [1, 2, 3, 4].map((k) => `<button class="${k === etat.n ? "on" : ""}" data-k="${k}">${k}</button>`).join("");
+  $("#nbs").querySelectorAll("button").forEach((b) => (b.onclick = () => { etat.n = +b.dataset.k; if (etat.cible !== "tous" && +etat.cible.slice(1) > etat.n) etat.cible = "tous"; sauver(); rendreNbs(); rendreCibles(); rendreScene(); }));
+}
+function rendreCibles() {
+  const ids = ["tous", ...Array.from({ length: etat.n }, (_, i) => "T" + (i + 1))];
+  $("#cibles").innerHTML = ids.map((k) => `<button class="${k === etat.cible ? "on" : ""}" data-k="${k}">${k}</button>`).join("");
+  $("#cibles").querySelectorAll("button").forEach((b) => (b.onclick = () => { etat.cible = b.dataset.k; sauver(); rendreCibles(); rendreScene(); }));
+}
+const cibles = () => (etat.cible === "tous" ? Array.from({ length: etat.n }, (_, i) => "T" + (i + 1)) : [etat.cible]);
+function fenetre(id) { const f = document.querySelector(`iframe[name="${id}"]`); return f && f.contentWindow; }
+function envoyer(id, m) { const w = fenetre(id); if (w) w.postMessage(Object.assign({ source: "dv-banc" }, m), "*"); }
+function diffuser(m) { cibles().forEach((id) => envoyer(id, m)); }
+function aller(url, id) {
+  (id ? [id] : cibles()).forEach((k) => {
+    const t = etat.tels[+k.slice(1) - 1]; t.url = url; sauver();
+    const f = document.querySelector(`iframe[name="${k}"]`); if (f) f.src = avecLang(url, t.lang);
+    const inp = f && f.closest(".tel").querySelector("input"); if (inp) inp.value = url;
+    log("banc", `${k} → ${url}`);
+  });
+}
+
+// Messages venant des pages du jeu (agent /__dev/agent.js)
+addEventListener("message", (ev) => {
+  const m = ev.data; if (!m || m.source !== "dv-app") return;
+  const f = [...document.querySelectorAll("iframe")].find((x) => x.contentWindow === ev.source);
+  const id = f ? f.name : "?";
+  if (m.type === "pret") {
+    log(id, `page ${m.url} · ${m.titre}`);
+    const inp = f && f.closest(".tel").querySelector("input");
+    if (inp) { const u = new URL(m.url, location.origin); u.searchParams.delete("lang"); inp.value = u.pathname + u.search; }
+    // Réapplique l'état du banc à chaque chargement
+    if (etat.horloge.iso) envoyer(id, { type: "horloge", iso: horlogeCourante(), vitesse: etat.horloge.vitesse });
+    if (etat.reduit) envoyer(id, { type: "reduit", actif: true });
+  } else if (m.type === "log") log(id, m.texte);
+});
+
+// ---------- Horloge simulée (A3) ----------
+function montrealVersIso(local) {
+  const [d, h] = local.split("T"), [Y, M, D] = d.split("-").map(Number), [hh, mm] = h.split(":").map(Number);
+  const naif = Date.UTC(Y, M - 1, D, hh, mm);
+  const dec = (t) => { const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Toronto", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }).formatToParts(new Date(t)); const v = (k) => +p.find((x) => x.type === k).value; return Date.UTC(v("year"), v("month") - 1, v("day"), v("hour"), v("minute"), v("second")) - t; };
+  return new Date(naif - dec(naif - dec(naif))).toISOString();
+}
+let reglageHorloge = Date.now();
+function horlogeCourante() {
+  if (!etat.horloge.iso) return null;
+  return new Date(Date.parse(etat.horloge.iso) + (Date.now() - reglageHorloge) * etat.horloge.vitesse).toISOString();
+}
+function regler(local, libelle, vitesse) {
+  etat.horloge = local ? { iso: montrealVersIso(local), vitesse: vitesse || etat.horloge.vitesse || 1, libelle } : { iso: null, vitesse: 1, libelle: "horloge réelle" };
+  reglageHorloge = Date.now(); sauver();
+  diffuser({ type: "horloge", iso: etat.horloge.iso, vitesse: etat.horloge.vitesse });
+  log("banc", `horloge → ${etat.horloge.libelle}`);
+}
+function vitesse(v) {
+  if (!etat.horloge.iso) regler(null);
+  etat.horloge.iso = horlogeCourante() || new Date().toISOString(); reglageHorloge = Date.now(); etat.horloge.vitesse = v; sauver();
+  diffuser({ type: "horloge", iso: etat.horloge.iso, vitesse: v }); log("banc", `vitesse ×${v}`);
+}
+setInterval(() => {
+  const iso = horlogeCourante();
+  $("#horloge").textContent = iso
+    ? new Date(iso).toLocaleString("fr-CA", { timeZone: "America/Toronto", weekday: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" }) + ` · ×${etat.horloge.vitesse} · Montréal`
+    : "horloge réelle";
+}, 250);
+$("#reduit").checked = etat.reduit;
+$("#reduit").onchange = (e) => { etat.reduit = e.target.checked; sauver(); diffuser({ type: "reduit", actif: etat.reduit }); };
+
+// ---------- Simulation serveur ----------
+async function api(chemin, corps) {
+  const r = await fetch(chemin, corps === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corps) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { log("banc", `${chemin} : ${j.erreur || r.status}`, "err"); throw new Error(j.erreur); }
+  return j;
+}
+async function codeAuHasard(etatEt = "vierge", role = "normale") { return (await api(`/__dev/etiquette?etat=${etatEt}&role=${role}`)).code; }
+
+// ---------- Catalogue des tests (liste validée) ----------
+// a: [libellé, fonction] ; fonction absente → bouton désactivé jusqu'au lot indiqué
+const H = (l, t) => [l, () => regler(t, `${l}`)];
+const TESTS = [
+  ["A. Cadre", [
+    ["A1", "Modèle, langue, animations réduites", "", [["voir les barres des téléphones", null, "en haut de chaque téléphone"]]],
+    ["A2", "1 à 4 téléphones, un joueur chacun", "", [["choisir en haut", null, "en-tête"]]],
+    ["A3", "Horloge simulée (heure de Montréal)", "", [
+      H("sam 20:59", "2026-11-07T20:59"), H("21:00", "2026-11-07T21:00"), H("minuit", "2026-11-08T00:00"), H("1:00", "2026-11-08T01:00"),
+      H("2:00", "2026-11-08T02:00"), H("4:59", "2026-11-08T04:59"), H("5:00", "2026-11-08T05:00"), H("6:00", "2026-11-08T06:00"),
+      ["×1", () => vitesse(1)], ["×60", () => vitesse(60)], ["réelle", () => regler(null)]]],
+    ["A4", "Réinitialiser, stock de test, réseau", "", [
+      ["Stock de test", async () => { await api("/__dev/stock", {}); log("banc", "stock : 30 petites, 16 MJ, 10 grandes"); }],
+      ["Tout réinitialiser", async () => { if (!confirm("Effacer toute la base locale ?")) return; await api("/__dev/reinitialiser", {}); log("banc", "base locale vidée"); diffuser({ type: "recharger" }); }],
+      ["État serveur", async () => log("banc", JSON.stringify((await api("/__dev/etat")).comptes))],
+      ["Réseau coupé", null, "LOT-2"], ["Réseau lent", null, "LOT-2"]]],
+    ["A5", "Journal des événements", "", [["ci-dessous", null, "toujours actif"]]],
+  ]],
+  ["B. Étiquette et personnage", [
+    ["B1", "Scanner : vierge, code manuel, inconnu, désactivée, spectateur", "LOT-0", [
+      ["Étiquette vierge", async () => aller("/" + (await codeAuHasard()))],
+      ["Étiquette du MJ", async () => aller("/" + (await codeAuHasard("vierge", "personnelle_mj")))],
+      ["Code manuel (minuscules)", async () => aller("/?code=" + (await codeAuHasard()).toLowerCase())],
+      ["Code inconnu", () => aller("/ZZZZ")], ["Code invalide (O)", () => aller("/?code=7KO3")],
+      ["Désactivée", async () => { const c = await codeAuHasard(); await api("/__dev/etiquette", { code: c, etat: "desactivee" }); aller("/" + c); }],
+      ["Accueil", () => aller("/")], ["Spectateur", null, "LOT-1"]]],
+    ["B2", "Création en 4 écrans, retour arrière, tutoriel", "LOT-1", [["Créer", null, "LOT-1"], ["Retour arrière", null, "LOT-1"], ["Tutoriel", null, "LOT-1"]]],
+    ["B3", "Réintégration par PIN : bon, mauvais, trop d'essais", "LOT-1", [["Bon PIN", null, "LOT-1"], ["Mauvais PIN", null, "LOT-1"], ["Trop d'essais", null, "LOT-1"]]],
+    ["B4", "2e, 3e, 4e étiquette ; tueur de poussin", "LOT-1", [["Achat compulsif", null, "LOT-1"], ["Surconsommation", null, "LOT-1"], ["Tuer un poussin", null, "LOT-1"]]],
+    ["B5", "Modifications avant et après minuit, 1 h, premier scan", "LOT-1", [["Pseudo", null, "LOT-1"], ["Classe → Trans-classe", null, "LOT-1"], ["Costume figé", null, "LOT-1"]]],
+  ]],
+  ["C. Collection et déjà vu", [
+    ["C1", "Nouvelle carte, faux souvenir en premier", "LOT-1", [["T1 scanne T2", null, "LOT-1"]]],
+    ["C2", "Rescans ×2, ×3, ×6, ×13 ; rescan < 5 min", "LOT-2", [["×2", null, "LOT-2"], ["×3", null, "LOT-2"], ["×6", null, "LOT-2"], ["×13", null, "LOT-2"], ["< 5 min", null, "LOT-2"]]],
+    ["C3", "Jauge de souvenirs < 5, à 0 (Amnésie)", "LOT-2", [["Floue", null, "LOT-2"], ["Amnésie", null, "LOT-2"]]],
+    ["C4", "Réactions, comparaison", "LOT-2", [["Réactions", null, "LOT-2"], ["Comparaison", null, "LOT-6"]]],
+  ]],
+  ["D. Temps réel, quête et MJ", [
+    ["D1", "Connexions, paliers P-1 à P-5", "LOT-3", [
+      ["Glitch global (injection)", () => diffuser({ type: "injecter", quoi: "glitch", secondes: 2 })],
+      ["+100 connexions", null, "LOT-3"], ["P-1", null, "LOT-3"], ["P-2", null, "LOT-3"], ["P-3", null, "LOT-3"], ["P-4", null, "LOT-3"], ["P-5", null, "LOT-3"]]],
+    ["D2", "Bannière du MJ, notification push", "LOT-3", [
+      ["Bannière (injection)", () => diffuser({ type: "injecter", quoi: "banniere", titre: "MESSAGE DU MJ", texte: prompt("Texte de la bannière", "Solde éclair au bar : scannez quelqu'un que vous ne connaissez pas !") || "" })],
+      ["Push", null, "LOT-3"]]],
+    ["D3", "Comptes à rebours, « Et maintenant ? »", "LOT-1", [["Situations", null, "LOT-1"], ["Révélation dans 10 min", null, "LOT-3"]]],
+    ["D4", "Mission éclair ; missions M-1 à M-7", "LOT-3", [["Mission globale", null, "LOT-6"], ["M-1…M-7", null, "LOT-3"], ["Réussie", null, "LOT-3"], ["Échouée", null, "LOT-3"]]],
+    ["D5", "Sanctions 1 à 5, pause, suggestion de préréglage", "LOT-3", [["Sanction 1…5", null, "LOT-3"], ["Pause", null, "LOT-3"], ["Suggestion", null, "LOT-3"]]],
+  ]],
+  ["E. Jumeaux et chats noirs", [
+    ["E1", "Jumeau, indice, retrouvailles < 90 s, triplés, déjà scanné", "LOT-4", [["Attribuer", null, "LOT-4"], ["Indice", null, "LOT-4"], ["Retrouvailles", null, "LOT-4"], ["Triplés 2/3", null, "LOT-4"]]],
+    ["E2", "Chat noir, contamination, immunité, guérison, vague > 50 %", "LOT-4", [["Devenir chat noir", null, "LOT-4"], ["Contaminer", null, "LOT-4"], ["Immunité", null, "LOT-4"], ["Vague", null, "LOT-4"]]],
+  ]],
+  ["F. Costume du MJ", [
+    ["F1", "Légendaires L-1 à L-10 ; rupture de stock ; déjà obtenue", "LOT-3", [["L-1…L-10", null, "LOT-3"], ["Rupture L-7", null, "LOT-3"], ["Déjà obtenue", null, "LOT-3"]]],
+    ["F2", "Pièges T-1 à T-5 ; déjà subi ; mélange", "LOT-3", [["T-1…T-5", null, "LOT-3"], ["Déjà subi", null, "LOT-3"], ["Mélanger", null, "LOT-3"]]],
+  ]],
+  ["G. Scanner intégré et mur", [
+    ["G1", "Scanner intégré, lampe, photo, mur", "LOT-5", [["Scanner", null, "LOT-5"], ["Lampe", null, "LOT-5"], ["Photo", null, "LOT-5"], ["Mur", null, "LOT-5"]]],
+  ]],
+  ["H. Fin de soirée", [
+    ["H1", "Révélation : graphe, zoom sur TOI, jumeau, 1 à 5 paliers", "LOT-3", [["Révéler", null, "LOT-3"], ["Paliers 1…5", null, "LOT-3"]]],
+    ["H2", "Temps d'écran, badges et classements, lendemain", "LOT-3", [["Temps d'écran", null, "LOT-3"], ["Badges", null, "LOT-3"], ["Lendemain", null, "LOT-8"]]],
+  ]],
+];
+function rendreTests() {
+  const z = $("#tests"); z.innerHTML = "";
+  for (const [section, tests] of TESTS) {
+    const h = document.createElement("h2"); h.textContent = section; z.appendChild(h);
+    for (const [id, titre, lot, acts] of tests) {
+      const d = document.createElement("div"); d.className = "t";
+      d.innerHTML = `<div class="id">${id}</div><div class="titre">${titre}${lot ? `<i>${lot}</i>` : ""}</div><div class="acts"></div>`;
+      for (const [libelle, fn, note] of acts) {
+        const b = document.createElement("button"); b.textContent = libelle;
+        if (fn) b.onclick = async () => { try { await fn(); } catch (e) { log("banc", `${id} ${libelle} : ${e.message}`, "err"); } };
+        else { b.disabled = true; b.title = note ? `À venir : ${note}` : ""; }
+        d.querySelector(".acts").appendChild(b);
+      }
+      z.appendChild(d);
+    }
+  }
+}
+function rendreZooms() {
+  $("#zooms").innerHTML = [1, 1.25, 1.5, 1.75].map((z) => `<button class="${z === etat.zoom ? "on" : ""}" data-z="${z}">${Math.round(z * 100)} %</button>`).join("");
+  $("#zooms").querySelectorAll("button").forEach((b) => (b.onclick = () => { etat.zoom = +b.dataset.z; sauver(); rendreZooms(); document.querySelectorAll(".cadre").forEach((c) => (c.style.zoom = etat.zoom)); }));
+}
+rendreNbs(); rendreCibles(); rendreZooms(); rendreScene(); rendreTests();
+log("banc", "prêt · les boutons grisés arrivent avec leur lot");
+</script>
+</body></html>

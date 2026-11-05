@@ -2,7 +2,7 @@
 
 [← Fonctionnalités](README.md)
 
-**Statut :** Confirmé (principe) ; Hypothèse pour la chaîne d'impression · **Sources :** S1, S3, S4, S5, S7, S8
+**Statut :** Confirmé (principe) ; Hypothèse pour la chaîne d'impression · **Sources :** S1, S3, S4, S5, S7, S8, S12
 
 ## Objectif
 Produire des étiquettes physiques **uniques** qui forment le costume de Florian, qu'il peut distribuer, et qui se scannent de façon fiable dans une salle sombre.
@@ -19,8 +19,8 @@ Florian (préparation), tous les joueurs (lecture).
 |----|-------|--------|--------|
 | RG-001-1 | Chaque étiquette a un identifiant **unique**. | Confirmé | S1 |
 | RG-001-2 | Le QR encode une **URL courte** `https://p.uyt.re/<code>`, pour limiter la densité du QR. | Confirmé | S3 |
-| RG-001-3 | Le code fait **4 caractères alphanumériques** (exemple `7KC3`). | Hypothèse : longueur déduite de l'exemple de S3 | S3 |
-| RG-001-4 | L'alphabet du code exclut les caractères ambigus (`0/O`, `1/I/L`). | Proposition | — |
+| RG-001-3 | Le code fait **4 caractères alphanumériques** (exemple `7KC3`). | Confirmé (S12, [DEC-086](../decisions.md#dec-086)) | S3, S12 |
+| RG-001-4 | L'alphabet du code exclut les caractères ambigus (`0/O`, `1/I/L`). | Confirmé (S12, [DEC-086](../decisions.md#dec-086)) | S12 |
 | RG-001-5 | Le QR mesure **un pouce (25,4 mm) de large**. | Confirmé | S3 |
 | RG-001-6 | Impression **noir sur blanc**, sur étiquette **mate**. | Confirmé | S3 |
 | RG-001-7 | Le **code court** est imprimé sous le QR, en clair, comme secours. | Confirmé | S3 |

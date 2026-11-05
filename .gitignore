@@ -1,0 +1,9 @@
+node_modules/
+.wrangler/
+.dev.vars
+*.local.*
+# Codes d'étiquettes, exports et aperçus : jamais dans le dépôt public (REQ-017)
+app/sorties/
+.DS_Store
+# Identifiants OAuth Google téléchargés depuis la console
+client_secret_*.json

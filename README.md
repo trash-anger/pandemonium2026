@@ -149,6 +149,7 @@ Les identifiants sont **stables** : une exigence abandonnée passe au statut « 
 | **S9** | Message de Florian du 2026-11-05 : barème validé, préréglages et suggestions au MJ, mode pause, sanctions graduées, invités qui se connaissent ; questions sur le graphe D3.js |
 | **S10** | Message de Florian du 2026-11-05 : confirmation de classements et badges, missions personnelles confiées par le MJ, validation du pitch, du tutoriel et des textes du MJ |
 | **S11** | Message de Florian du 2026-11-05 : révision du README et direction graphique inspirée du teaser (glitch, rose, surveillance de magasin, avatars glossy) |
+| **S12** | Message de Florian du 2026-11-05 : validation du format des codes d'étiquette |
 
 ## Résumé en une phrase
 

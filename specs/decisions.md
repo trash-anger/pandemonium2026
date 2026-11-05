@@ -93,4 +93,4 @@ Format : **ID · Décision · Raison · Statut · Source · Exigences liées**. 
 | <a id="dec-085"></a>DEC-085 | Pitch de distribution, tutoriel, accueil, textes du MJ et des missions personnelles validés | Relecture de Florian | Acceptée | S10 | [Textes](textes.md) |
 
 ## Décisions en attente
-Aucune. Les questions Q-001 à Q-043 ont été tranchées le 5 novembre 2026 (S5, S6, S7). Restent à faire : le dessin caché de la constellation (Florian s'en charge plus tard) Tous les textes sont validés. Le graphe D3.js de la révélation est une proposition ([RG-009-13](fonctionnalites/quete-collective.md)). La partie graphique sera travaillée dans une phase ultérieure.
+Aucune. Les questions Q-001 à Q-043 ont été tranchées le 5 novembre 2026 (S5, S6, S7). Restent à faire : le dessin caché de la constellation (Florian s’en charge plus tard). Tous les textes sont validés. Le graphe D3.js de la révélation est une proposition ([RG-009-13](fonctionnalites/quete-collective.md)). La partie graphique sera travaillée dans une phase ultérieure.

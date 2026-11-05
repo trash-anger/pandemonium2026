@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<link rel="stylesheet" href="kit.css">
+<style>
+body{width:1360px;height:790px;padding:44px 56px}
+h2{font-size:14px;letter-spacing:.2em;color:var(--pink);font-family:var(--mono);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:14px}
+.c{position:relative;height:200px;border-radius:16px;padding:16px;background:linear-gradient(170deg,#24202e,#141219);
+  box-shadow:inset 0 0 0 2px #3a3445,0 14px 28px rgba(0,0,0,.55);overflow:hidden}
+.c.hid{box-shadow:inset 0 0 0 2px var(--pink),0 14px 28px rgba(0,0,0,.55)}
+.c.mj{box-shadow:inset 0 0 0 2px var(--gold),0 14px 28px rgba(0,0,0,.55)}
+.c.won{box-shadow:inset 0 0 0 2px var(--green),0 14px 28px rgba(0,0,0,.55)}
+.c::after{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(rgba(255,255,255,.12),transparent 70%)}
+.e{font-size:50px;line-height:1;filter:drop-shadow(3px 0 0 rgba(255,79,139,.75)) drop-shadow(-3px 0 0 rgba(61,255,138,.6))}
+.n{font-family:var(--display);font-size:21px;margin-top:12px}
+.t{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;margin-top:4px;text-transform:uppercase}
+.hid .t{color:var(--pink)}.mj .t{color:var(--gold)}.won .t{color:var(--green)}
+.d{color:var(--muted);font-size:13.5px;line-height:1.4;margin-top:8px}
+.stat{position:absolute;right:14px;top:16px;font-family:var(--mono);font-size:11px;color:var(--fg);background:#0b0a0f;padding:4px 7px;border-radius:6px}
+.sec{margin-top:30px}
+.fac{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:14px}
+.f{border-radius:14px;padding:14px;background:#15131c;border-top:4px solid var(--c)}
+.f b{display:block;font-family:var(--display);font-size:15px;line-height:1.15;margin-top:6px}
+.f i{display:block;font-style:normal;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--c);margin-top:6px;text-transform:uppercase}
+.f span{display:block;color:var(--muted);font-size:12.5px;margin-top:6px}
+</style></head>
+<body class="scan">
+<h2>RÔLES · <span style="color:var(--pink)">■</span> CACHÉS · <span style="color:var(--gold)">■</span> PORTÉS PAR LE MJ · <span style="color:var(--green)">■</span> GAGNÉS EN JOUANT</h2>
+<div class="grid">
+  <div class="c hid"><span class="stat">dès minuit</span><div class="e">👯</div><div class="n">Jumeaux &amp; triplés</div><div class="t">Rôle caché · attribué</div><div class="d">Ton double est dans la salle. Des indices arrivent ; scannez-vous mutuellement.</div></div>
+  <div class="c hid"><span class="stat">1 / 50</span><div class="e">🐈‍⬛</div><div class="n">Chat noir</div><div class="t">Rôle secret · tu le sais</div><div class="d">Fais glitcher la Matrice. Chaque scan peut contaminer.</div></div>
+  <div class="c mj"><span class="stat">×10</span><div class="e">✨</div><div class="n">Légendaire</div><div class="t">Sur le costume du MJ</div><div class="d">Cape de Déjà-vu +2, Pilule rouge, Dernier exemplaire…</div></div>
+  <div class="c mj"><span class="stat">×5</span><div class="e">🪤</div><div class="n">Piège</div><div class="t">Sur le costume du MJ</div><div class="d">File du Black Friday, CAPTCHA infini… scanner bloqué 1 à 5 min.</div></div>
+  <div class="c won"><span class="stat">top 10</span><div class="e">🌟</div><div class="n">Célébrité</div><div class="t">Gagné · très scanné</div><div class="d">Tout le monde veut ta carte. Un badge par faction.</div></div>
+  <div class="c won"><span class="stat">≥ 25</span><div class="e">👻</div><div class="n">Fantôme</div><div class="t">Gagné · scanné, scanne peu</div><div class="d">On te collectionne, tu ne collectionnes personne.</div></div>
+  <div class="c won"><span class="stat">≥ 30</span><div class="e">🔁</div><div class="n">Boucle infinie</div><div class="t">Gagné · rescans</div><div class="d">Tu revois toujours les mêmes. Attention à l'amnésie.</div></div>
+  <div class="c won"><span class="stat">badge</span><div class="e">🐣</div><div class="n">Tueur de poussin</div><div class="t">Gagné · étiquette vierge</div><div class="d">Tu as scanné une étiquette vierge qui n'était pas la tienne.</div></div>
+</div>
+<h2 class="sec">5 FACTIONS · TIRÉES AU HASARD · DONJONS &amp; DRAGONS DU BLACK FRIDAY</h2>
+<div class="fac">
+  <div class="f" style="--c:#9ec5ff"><div style="font-size:28px">🛡️</div><b>L'Ordre du Ticket de Caisse</b><i>Loyal bon</i><span>« Sans reçu, point de salut. »</span></div>
+  <div class="f" style="--c:#ff7a3d"><div style="font-size:28px">🔥</div><b>Les Soldés Chaotiques</b><i>Chaotique neutre</i><span>« Tout doit disparaître. Nous aussi. »</span></div>
+  <div class="f" style="--c:#3dff8a"><div style="font-size:28px">🌿</div><b>Le Cercle de la Friperie</b><i>Neutre bon</i><span>« Déjà porté, jamais dépassé. »</span></div>
+  <div class="f" style="--c:#ff4f8b"><div style="font-size:28px">📸</div><b>La Guilde des Influenceurs</b><i>Neutre mauvais</i><span>« Utilise mon code promo. »</span></div>
+  <div class="f" style="--c:#b58cff"><div style="font-size:28px">💀</div><b>Les Nécromanciens du Black Friday</b><i>Loyal mauvais</i><span>« Les invendus se relèveront. »</span></div>
+</div>
+</body></html>

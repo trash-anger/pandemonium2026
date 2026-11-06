@@ -1182,6 +1182,8 @@
       protege: "Retour sans reçu ! Ta légendaire a annulé la corruption.", contamine: "Contamination réussie. Miaou.", guerison: "Ta corruption est annulée.",
       puceChat: "🐈‍⬛ Chat noir · secret", puceCorrompu: "🦠 Corrompu", puceImmunise: "🛡️ Immunisé", pilule: (p, n) => `💊 ${p} % de corrompus · ${n} chat${n > 1 ? "s" : ""} noir${n > 1 ? "s" : ""}`,
       indiceBonus: "Un indice bonus sur ton double.",
+      revContagion: "🦠 Contagion", revConstellation: "✦ Constellation", revChat: "🐈‍⬛ Chat noir", revSurvivant: "🛡️ Dernier survivant", revJumeau: "👯 Double retrouvé",
+      revContStats: (c, k, n) => `${c} corrompu${c > 1 ? "s" : ""} · ${k} chat${k > 1 ? "s" : ""} noir${k > 1 ? "s" : ""} · ${n} transmission${n > 1 ? "s" : ""}`,
     },
     en: {
       double: "Your double", doubles: "Your doubles", doubleN: (i) => `Double #${i}`,
@@ -1203,6 +1205,8 @@
       protege: "Return without receipt! Your legendary cancelled the corruption.", contamine: "Infection successful. Meow.", guerison: "Your corruption is cancelled.",
       puceChat: "🐈‍⬛ Black cat · secret", puceCorrompu: "🦠 Corrupted", puceImmunise: "🛡️ Immune", pilule: (p, n) => `💊 ${p}% corrupted · ${n} black cat${n > 1 ? "s" : ""}`,
       indiceBonus: "A bonus clue about your double.",
+      revContagion: "🦠 Contagion", revConstellation: "✦ Constellation", revChat: "🐈‍⬛ Black cat", revSurvivant: "🛡️ Last survivor", revJumeau: "👯 Double found",
+      revContStats: (c, k, n) => `${c} corrupted · ${k} black cat${k > 1 ? "s" : ""} · ${n} transmission${n > 1 ? "s" : ""}`,
     },
   };
   const J = () => TJ[L] || TJ.fr;
@@ -1460,7 +1464,7 @@
       <p class="rev-charge" id="rev-charge">${t.revCharge}</p>
       <div class="rev-carte" id="rev-carte" hidden></div>
       <div class="rev-bas" id="rev-bas" hidden><p id="rev-ecran"></p><p id="rev-faction"></p>
-        <div class="rev-boutons"><button class="bouton sec" id="rev-moi" hidden>${t.revMoi}</button><button class="bouton sec" id="rev-vue">${t.revVue}</button></div></div></div>`, { classe: "rev-page" });
+        <div class="rev-boutons"><button class="bouton sec" id="rev-moi" hidden>${t.revMoi}</button><button class="bouton sec" id="rev-vue">${t.revVue}</button><button class="bouton sec" id="rev-cont" hidden>${J().revContagion}</button></div></div></div>`, { classe: "rev-page" });
     if (!etat.heures) await chargerMoi();
     let R;
     try {
@@ -1475,6 +1479,10 @@
     const moiId = etat.moi && etat.moi.personnage && etat.moi.personnage.id;
     const moi = L0.N.find((p) => p.d.id === moiId) || null;
     const voisins = new Set(moi ? moi.voisins : []);
+    // LOT-4 : jumeaux retrouvés (RG-009-14), graphe de propagation et chats noirs dévoilés (RG-008-9), dernier survivant (BDG-6b)
+    const jumeaux = R.jumeaux || [], propagation = R.contagion || [], chats = new Set(R.chats || []), corrompus = new Set(R.corrompus || []);
+    let vueCont = false;
+    const cleJ = (a, b) => (a < b ? a + "-" + b : b + "-" + a), paireJ = new Set(jumeaux.map(([a, b]) => cleJ(a, b)));
     $("#rev-stats").textContent = `${t.revStats(R.noeuds.length, R.liens.length)} · ${t.revImage(Math.round(R.part * 100), R.franchis)}`;
 
     const canvas = $("#rev-canvas"), ctx = canvas.getContext("2d");
@@ -1517,33 +1525,61 @@
         p.sx = ecranX(x + (p.fx - x) * m); p.sy = ecranY(y + (p.fy - y) * m); p.a = b;
       }
       // Les liens s'estompent pendant la transformation pour laisser lire le dessin
-      ctx.lineWidth = 1; ctx.strokeStyle = `rgba(255,255,255,${(moi ? 0.05 : 0.09) * (1 - 0.7 * m)})`;
+      ctx.lineWidth = 1; ctx.strokeStyle = `rgba(255,255,255,${(vueCont ? 0.03 : moi ? 0.05 : 0.09) * (1 - 0.7 * m)})`;
       ctx.beginPath();
       const miens = [];
       for (const [a, b] of R.liens) {
         const p = L0.N[a], q = L0.N[b];
         if (p.a < 0.6 || q.a < 0.6) continue;
+        if (!vueCont && paireJ.has(cleJ(a, b))) continue; // dessiné en pointillés dorés
         if (moi && (p === moi || q === moi)) { miens.push([p, q]); continue; }
         ctx.moveTo(p.sx, p.sy); ctx.lineTo(q.sx, q.sy);
       }
       ctx.stroke();
-      if (miens.length) {
+      if (miens.length && !vueCont) {
         ctx.lineWidth = 1.5; ctx.strokeStyle = `rgba(61,255,138,${0.75 - 0.45 * m})`; ctx.beginPath();
         for (const [p, q] of miens) { ctx.moveTo(p.sx, p.sy); ctx.lineTo(q.sx, q.sy); }
         ctx.stroke();
+      }
+      const trait = (liste, style, largeur, tirets) => {
+        ctx.setLineDash(tirets); ctx.lineWidth = largeur;
+        for (const [a, b] of liste) {
+          const p = L0.N[a], q = L0.N[b];
+          if (!p || !q || p.a < 0.6 || q.a < 0.6) continue;
+          ctx.strokeStyle = style(p, q); ctx.beginPath(); ctx.moveTo(p.sx, p.sy); ctx.lineTo(q.sx, q.sy); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+      };
+      if (vueCont) {
+        // Chaque transmission : un trait rose, et un petit point du côté de la personne contaminée
+        trait(propagation, () => "rgba(255,79,138,0.75)", 1.4, []);
+        ctx.fillStyle = "#ff4f8a";
+        for (const [, b] of propagation) { const q = L0.N[b]; if (q && q.a) { ctx.beginPath(); ctx.arc(q.sx, q.sy, 3.2, 0, 7); ctx.fill(); } }
+      } else {
+        trait(jumeaux, (p, q) => `rgba(255,205,70,${(moi && (p === moi || q === moi) ? 1 : 0.6) * (1 - 0.25 * m)})`, 2, [5, 4]);
       }
       const k = Z.k, emojis = k >= 2.5, pseudos = k >= 5;
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       for (const p of L0.N) {
         if (!p.a || p === moi) continue;
-        ctx.globalAlpha = p.a * (moi && !voisins.has(p.i) ? 0.45 : 1);
         const r = 2 + Math.min(3, Math.sqrt(p.deg) * 0.6);
-        ctx.fillStyle = TEINTES_FACTIONS[p.d.faction] || "#cfc8d8";
+        if (vueCont) { ctx.globalAlpha = p.a * (corrompus.has(p.i) ? 1 : 0.4); ctx.fillStyle = corrompus.has(p.i) ? "#ff4f8a" : "#5a5560"; }
+        else { ctx.globalAlpha = p.a * (moi && !voisins.has(p.i) ? 0.45 : 1); ctx.fillStyle = TEINTES_FACTIONS[p.d.faction] || "#cfc8d8"; }
         ctx.beginPath(); ctx.arc(p.sx, p.sy, r, 0, 7); ctx.fill();
         if (emojis) { ctx.font = `${Math.min(26, 6 + k * 2.4)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`; ctx.fillText(p.e, p.sx, p.sy - r - 9); }
         if (pseudos) { ctx.font = "11px ui-monospace, monospace"; ctx.fillStyle = "#f2eef8"; ctx.fillText(p.d.pseudo, p.sx, p.sy + r + 9); }
       }
       ctx.globalAlpha = 1;
+      if (vueCont) {
+        ctx.font = `16px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+        for (const i of chats) {
+          const p = L0.N[i]; if (!p || !p.a) continue;
+          ctx.fillStyle = "rgba(255,79,138,0.35)"; ctx.beginPath(); ctx.arc(p.sx, p.sy - 14, 12, 0, 7); ctx.fill(); // halo : le chat se voit sur le fond sombre
+          ctx.fillText("🐈‍⬛", p.sx, p.sy - 14);
+        }
+        const sv = R.survivant != null && L0.N[R.survivant];
+        if (sv && sv.a) ctx.fillText("🛡️", sv.sx, sv.sy - 14);
+      }
       if (moi && moi.a) {
         // RG-009-14 : le point du joueur, plus gros, lumineux, avec son emoji et « TOI »
         ctx.shadowColor = "#3dff8a"; ctx.shadowBlur = 18; ctx.fillStyle = "#3dff8a";
@@ -1583,10 +1619,21 @@
       if (!best) { c.hidden = true; return; }
       const f = FACTIONS[best.d.faction];
       c.innerHTML = `<span class="e">${best.e}</span><div><b>${esc(best.d.pseudo)}</b>${best === moi ? ` <span class="or">· ${t.revToi}</span>` : ""}
-        <div class="petit muted">${f ? `${f.e} ${esc(lib(f))}` : t.revSansFaction} · ${t.revConnexions(best.deg)}</div></div>`;
+        <div class="petit muted">${f ? `${f.e} ${esc(lib(f))}` : t.revSansFaction} · ${t.revConnexions(best.deg)}</div>
+        ${[chats.has(best.i) && J().revChat, R.survivant === best.i && J().revSurvivant, jumeaux.some(([a, b]) => a === best.i || b === best.i) && J().revJumeau].filter(Boolean).map((x) => `<div class="petit or">${x}</div>`).join("")}</div>`;
       c.hidden = false; c.onclick = () => (c.hidden = true);
     });
     $("#rev-vue").onclick = () => sel.transition().duration(900).call(zoom.transform, d3.zoomIdentity);
+    if (propagation.length || chats.size) {
+      const b = $("#rev-cont"), stats = $("#rev-stats").textContent;
+      b.hidden = false;
+      b.onclick = () => {
+        vueCont = !vueCont;
+        b.textContent = vueCont ? J().revConstellation : J().revContagion;
+        $("#rev-stats").textContent = vueCont ? J().revContStats(corrompus.size, chats.size, propagation.length) : stats;
+        dessiner();
+      };
+    }
     if (moi) { $("#rev-moi").hidden = false; $("#rev-moi").onclick = () => sel.transition().duration(900).call(zoom.transform, versMoi()); }
 
     // RG-015-5 et RG-009-12 : temps d'écran de la soirée et faction de rattachement

@@ -7,6 +7,7 @@ import {
   fixerHasard, formerGroupes, jumeauDe,
 } from "../src/jumeaux";
 import { d1Memoire } from "./d1-memoire";
+import { construireInstantane, instantane } from "../src/revelation";
 import { ALPHABET } from "../src/codes";
 
 const ORIGINE = "http://localhost:8787";
@@ -232,5 +233,26 @@ describe("chats noirs et contagion (FEAT-008)", () => {
     await joueur(); // la 10e activation désigne le premier chat
     expect(chats()).toBe(1);
     expect(await designerChats(env as never, T0)).toBe(0);
+  });
+});
+
+describe("révélation : jumeaux, contagion et dernier survivant (RG-009-14, RG-008-9, BDG-6b)", () => {
+  it("l'instantané contient les jumeaux retrouvés, les transmissions, les chats ; le dernier survivant reçoit son badge au gel", async () => {
+    const [a, b, chat, c, d] = [await joueur(), await joueur(), await joueur(), await joueur(), await joueur()];
+    await creerGroupe(env as never, [a.id, b.id], T0);
+    await scan(a, b.code, T0); await scan(b, a.code, T0 + 10_000); // retrouvailles (a et b ne sont pas corrompus)
+    await devenirChat(env as never, chat.id, T0);
+    await scan(c, chat.code, T0 + MIN); // c corrompu par le chat
+    await scan(d, c.code, T0 + 2 * MIN); // d corrompu par c
+    await scan(a, d.code, T0 + 30 * MIN); // d est guéri et immunisé : a reste sain, et a 2 cartes
+    const rev = new Date(H(10)).toISOString();
+    const r = await construireInstantane(env as never, rev);
+    const i = (j: J) => r.noeuds.findIndex((n) => n.id === j.id);
+    expect(r.jumeaux.map((p) => p.map((x) => r.noeuds[x].id).sort())).toEqual([[a.id, b.id].sort()]);
+    expect(r.contagion).toEqual([[i(chat), i(c)], [i(c), i(d)]]);
+    expect(r.chats).toEqual([i(chat)]);
+    expect(r.survivant).toBe(i(a));
+    await instantane(env as never, rev, H(10));
+    expect(aBadge(a.id, "dernier_survivant")).toBe(true);
   });
 });

@@ -57,7 +57,7 @@ function page(l: Langue, titre: string, corps: string, robots = true): Response 
 }
 
 /** Coquille de l'application du joueur (LOT-1) : tout l'affichage est fait par public/app.js. */
-export const VERSION_APP = "l4-2";
+export const VERSION_APP = "l3d-1";
 export function pageApp(l: Langue, status = 200): Response {
   const html = `<!doctype html><html lang="${l}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -93,6 +93,7 @@ export function pageAdmin(p: {
   image?: ImageCachee;
   mj?: Awaited<ReturnType<typeof etatMJ>>;
   roles?: Awaited<ReturnType<typeof etatRoles>>;
+  push?: { cle: boolean; appareils: number; joueurs: number; en_echec: number };
 }) {
   const lecture = p.role === "lecteur";
   const total = p.comptes.reduce((a, c) => a + c.n, 0);
@@ -130,6 +131,7 @@ ${p.message ? `<p class="ok">${esc(p.message)}</p>` : ""}${p.erreur ? `<p class=
 ${p.direct ? blocDirect(p.direct, lecture) : ""}
 ${p.mj ? blocMJ(p.mj, lecture) : ""}
 ${p.roles ? blocRoles(p.roles, lecture) : ""}
+${p.push ? blocPush(p.push, lecture) : ""}
 ${p.image ? blocRevelation(p.image, lecture) : ""}
 <h2>Étiquettes</h2><div class="grille">${stats}</div>
 <h2>Partie</h2><div class="grille"><div class="stat"><b>${p.joueurs.personnages}</b><span>personnages</span></div><div class="stat"><b>${p.joueurs.cartes}</b><span>cartes collectées</span></div><div class="stat"><b>${p.joueurs.scans}</b><span>scans</span></div></div>
@@ -337,6 +339,16 @@ ${clients || '<p class="muted">Personne n\'a scanné tes étiquettes récemment.
 ${missions ? `<h3>Missions en cours</h3><table><tr><th>Joueur</th><th>Mission</th><th>Fin</th><th></th></tr>${missions}</table>` : ""}
 ${sanctions ? `<h3>Sanctions</h3><table><tr><th>Heure</th><th>Joueur</th><th>Niveau</th><th></th></tr>${sanctions}</table>` : ""}
 ${lecture ? "" : SCRIPT_MAINTENIR}`;
+}
+
+// ---------- Notifications push (FEAT-016) ----------
+function blocPush(x: { cle: boolean; appareils: number; joueurs: number; en_echec: number }, lecture: boolean) {
+  return `<h2>Notifications</h2>
+<div class="carte">${x.cle
+    ? `<p class="mono" style="margin:0">🔔 ${x.appareils} appareil(s) abonné(s) · ${x.joueurs} joueur(s)${x.en_echec ? ` · ${x.en_echec} en échec` : ""}</p>
+<p class="muted" style="font-size:13px;margin:4px 0 0">Envoyées chaque minute : annonces H−30 et révélation, messages, paliers, jumeau, chat noir, sanctions, missions. Au plus une toutes les 10 min, sauf annonces, jumeau et chat noir.</p>`
+    : `<p class="err" style="margin:0">Clé VAPID absente (secret VAPID_JWK) : aucune notification push.</p>`}</div>
+${lecture || !x.cle ? "" : `<form method="post" action="/admin/push/test"><p><button class="bouton sec">🔔 Push de test sur les appareils du MJ</button></p></form>`}`;
 }
 
 // ---------- Jumeaux et chats noirs (FEAT-007, FEAT-008) ; contagion en direct (ADM-7) ----------

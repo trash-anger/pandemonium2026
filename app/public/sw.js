@@ -4,7 +4,7 @@
 // - L'API, l'admin, la connexion et le banc ne passent jamais par le cache.
 // - LOT-3 D (FEAT-016) : les pushs arrivent sans contenu ; le texte se lit sur /api/push/contenu avec l'adresse
 //   de l'abonnement comme clé. Toucher la notification ouvre ou ramène l'app.
-const CACHE = "deja-vu-l3-2";
+const CACHE = "deja-vu-l3-3";
 const STATIQUES = ["/manifest.webmanifest", "/favicon.svg", "/icone-192.png", "/icone-512.png", "/apple-touch-icon.png",
   "/vendor/d3-7.9.0.min.js"]; // RG-009-13 : D3 en cache bien avant la révélation
 const DELAI_RESEAU_MS = 4000;
@@ -102,7 +102,7 @@ self.addEventListener("push", (e) => {
     // Safari exige une notification visible à chaque push
     if (!liste.length) liste = [{ titre: "Déjà vu !", texte: "Du nouveau dans le jeu.", tag: "generique" }];
     await Promise.all(liste.map((n) => self.registration.showNotification(n.titre, {
-      body: n.texte, tag: n.tag, renotify: true, icon: ICONE, badge: ICONE, data: { url: "/" },
+      body: n.texte, tag: n.tag, renotify: true, icon: ICONE, badge: ICONE, data: { url: n.url || "/" },
     })));
   })());
 });
@@ -111,9 +111,11 @@ self.addEventListener("notificationclick", (e) => {
   e.notification.close();
   e.waitUntil((async () => {
     const fenetres = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const cible = (e.notification.data && e.notification.data.url) || "/";
     const f = fenetres.find((c) => new URL(c.url).origin === location.origin);
-    if (f) { await f.focus(); return; }
-    await self.clients.openWindow((e.notification.data && e.notification.data.url) || "/");
+    // Une suggestion au MJ ouvre l'admin ; le reste ramène l'app ouverte
+    if (f && cible === "/") { await f.focus(); return; }
+    await self.clients.openWindow(cible);
   })());
 });
 

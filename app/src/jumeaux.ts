@@ -5,7 +5,7 @@ import { baremeDe, lireParametres } from "./config";
 import { ajouterCompteur, ajouterPoints, franchirPaliers, heuresIso } from "./direct";
 import { hash, souvenirOrigine } from "./souvenirs";
 
-interface EnvRoles { DB: D1Database }
+export interface EnvRoles { DB: D1Database }
 const MIN = 60_000;
 const iso = (t: number) => new Date(t).toISOString();
 /** Tirage uniforme dans [0, 1[ (crypto : imprévisible pour les joueurs). */

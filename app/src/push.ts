@@ -26,8 +26,9 @@ const ABONNEMENTS_PAR_PERSO = 5;
 const iso = (t: number) => new Date(t).toISOString();
 
 /** Notifications personnelles poussées ; les autres (corrompu, retrouvailles…) se vivent face à face. */
-export const TYPES_PERSO = ["jumeau", "chat_noir", "sanction", "sanction_annulee", "mission", "mission_reussie", "mission_echouee", "mission_annulee"];
-const PRIORITAIRES = ["jumeau", "chat_noir"];
+export const TYPES_PERSO = ["jumeau", "chat_noir", "sanction", "sanction_annulee", "mission", "mission_reussie", "mission_echouee", "mission_annulee", "suggestion"];
+// Suggestions au MJ : déjà espacées de 15 min par suivi.ts
+const PRIORITAIRES = ["jumeau", "chat_noir", "suggestion"];
 const TYPES_EVT = ["message", "palier"];
 
 // Services de push connus : le serveur ne contacte jamais une autre adresse (pas de SSRF).
@@ -133,7 +134,7 @@ async function distribuer(env: EnvPush, endpoints: string[]) {
 }
 
 // ---------- Textes (FR/EN, épicènes) ----------
-export interface Notification { titre: string; texte: string; tag: string }
+export interface Notification { titre: string; texte: string; tag: string; url?: string }
 type Element = { k: "notif"; type: string; donnees: Record<string, unknown> } | { k: "evt"; type: string; donnees: Record<string, unknown> } | { k: "annonce"; cle: "h30" | "revelation"; fin: string } | { k: "test" };
 
 function heureLisible(local: string, l: string) {
@@ -180,6 +181,7 @@ export function texte(e: Element, l: string): Notification | null {
       : { titre: en ? "🎯 A mission from the GM" : "🎯 Mission du MJ", texte: en ? "Open the app to see it. The clock is ticking." : "Ouvre l'app pour la découvrir. Le chrono tourne.", tag: "mission" };
     case "mission_reussie": return { titre: en ? "Mission accomplished" : "Mission accomplie", texte: en ? "Badge: Employee of the Month." : "Badge : Employé du mois.", tag: "mission" };
     case "mission_echouee": return { titre: en ? "Time's up" : "Temps écoulé", texte: en ? "The GM isn't mad. Not too mad." : "Le MJ ne t'en veut pas. Pas trop.", tag: "mission" };
+    case "suggestion": return { titre: "🎛️ Suggestion de réglage", texte: String(d.texte || ""), tag: "suggestion", url: "/admin#suggestions" };
     case "mission_annulee": return { titre: en ? "Mission cancelled" : "Mission annulée", texte: en ? "The GM called it off." : "Le MJ l'a annulée.", tag: "mission" };
   }
   return null;

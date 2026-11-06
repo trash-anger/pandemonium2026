@@ -10,6 +10,7 @@ import { attribution, confierMission, heureDuJoueur, ouvrirPause, fermerPause, s
 import { corrompre, creerGroupe, devenirChat, indiceBonus } from "./jumeaux";
 
 import { tickPush } from "./push";
+import { tickSuggestions } from "./suivi";
 
 export interface EnvDev {
   DB: D1Database;
@@ -21,7 +22,7 @@ export interface EnvDev {
 }
 
 export const TABLES_PARTIE = ["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "compteurs", "points_faction", "evenements", "revelations",
-  "effets", "sanctions", "missions", "notifs", "groupes", "retrouvailles", "corruptions", "abonnements_push", "personnages"]; // appareils avant personnages (clé étrangère)
+  "effets", "sanctions", "missions", "notifs", "groupes", "retrouvailles", "corruptions", "abonnements_push", "suggestions", "personnages"]; // appareils avant personnages (clé étrangère)
 
 async function persoDuJeton(env: EnvDev, jeton: unknown): Promise<string | null> {
   if (typeof jeton !== "string" || !jeton) return null;
@@ -155,6 +156,11 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
   // LOT-3 D : tick des notifications à l'heure du banc (forcé, sans attendre la minute)
   if (p === "/__dev/push" && req.method === "POST") {
     return json(await tickPush(env as EnvDev & { VAPID_JWK?: string; SOI?: Fetcher }, Number(corps.maintenant) || Date.now(), { force: true }));
+  }
+  // LOT-3 E : évalue les signaux à l'heure du banc, sans attendre les 10 min
+  if (p === "/__dev/suggestions" && req.method === "POST") {
+    if (corps.effacer) await env.DB.prepare("DELETE FROM suggestions").run();
+    return json({ suggestion: await tickSuggestions(env, Number(corps.maintenant) || Date.now(), { force: true }) });
   }
   if (p === "/__dev/transmission" && req.method === "POST") {
     const prm = await lireParametres(env.DB);

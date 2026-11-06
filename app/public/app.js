@@ -1170,6 +1170,7 @@
       if (n.type === "mission_reussie") html = `<small>🏷️ ${m.messageMJ}</small><p>${m.missionReussie}<br>${m.recompenses[d.recompense] || ""}</p>`;
       if (n.type === "mission_echouee") html = `<small>⏳ ${m.messageMJ}</small><p>${m.missionEchouee}</p>`;
       if (n.type === "mission_annulee") html = `<small>${m.messageMJ}</small><p>${m.missionAnnulee}</p>`;
+      if (n.type === "suggestion") html = `<small>🎛️ Suggestion de réglage</small><p>${esc(d.texte || "")}</p><p><a class="bouton sec" href="/admin#suggestions">Ouvrir l'admin</a></p>`; // MJ seulement
       if (html) { vibrer([60, 80, 60]); banniere("notif-" + n.id, `${html}<button class="lien" data-fermer>${t.fermer}</button>`, classe); }
     }
     if ((r.notifs || []).length && location.pathname === "/collection") collection();

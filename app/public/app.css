@@ -221,3 +221,24 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
   .palier-13 .echo{animation:gl13 1.5s steps(1) 1}
   @keyframes gl13{0%{transform:translateX(-6px) skewX(8deg);filter:hue-rotate(90deg)}40%{transform:translateX(5px) skewX(-6deg);filter:none}80%{transform:translateX(-2px)}100%{transform:none}}
 }
+
+/* Révélation de 5 h (FEAT-009, E-10) : plein écran, graphe en Canvas, panneau du joueur en bas */
+.rev-page{padding:0;max-width:none}
+.rev{position:fixed;inset:0;background:#07060a;z-index:30;overflow:hidden;touch-action:none}
+.rev canvas{position:absolute;inset:0;display:block}
+.rev .or{color:var(--gold)}
+.rev-haut{position:absolute;top:0;left:0;right:0;display:flex;gap:12px;align-items:flex-start;padding:calc(14px + env(safe-area-inset-top)) 16px 0;pointer-events:none}
+.rev-haut>*{pointer-events:auto}
+.rev-haut .mono{margin-top:6px;color:var(--muted)}
+.rev-fermer{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--bg3);color:var(--fg);text-decoration:none;font-size:18px;flex:0 0 auto}
+.rev-charge{position:absolute;top:45%;left:0;right:0;text-align:center;font-family:var(--mono);color:var(--muted);padding:0 16px}
+.rev-bas{position:absolute;left:0;right:0;bottom:0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(7,6,10,.92) 30%)}
+.rev-bas p{margin:0 0 8px;max-width:560px;font-size:16px;line-height:1.4}
+.rev-bas b{color:var(--green)}
+.rev-boutons{display:flex;gap:10px;max-width:560px}
+.rev-boutons .bouton{flex:1;margin:0;min-height:44px;padding:10px}
+.rev-carte{position:absolute;left:16px;right:16px;top:calc(96px + env(safe-area-inset-top));max-width:420px;display:flex;gap:12px;align-items:center;background:var(--bg2);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px}
+.rev-carte .e{font-size:30px}
+.rev-revoir{background:var(--bg3);color:var(--gold);border:1.5px solid var(--gold);margin-bottom:12px}
+@media (prefers-reduced-motion:no-preference){.rev-charge{animation:clignote 1.6s ease-in-out infinite}.rev-bas{animation:ap .8s ease-out}}
+.rev [hidden]{display:none!important}

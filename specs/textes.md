@@ -336,6 +336,23 @@ L'accueil affiche toujours **une seule suggestion**, choisie selon la situation 
 | Joueur corrompu | « Tu glitches. Chaque scan peut contaminer. » | "You're glitching. Every scan can infect." |
 | Par défaut | « Scanne quelqu'un que tu ne connais pas. » | "Scan someone you don't know." |
 
+### 5.3 Direct et révélation (LOT-3)
+**Statut : Proposition.** Textes de la barre de quête, des annonces et de l'écran de révélation ([FEAT-009](fonctionnalites/quete-collective.md)).
+
+| Élément | FR | EN |
+|---------|----|----|
+| Palier atteint | « Palier {n} atteint ! » | "Milestone {n} reached!" |
+| Annonce H−30 | « Révélation dans 30 minutes. Dernière chance de faire grimper la quête ! » | "Reveal in 30 minutes. Last chance to push the quest!" |
+| Chargement de la révélation | « La Matrice rassemble vos souvenirs… » | "The Matrix is gathering your memories…" |
+| Bilan de la révélation | « {n} personnages · {l} connexions · image révélée à {pct} % · {p}/5 paliers » | "{n} characters · {l} connections · picture revealed at {pct}% · {p}/5 milestones" |
+| Temps d'écran ([RG-015-5](fonctionnalites/badges-classements.md)) | « **{durée}** à regarder ton écran, soit **{pct} %** de ta soirée. » | "**{duration}** staring at your screen, or **{pct}%** of your night." |
+| Faction de rattachement ([RG-011-6](fonctionnalites/factions.md)) | « Tu termines la soirée chez {faction}. » + « Plusieurs factions : tu restes dans celle où tu as marqué le moins de points. » | "You end the night with {faction}." + "Several factions: you stay in the one where you scored the fewest points." |
+| Point du joueur | « TOI » | "YOU" |
+| Boutons | « Me retrouver », « Vue d'ensemble », « ✦ Revoir la révélation » | "Find me", "Overview", "✦ Replay the reveal" |
+| Avant l'heure | « La révélation n'a pas encore eu lieu. Rendez-vous à 5 h. » | "The reveal hasn't happened yet. See you at 5 a.m." |
+
+La part de la soirée se calcule depuis la création du personnage jusqu'à l'instant présent (au plus 6 h).
+
 ## 6. Textes du MJ
 
 > **Statut : Confirmé** (S10).

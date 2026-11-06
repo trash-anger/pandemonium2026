@@ -1,6 +1,7 @@
 // Pages HTML rendues par le Worker. Charte du teaser (teaser/index.html).
 // Coquille de l'application du joueur et panneau du MJ.
 import type { etatDirect } from "./direct";
+import type { ImageCachee } from "./revelation";
 
 export type Langue = "fr" | "en";
 
@@ -54,7 +55,7 @@ function page(l: Langue, titre: string, corps: string, robots = true): Response 
 }
 
 /** Coquille de l'application du joueur (LOT-1) : tout l'affichage est fait par public/app.js. */
-export const VERSION_APP = "l2-2";
+export const VERSION_APP = "l3-1";
 export function pageApp(l: Langue, status = 200): Response {
   const html = `<!doctype html><html lang="${l}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -87,6 +88,7 @@ export function pageAdmin(p: {
   /** Bouton du banc d'essai (selon l'environnement et le rôle) */
   banc?: boolean;
   direct?: EtatDirect;
+  image?: ImageCachee;
 }) {
   const lecture = p.role === "lecteur";
   const total = p.comptes.reduce((a, c) => a + c.n, 0);
@@ -121,6 +123,7 @@ ${lecture ? "" : `<form method="post" action="/admin/pin" class="rangee" style="
 ${p.banc ? `<p><a class="bouton sec" href="/banc">🧪 Banc d'essai</a></p>` : ""}
 ${p.message ? `<p class="ok">${esc(p.message)}</p>` : ""}${p.erreur ? `<p class="err">${esc(p.erreur)}</p>` : ""}
 ${p.direct ? blocDirect(p.direct, lecture) : ""}
+${p.image ? blocRevelation(p.image, lecture) : ""}
 <h2>Étiquettes</h2><div class="grille">${stats}</div>
 <h2>Partie</h2><div class="grille"><div class="stat"><b>${p.joueurs.personnages}</b><span>personnages</span></div><div class="stat"><b>${p.joueurs.cartes}</b><span>cartes collectées</span></div><div class="stat"><b>${p.joueurs.scans}</b><span>scans</span></div></div>
 
@@ -188,4 +191,75 @@ ${Object.keys(NOMS_PREREGLAGES).map((k) => `<button name="nom" value="${k}" clas
 export function pageConnexion() {
   return page("fr", "Admin · Déjà vu !", `<span class="chip">Maître du jeu</span><h1>ADMIN</h1>
 <p class="muted">Accès réservé au maître du jeu.</p><p><a class="bouton" href="/auth/connexion">Se connecter avec Google</a></p>`, false);
+}
+
+/** Image cachée de la révélation (RG-009-6, RG-009-16) : stockée en base, jamais dans le dépôt (REQ-017).
+ *  Le navigateur du MJ échantillonne une phrase ou une image en points ; le serveur ne fait que les valider. */
+function blocRevelation(img: ImageCachee, lecture: boolean) {
+  const apercu = `<canvas id="rev-apercu" width="600" height="160" style="width:100%;max-width:600px;background:#0b0910;border-radius:8px;display:block"></canvas>
+<p class="mono" style="font-size:13px" id="rev-info"></p>
+<script>(() => { const img = ${JSON.stringify(img).replace(/</g, "\\u003c")}; window.dessinerImageCachee = (img) => { const c = document.getElementById("rev-apercu"), x = c.getContext("2d");
+  const s = Math.min((c.width - 20) / img.l, (c.height - 20) / img.h), ox = (c.width - img.l * s) / 2, oy = (c.height - img.h * s) / 2;
+  x.clearRect(0, 0, c.width, c.height); x.fillStyle = "#3dff8a"; for (const [a, b] of img.p) x.fillRect(ox + a * s, oy + b * s, Math.max(1, s * 0.7), Math.max(1, s * 0.7));
+  document.getElementById("rev-info").textContent = "« " + img.nom + " » · " + img.p.length + " points"; }; dessinerImageCachee(img); })();</script>`;
+  const outil = lecture ? "" : `<form method="post" action="/admin/revelation/image" id="f-image" style="margin-top:12px">
+<input type="hidden" name="points" id="rev-points">
+<div class="rangee"><div><label>Phrase cachée (« / » pour passer à la ligne)</label><input id="rev-texte" maxlength="40" placeholder="DÉJÀ / VU !"></div>
+<div style="flex:0 0 auto"><button type="button" class="bouton sec" id="rev-depuis-texte">Échantillonner</button></div></div>
+<div class="rangee" style="margin-top:8px"><div><label>…ou une image (les zones sombres deviennent le dessin)</label><input type="file" id="rev-fichier" accept="image/*"></div>
+<div style="flex:0 0 auto"><label><input type="checkbox" id="rev-inverser"> claires</label></div></div>
+<div class="rangee" style="margin-top:8px"><button id="rev-enregistrer" disabled>Enregistrer l'image</button>
+<button name="action" value="defaut" class="bouton sec" formnovalidate>Revenir à « DÉJÀ VU ! »</button></div></form>
+<script>(() => {
+  let courante = null;
+  // Rastérise un canvas source en points sur une grille d'au plus 160 colonnes et 5000 points
+  function echantillonner(src, nom, garder) {
+    let pas = Math.max(1, Math.ceil(Math.max(src.width / 160, src.height / 160)));
+    for (;;) {
+      const l = Math.floor(src.width / pas), h = Math.floor(src.height / pas), p = [];
+      const d = src.getContext("2d").getImageData(0, 0, src.width, src.height).data;
+      for (let y = 0; y < h; y++) for (let x = 0; x < l; x++) {
+        const i = ((y * pas + (pas >> 1)) * src.width + (x * pas + (pas >> 1))) * 4;
+        if (garder(d[i], d[i + 1], d[i + 2], d[i + 3])) p.push([x, y]);
+      }
+      if (p.length <= 5000 || pas > 40) return { nom, l, h, p };
+      pas++;
+    }
+  }
+  function choisir(img) {
+    if (img.p.length < 20) { alert("Trop peu de points : choisis une phrase ou une image plus grande."); return; }
+    courante = img; dessinerImageCachee(img);
+    document.getElementById("rev-points").value = JSON.stringify(img);
+    document.getElementById("rev-enregistrer").disabled = false;
+  }
+  document.getElementById("rev-depuis-texte").onclick = () => {
+    const texte = document.getElementById("rev-texte").value.trim(); if (!texte) return;
+    // « / » coupe la phrase en lignes : l'image tient mieux sur un téléphone en portrait
+    const lignes = texte.split("/").map((l) => l.trim()).filter(Boolean);
+    const c = document.createElement("canvas"), x = c.getContext("2d"), police = "900 60px system-ui, sans-serif";
+    x.font = police; c.width = Math.ceil(Math.max(...lignes.map((l) => x.measureText(l).width))) + 8; c.height = 72 * lignes.length;
+    x.font = police; x.textBaseline = "middle"; x.textAlign = "center"; x.fillStyle = "#000";
+    lignes.forEach((l, i) => x.fillText(l, c.width / 2, 38 + i * 72));
+    const img = echantillonner(c, lignes.join(" "), (r, g, b, a) => a > 128);
+    choisir(img);
+  };
+  document.getElementById("rev-fichier").onchange = (ev) => {
+    const f = ev.target.files[0]; if (!f) return;
+    const im = new Image(); im.onload = () => {
+      const k = Math.min(1, 640 / Math.max(im.width, im.height)), c = document.createElement("canvas");
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+      const claires = document.getElementById("rev-inverser").checked;
+      choisir(echantillonner(c, f.name.replace(/\.[^.]+$/, ""), (r, g, b) => { const l = 0.3 * r + 0.59 * g + 0.11 * b; return claires ? l > 160 : l < 96; }));
+    }; im.src = URL.createObjectURL(f);
+  };
+  document.getElementById("f-image").addEventListener("submit", (ev) => {
+    if (ev.submitter && ev.submitter.value === "defaut") return;
+    if (!courante) ev.preventDefault();
+  });
+})();</script>`;
+  return `<h2>Révélation : image cachée</h2>
+<div class="carte"><p class="muted" style="font-size:13px;margin-top:0">La constellation se réorganise en ce dessin, d'autant plus nettement que la salle a franchi de paliers. Elle est figée à l'heure de la révélation.</p>
+${apercu}
+<p><a class="bouton sec" href="/revelation?apercu=1" target="_blank">Aperçu de la révélation (état actuel)</a></p>${outil}</div>`;
 }

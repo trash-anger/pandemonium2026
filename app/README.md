@@ -86,3 +86,9 @@ python3 app/scripts/textes-souvenirs.py
 ```
 
 Les seuils de la jauge de souvenirs (départ, rescans par heure, seuil du flou) se règlent dans l'admin, section `memoire` des paramètres.
+
+## Direct et révélation (LOT-3)
+- `/api/direct` : quête, paliers, soldes éclair, factions et événements, identique pour tous (cache 4 s en périphérie). Les téléphones l'interrogent toutes les 10 s.
+- `/api/revelation` : refusé avant l'heure de révélation, puis un instantané figé (table `revelations`), le même pour tous (cache 30 s). Le graphe est dessiné avec D3 (`public/vendor/d3-7.9.0.min.js`, mis en cache par le service worker dès la première visite).
+- Admin → « Révélation : image cachée » : phrase (« / » pour passer à la ligne) ou image, échantillonnée en points dans le navigateur. Le lien « Aperçu de la révélation » montre l'état actuel sans rien figer.
+- Pour répéter : sur le banc, avancer l'heure de révélation (Admin → En direct → −15 min ou « Maintenant »). Chaque nouvelle heure produit un nouvel instantané.

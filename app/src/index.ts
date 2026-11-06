@@ -4,6 +4,7 @@ import { genererCodes, normaliserCode } from "./codes";
 import { ecrireConfig, HEURES_PAR_DEFAUT, lireConfig, lireParametres, PREREGLAGES, type CleConfig } from "./config";
 import { etatDirect, evenement, isoVersLocal } from "./direct";
 import { csvNiimbot } from "./csv";
+import { construireInstantane, ecrireImage, lireImage, SANS_BORNE, validerImage } from "./revelation";
 import { langue, pageAdmin, pageApp, pageConnexion, type Compte, type EtiquetteVue, type Lot } from "./pages";
 import { definirPin, routeApi } from "./jeu";
 import { localVersIso } from "./temps";
@@ -61,7 +62,7 @@ async function servir(req: Request, env: Env, url: URL): Promise<Response> {
         return pageApp(langue(req));
       }
       if (chemin.startsWith("/api/")) return routeApi(req, env, url);
-      if (["/collection", "/moi", "/saisie", "/tuto", "/badges", "/medailles"].includes(chemin)) return pageApp(langue(req));
+      if (["/collection", "/moi", "/saisie", "/tuto", "/badges", "/medailles", "/revelation"].includes(chemin)) return pageApp(langue(req));
       if (chemin === "/auth/connexion") return debutConnexion(env);
       if (chemin === "/auth/retour") return retourConnexion(req, env);
       if (chemin === "/auth/deconnexion") return deconnexion(env);
@@ -154,7 +155,7 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     if (url.pathname === "/admin/partie-zero") {
       if (String(f.get("confirmation")).trim().toUpperCase() !== "ZERO") return retour({ erreur: "Confirmation manquante : rien n'a été effacé." });
       await env.DB.batch([
-        ...["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "compteurs", "points_faction", "evenements", "personnages"].map((x) => env.DB.prepare(`DELETE FROM ${x}`)),
+        ...["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "compteurs", "points_faction", "evenements", "revelations", "personnages"].map((x) => env.DB.prepare(`DELETE FROM ${x}`)),
         env.DB.prepare("UPDATE etiquettes SET etat = 'vierge', personnage_id = NULL, faction_id = NULL, reclamee_le = NULL WHERE etat = 'reclamee'"),
       ]);
       await journal(env, email, "partie_zero", {});
@@ -188,6 +189,19 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       await ecrireConfig(env.DB, "heures", { ...h, revelation: nouvelle });
       await journal(env, email, "revelation", { action, revelation: nouvelle });
       return retour({ message: `Révélation fixée à ${nouvelle.replace("T", " ")}.` });
+    }
+    if (url.pathname === "/admin/revelation/image") {
+      if (String(f.get("action")) === "defaut") {
+        await ecrireImage(env.DB, null);
+        await journal(env, email, "revelation_image", { nom: "défaut" });
+        return retour({ message: "Image cachée : retour à « DÉJÀ VU ! »." });
+      }
+      let img = null;
+      try { img = validerImage(JSON.parse(String(f.get("points") || "null"))); } catch { /* invalide */ }
+      if (!img) return retour({ erreur: "Image cachée invalide (20 à 5000 points sur une grille de 400 × 400 au plus) : rien n'a été enregistré." });
+      await ecrireImage(env.DB, img);
+      await journal(env, email, "revelation_image", { nom: img.nom, points: img.p.length });
+      return retour({ message: `Image cachée « ${img.nom} » enregistrée (${img.p.length} points).` });
     }
     if (url.pathname === "/admin/prereglage") {
       const nom = String(f.get("nom"));
@@ -234,6 +248,13 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     });
   }
 
+  // Aperçu de la révélation pour le MJ : instantané à l'instant présent, jamais enregistré
+  if (url.pathname === "/admin/revelation/apercu.json") {
+    return new Response(JSON.stringify(await construireInstantane(env, new Date().toISOString(), SANS_BORNE)), {
+      headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+    });
+  }
+
   if (url.pathname !== "/admin") return new Response("Introuvable", { status: 404 });
   const comptes = (await env.DB.prepare("SELECT format, role, etat, COUNT(*) AS n FROM etiquettes WHERE banc = 0 GROUP BY format, role, etat").all<Compte>()).results;
   const lots = (await env.DB.prepare("SELECT lot, format, role, COUNT(*) AS n, MIN(cree_le) AS cree_le, MAX(banc) AS banc FROM etiquettes GROUP BY lot, format, role ORDER BY lot DESC").all<Lot>()).results;
@@ -256,6 +277,7 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     heures: await lireConfig(env.DB, "heures"),
     parametres: await lireParametres(env.DB),
     direct: await etatDirect(env, Date.now()),
+    image: await lireImage(env.DB),
     message: url.searchParams.get("message") || undefined,
     erreur: url.searchParams.get("erreur") || undefined,
   });

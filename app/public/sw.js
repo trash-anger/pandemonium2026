@@ -1,9 +1,10 @@
 // Service worker « Déjà vu ! » (FEAT-021) : l'interface reste disponible hors ligne après une première visite.
 // - Pages du joueur : réseau d'abord (pour recevoir les correctifs), coquille en cache si le réseau manque (RG-021-4).
-// - app.js et app.css sont versionnés (?v=) : cache d'abord. Icônes et manifeste : cache, rafraîchi en arrière-plan.
+// - app.js et app.css sont versionnés (?v=) : cache d'abord. Icônes, manifeste et D3 : cache, rafraîchi en arrière-plan.
 // - L'API, l'admin, la connexion et le banc ne passent jamais par le cache.
-const CACHE = "deja-vu-l2-1";
-const STATIQUES = ["/manifest.webmanifest", "/favicon.svg", "/icone-192.png", "/icone-512.png", "/apple-touch-icon.png"];
+const CACHE = "deja-vu-l3-1";
+const STATIQUES = ["/manifest.webmanifest", "/favicon.svg", "/icone-192.png", "/icone-512.png", "/apple-touch-icon.png",
+  "/vendor/d3-7.9.0.min.js"]; // RG-009-13 : D3 en cache bien avant la révélation
 const DELAI_RESEAU_MS = 4000;
 
 self.addEventListener("install", (e) => {

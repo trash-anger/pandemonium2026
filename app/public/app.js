@@ -211,6 +211,12 @@
       messageMJ: "Message du MJ", fermer: "Fermer",
       barreRevelation: "Révélation dans", barreFin: "Fermeture dans",
       annonce30: "Révélation dans 30 minutes. Dernière chance de faire grimper la quête !",
+      revTitre: "Révélation", revCharge: "La Matrice rassemble vos souvenirs…", revPasEncore: "La révélation n'a pas encore eu lieu. Rendez-vous à 5 h.",
+      revStats: (n, l) => `${n} personnages · ${l} connexions`, revImage: (pct, n) => `image révélée à ${pct} % · ${n}/5 paliers`,
+      revEcran: (d, pct) => `<b>${d}</b> à regarder ton écran, soit <b>${pct} %</b> de ta soirée.`,
+      revFaction: (f) => `Tu termines la soirée chez ${f}.`, revFactionAide: "Plusieurs factions : tu restes dans celle où tu as marqué le moins de points.",
+      revMoi: "Me retrouver", revVue: "Vue d'ensemble", revToi: "TOI", revRevoir: "✦ Revoir la révélation", revApercu: "Aperçu du MJ : état actuel, rien n'est figé.",
+      revSansFaction: "Sans faction", revConnexions: (n) => `${n} connexion${n > 1 ? "s" : ""}`, revErreur: "Impossible de charger la révélation. Réessaie dans un instant.",
       dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Article déjà dans ton panier.", fenetre: (m) => `Trop tôt pour compter : un même déjà vu compte une fois toutes les ${m} minute${m > 1 ? "s" : ""}.`,
       soiTitre: "C'est toi.", soi: "Ton double existe… quelque part. Les indices arrivent à partir de minuit.",
       encore: "Scanner encore",
@@ -365,6 +371,12 @@
       messageMJ: "Message from the GM", fermer: "Close",
       barreRevelation: "Reveal in", barreFin: "Closing in",
       annonce30: "Reveal in 30 minutes. Last chance to push the quest!",
+      revTitre: "Reveal", revCharge: "The Matrix is gathering your memories…", revPasEncore: "The reveal hasn't happened yet. See you at 5 a.m.",
+      revStats: (n, l) => `${n} characters · ${l} connections`, revImage: (pct, n) => `picture revealed at ${pct}% · ${n}/5 milestones`,
+      revEcran: (d, pct) => `<b>${d}</b> staring at your screen, or <b>${pct}%</b> of your night.`,
+      revFaction: (f) => `You end the night with ${f}.`, revFactionAide: "Several factions: you stay in the one where you scored the fewest points.",
+      revMoi: "Find me", revVue: "Overview", revToi: "YOU", revRevoir: "✦ Replay the reveal", revApercu: "GM preview: current state, nothing is frozen.",
+      revSansFaction: "No faction", revConnexions: (n) => `${n} connection${n > 1 ? "s" : ""}`, revErreur: "Couldn't load the reveal. Try again in a moment.",
       dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Item already in your cart.", fenetre: (m) => `Too soon to count: the same déjà vu counts once every ${m} minute${m > 1 ? "s" : ""}.`,
       soiTitre: "That's you.", soi: "Your double is out there… somewhere. Clues start at midnight.",
       encore: "Scan again",
@@ -578,6 +590,7 @@
       if (p === "/saisie") return saisie();
       if (p === "/tuto") return tutoriel();
       if (p === "/badges" || p === "/medailles") return medailles();
+      if (p === "/revelation") return revelation();
       const m = p.match(/^\/([^/]{1,12})\/?$/);
       if (m) return scanner(decodeURIComponent(m[1]).toUpperCase());
       return inconnue("");
@@ -623,6 +636,7 @@
     const ty = typeDe(pe.type);
     rendre(`${compte ? `<div class="boite">${compte}</div>` : ""}
       <p class="maintenant"><small>${t.maintenant}</small>${esc(ligne)}</p>
+      ${h.revelation && now >= Date.parse(h.revelation) ? `<a class="bouton rev-revoir" href="/revelation" data-nav>${t.revRevoir}</a>` : ""}
       <a class="gros-scan" href="/saisie" data-nav><span>📷</span>${t.scanner}</a>
       <div class="discret"><a href="/moi" data-nav><b>${ty.e}</b><span>${t.maCarte}</span><div class="petit" style="margin-top:4px">${esc(pe.pseudo)}</div></a>
       <a href="/collection" data-nav><b>${d.nb_cartes}</b><span>${t.maCollection}</span><div class="petit" style="margin-top:4px">${t.cartes(d.nb_cartes)}</div></a>
@@ -835,6 +849,7 @@
     const compte = now >= rev - 30 * 60_000 && now < rev ? [t.barreRevelation, h.revelation]
       : now >= rev && now < fin ? [t.barreFin, h.fin] : null;
     b.hidden = false;
+    b.setAttribute("href", now >= rev ? "/revelation" : "/");
     b.classList.toggle("solde", !!d.solde);
     b.innerHTML = `<div class="haut"><span>${d.solde ? `🔥 ${t.solde} · <span data-fin="${d.solde.fin}"></span>` : `✦ ${t.quete} · P-${q.franchis}/5`}</span>
       <span class="mono">${q.prochain ? `${Math.floor(q.total)} / ${q.prochain}` : t.queteComplete}</span></div>
@@ -885,10 +900,276 @@
       const d = await api("/api/direct");
       etat.direct = d; etat.heures = d.heures;
       majBarre(); traiterEvenements(d);
+      ouvrirRevelationSiHeure(d.heures);
     } catch { /* hors ligne : on garde le dernier état */ }
   }
   setInterval(() => { if (document.visibilityState === "visible") rafraichirDirect(); }, 10_000);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") rafraichirDirect(); });
+
+  // ---------- Révélation de 5 h (FEAT-009, RG-009-5 à RG-009-16, RG-015-5) ----------
+  // Le serveur fige un instantané commun ; chaque téléphone calcule la même disposition (d3-force déterministe),
+  // anime la construction de la constellation, sa transformation en dessin caché, puis zoome sur le joueur.
+  const CLE_REV = "dv-revelation" + SUFFIXE, CLE_REV_VUE = "dv-revelation-vue" + SUFFIXE;
+  const TEINTES_FACTIONS = { ordre: "#4da3ff", chaos: "#ff5a3d", friperie: "#3dff8a", influence: "#ff4fd8", necro: "#b48cff" };
+  const PAGES_REVELATION_AUTO = ["/", "/collection", "/moi", "/medailles", "/badges", "/saisie"];
+
+  /** CA-009-3 : à l'heure, tout appareil ouvert bascule une fois sur la révélation ; à la réouverture aussi. */
+  function ouvrirRevelationSiHeure(h) {
+    if (!h || !h.revelation) return;
+    const now = Date.now(), rev = Date.parse(h.revelation);
+    if (now < rev || now > Date.parse(h.fin) + 12 * 3600e3) return;
+    if (lire(CLE_REV_VUE) === h.revelation || !PAGES_REVELATION_AUTO.includes(location.pathname)) return;
+    ecrire(CLE_REV_VUE, h.revelation); vibrer([60, 120, 60]);
+    aller("/revelation");
+  }
+
+  let d3Pret = null;
+  const chargerD3 = () => d3Pret || (d3Pret = new Promise((ok, ko) => {
+    if (window.d3) return ok();
+    const s = document.createElement("script"); s.src = "/vendor/d3-7.9.0.min.js";
+    s.onload = () => ok(); s.onerror = () => { d3Pret = null; ko({ erreur: "reseau" }); };
+    document.head.appendChild(s);
+  }));
+
+  async function donneesRevelation(apercu) {
+    if (apercu) {
+      const r = await fetch("/admin/revelation/apercu.json", { cache: "no-store", credentials: "same-origin" }).catch(() => null);
+      if (!r || !r.ok) throw { erreur: "apercu" };
+      return r.json();
+    }
+    const h = etat.heures;
+    // Réseau d'abord (le serveur peut refaire l'instantané) ; la copie locale ne sert que hors ligne
+    const local = lireJson(CLE_REV);
+    // Pile à l'heure, tous les téléphones demandent en même temps : on étale sur quelques secondes
+    if (h && Date.now() - Date.parse(h.revelation) < 20_000) await new Promise((ok) => setTimeout(ok, Math.random() * 6000));
+    try {
+      const d = await api("/api/revelation");
+      ecrire(CLE_REV, JSON.stringify(d));
+      return d;
+    } catch (e) {
+      if (local && e.erreur === "reseau" && (!h || local.revelation === h.revelation)) return local;
+      throw e;
+    }
+  }
+
+  /** Hachage 32 bits (FNV-1a + finaliseur) : mêmes positions de départ sur tous les téléphones. */
+  function hache(s) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
+    return h >>> 0;
+  }
+
+  /** Disposition commune : constellation (d3-force, 300 pas), puis cible dans le dessin caché (RG-009-16). */
+  function disposer(R) {
+    const n = R.noeuds.length, etendue = 40 * Math.sqrt(n + 1);
+    const N = R.noeuds.map((x, i) => {
+      const h = hache(x.id);
+      return { i, d: x, e: typeDe(x.type).e, deg: 0, x: ((h & 0xffff) / 65535 - 0.5) * etendue, y: ((h >>> 16) / 65535 - 0.5) * etendue, voisins: [] };
+    });
+    for (const [a, b] of R.liens) { N[a].deg++; N[b].deg++; N[a].voisins.push(b); N[b].voisins.push(a); }
+    if (n) {
+      const sim = d3.forceSimulation(N)
+        .force("charge", d3.forceManyBody().strength(-30).distanceMax(400))
+        .force("lien", d3.forceLink(R.liens.map(([a, b]) => ({ source: a, target: b }))).distance(30))
+        .force("x", d3.forceX(0).strength(0.06)).force("y", d3.forceY(0).strength(0.06))
+        .stop();
+      for (let k = 0; k < 300; k++) sim.tick();
+    }
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const p of N) { p.lx = p.x; p.ly = p.y; x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
+    if (!n) { x0 = y0 = -100; x1 = y1 = 100; }
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, taille = Math.max(x1 - x0, y1 - y0, 200);
+    const img = R.image, s = (taille * 1.1) / Math.max(img.l, img.h);
+    const P = img.p.map(([a, b]) => [cx + (a - img.l / 2) * s, cy + (b - img.h / 2) * s]);
+    // Joueurs aimantés : une part qui dépend des paliers, choisis par hachage, appariés de gauche à droite
+    const k = Math.round(n * R.part);
+    const tries = N.slice().sort((a, b) => hache(a.d.id + "·") - hache(b.d.id + "·"));
+    const aimantes = tries.slice(0, k).sort((a, b) => a.lx - b.lx || a.ly - b.ly);
+    const Ps = P.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    for (const p of N) { p.fx = cx + (p.lx - cx) * 1.25; p.fy = cy + (p.ly - cy) * 1.25; }
+    aimantes.forEach((p, j) => {
+      const q = Ps[Math.floor(((j + 0.5) * Ps.length) / k) % Ps.length], h = hache(p.d.id);
+      const dec = k > Ps.length ? s * 0.4 : 0;
+      p.fx = q[0] + ((h & 15) / 15 - 0.5) * dec; p.fy = q[1] + (((h >>> 4) & 15) / 15 - 0.5) * dec;
+    });
+    // Poussière : le reste du dessin, d'autant plus complet et net que la quête a avancé
+    const flou = (1 - R.part) * s * 4;
+    const poussiere = P.map((q, i) => [q, hache("p" + i)]).sort((a, b) => a[1] - b[1]).slice(0, Math.round(P.length * R.part))
+      .map(([q, h]) => [q[0] + ((h & 255) / 255 - 0.5) * flou, q[1] + (((h >>> 8) & 255) / 255 - 0.5) * flou]);
+    // Ordre d'apparition : les plus connectés d'abord
+    N.slice().sort((a, b) => b.deg - a.deg || a.i - b.i).forEach((p, r) => (p.delai = n ? (r / n) * 2600 : 0));
+    // Deux cadrages : la constellation, puis le dessin final (le dessin remplit l'écran à la fin)
+    const boite = (pts) => {
+      let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+      for (const [x, y] of pts) { a = Math.min(a, x); b = Math.min(b, y); c = Math.max(c, x); d = Math.max(d, y); }
+      return a === Infinity ? [-100, -100, 100, 100] : [a, b, c, d];
+    };
+    return { N, poussiere, centre: [cx, cy], pas: s, boiteL: boite(N.map((p) => [p.lx, p.ly])), boiteF: boite([...N.map((p) => [p.fx, p.fy]), ...P]) };
+  }
+
+  const borne = (x) => Math.max(0, Math.min(1, x));
+  const adoucir = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const DUREE_REV = { morphe: 4200, morpheFin: 7200, zoom: 7800, vue: 10600, fin: 12400 };
+
+  async function revelation() {
+    const apercu = new URLSearchParams(location.search).has("apercu");
+    rendre(`<div class="rev"><canvas id="rev-canvas"></canvas>
+      <div class="rev-haut"><a class="rev-fermer" href="${apercu ? "/admin" : "/"}"${apercu ? "" : " data-nav"} aria-label="${t.fermer}">✕</a>
+        <div><span class="chip">✦ ${t.revTitre}</span><div class="mono petit" id="rev-stats"></div>${apercu ? `<div class="petit or">${t.revApercu}</div>` : ""}</div></div>
+      <p class="rev-charge" id="rev-charge">${t.revCharge}</p>
+      <div class="rev-carte" id="rev-carte" hidden></div>
+      <div class="rev-bas" id="rev-bas" hidden><p id="rev-ecran"></p><p id="rev-faction"></p>
+        <div class="rev-boutons"><button class="bouton sec" id="rev-moi" hidden>${t.revMoi}</button><button class="bouton sec" id="rev-vue">${t.revVue}</button></div></div></div>`, { classe: "rev-page" });
+    if (!etat.heures) await chargerMoi();
+    let R;
+    try {
+      [R] = await Promise.all([donneesRevelation(apercu), chargerD3()]);
+    } catch (e) {
+      $("#rev-charge").textContent = e && e.erreur === "pas_encore" ? t.revPasEncore : t.revErreur;
+      return;
+    }
+    if (location.pathname !== "/revelation") return;
+    $("#rev-charge").remove();
+    const L0 = disposer(R);
+    const moiId = etat.moi && etat.moi.personnage && etat.moi.personnage.id;
+    const moi = L0.N.find((p) => p.d.id === moiId) || null;
+    const voisins = new Set(moi ? moi.voisins : []);
+    $("#rev-stats").textContent = `${t.revStats(R.noeuds.length, R.liens.length)} · ${t.revImage(Math.round(R.part * 100), R.franchis)}`;
+
+    const canvas = $("#rev-canvas"), ctx = canvas.getContext("2d");
+    let W = 0, H = 0, dpr = 1, Z = d3.zoomIdentity;
+    // Cadrage courant : interpolé entre celui de la constellation et celui du dessin final
+    let F = 1, Cx = 0, Cy = 0;
+    const cadrage = ([x0, y0, x1, y1]) => [Math.min((W - 32) / Math.max(1, x1 - x0), (H - 300) / Math.max(1, y1 - y0)), (x0 + x1) / 2, (y0 + y1) / 2];
+    const cadrer = (m) => {
+      const a = cadrage(L0.boiteL), b = cadrage(L0.boiteF);
+      F = a[0] + (b[0] - a[0]) * m; Cx = a[1] + (b[1] - a[1]) * m; Cy = a[2] + (b[2] - a[2]) * m;
+    };
+    const ajuster = () => {
+      dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+      canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    };
+    ajuster();
+    // Monde → écran : cadrage, puis zoom de d3
+    const ecranX = (x) => Z.applyX((x - Cx) * F + W / 2);
+    const ecranY = (y) => Z.applyY((y - Cy) * F + H / 2 - 50);
+    // Mouvement réduit : l'image finale directement, sans animation ni travelling
+    const calme = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const debut = performance.now() - (calme ? DUREE_REV.fin : 0);
+    let fini = calme;
+
+    function dessiner() {
+      const tm = fini ? DUREE_REV.fin : performance.now() - debut;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = "#07060a"; ctx.fillRect(0, 0, W, H);
+      const m = adoucir(borne((tm - DUREE_REV.morphe) / (DUREE_REV.morpheFin - DUREE_REV.morphe)));
+      cadrer(m);
+      if (m > 0) {
+        const c = Math.max(1.4, Math.min(6, L0.pas * F * Z.k * 0.75));
+        ctx.fillStyle = `rgba(61,255,138,${0.45 * m})`;
+        for (const [x, y] of L0.poussiere) ctx.fillRect(ecranX(x) - c / 2, ecranY(y) - c / 2, c, c);
+      }
+      const [cx, cy] = L0.centre;
+      for (const p of L0.N) {
+        const b = adoucir(borne((tm - p.delai) / 1200));
+        const x = cx + (p.lx - cx) * b, y = cy + (p.ly - cy) * b;
+        p.sx = ecranX(x + (p.fx - x) * m); p.sy = ecranY(y + (p.fy - y) * m); p.a = b;
+      }
+      // Les liens s'estompent pendant la transformation pour laisser lire le dessin
+      ctx.lineWidth = 1; ctx.strokeStyle = `rgba(255,255,255,${(moi ? 0.05 : 0.09) * (1 - 0.7 * m)})`;
+      ctx.beginPath();
+      const miens = [];
+      for (const [a, b] of R.liens) {
+        const p = L0.N[a], q = L0.N[b];
+        if (p.a < 0.6 || q.a < 0.6) continue;
+        if (moi && (p === moi || q === moi)) { miens.push([p, q]); continue; }
+        ctx.moveTo(p.sx, p.sy); ctx.lineTo(q.sx, q.sy);
+      }
+      ctx.stroke();
+      if (miens.length) {
+        ctx.lineWidth = 1.5; ctx.strokeStyle = `rgba(61,255,138,${0.75 - 0.45 * m})`; ctx.beginPath();
+        for (const [p, q] of miens) { ctx.moveTo(p.sx, p.sy); ctx.lineTo(q.sx, q.sy); }
+        ctx.stroke();
+      }
+      const k = Z.k, emojis = k >= 2.5, pseudos = k >= 5;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      for (const p of L0.N) {
+        if (!p.a || p === moi) continue;
+        ctx.globalAlpha = p.a * (moi && !voisins.has(p.i) ? 0.45 : 1);
+        const r = 2 + Math.min(3, Math.sqrt(p.deg) * 0.6);
+        ctx.fillStyle = TEINTES_FACTIONS[p.d.faction] || "#cfc8d8";
+        ctx.beginPath(); ctx.arc(p.sx, p.sy, r, 0, 7); ctx.fill();
+        if (emojis) { ctx.font = `${Math.min(26, 6 + k * 2.4)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`; ctx.fillText(p.e, p.sx, p.sy - r - 9); }
+        if (pseudos) { ctx.font = "11px ui-monospace, monospace"; ctx.fillStyle = "#f2eef8"; ctx.fillText(p.d.pseudo, p.sx, p.sy + r + 9); }
+      }
+      ctx.globalAlpha = 1;
+      if (moi && moi.a) {
+        // RG-009-14 : le point du joueur, plus gros, lumineux, avec son emoji et « TOI »
+        ctx.shadowColor = "#3dff8a"; ctx.shadowBlur = 18; ctx.fillStyle = "#3dff8a";
+        ctx.beginPath(); ctx.arc(moi.sx, moi.sy, 7, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+        ctx.font = `22px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`; ctx.fillText(moi.e, moi.sx, moi.sy - 22);
+        ctx.font = "bold 12px ui-monospace, monospace"; ctx.fillStyle = "#3dff8a"; ctx.fillText(t.revToi, moi.sx, moi.sy + 18);
+      }
+    }
+
+    const zoom = d3.zoom().scaleExtent([0.7, 8]).on("zoom", (ev) => { Z = ev.transform; if (fini) dessiner(); });
+    const sel = d3.select(canvas).call(zoom);
+    const versMoi = () => {
+      const [Ff, cx, cy] = cadrage(L0.boiteF);
+      const x = (moi.fx - cx) * Ff + W / 2, y = (moi.fy - cy) * Ff + H / 2 - 50;
+      return d3.zoomIdentity.translate(W / 2, H / 2 - 60).scale(4).translate(-x, -y);
+    };
+    const boucle = () => {
+      if (!canvas.isConnected) return;
+      dessiner();
+      if (performance.now() - debut < DUREE_REV.fin) requestAnimationFrame(boucle);
+      else { fini = true; dessiner(); }
+    };
+    requestAnimationFrame(boucle);
+    if (moi && !calme) {
+      setTimeout(() => canvas.isConnected && sel.transition().duration(1600).call(zoom.transform, versMoi()), DUREE_REV.zoom);
+      setTimeout(() => canvas.isConnected && sel.transition().duration(1600).call(zoom.transform, d3.zoomIdentity), DUREE_REV.vue);
+    }
+    const surRedim = () => { if (!canvas.isConnected) return removeEventListener("resize", surRedim); ajuster(); dessiner(); };
+    addEventListener("resize", surRedim);
+
+    // RG-009-15 : toucher un point affiche la carte du joueur
+    canvas.addEventListener("click", (ev) => {
+      const r = canvas.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
+      let best = null, dmin = 22 * 22;
+      for (const p of L0.N) { const d = (p.sx - x) ** 2 + (p.sy - y) ** 2; if (p.a && d < dmin) { dmin = d; best = p; } }
+      const c = $("#rev-carte");
+      if (!best) { c.hidden = true; return; }
+      const f = FACTIONS[best.d.faction];
+      c.innerHTML = `<span class="e">${best.e}</span><div><b>${esc(best.d.pseudo)}</b>${best === moi ? ` <span class="or">· ${t.revToi}</span>` : ""}
+        <div class="petit muted">${f ? `${f.e} ${esc(lib(f))}` : t.revSansFaction} · ${t.revConnexions(best.deg)}</div></div>`;
+      c.hidden = false; c.onclick = () => (c.hidden = true);
+    });
+    $("#rev-vue").onclick = () => sel.transition().duration(900).call(zoom.transform, d3.zoomIdentity);
+    if (moi) { $("#rev-moi").hidden = false; $("#rev-moi").onclick = () => sel.transition().duration(900).call(zoom.transform, versMoi()); }
+
+    // RG-015-5 et RG-009-12 : temps d'écran de la soirée et faction de rattachement
+    setTimeout(async () => {
+      if (!canvas.isConnected) return;
+      const bas = $("#rev-bas");
+      if (moi && !apercu) {
+        await envoyerEcran(); await chargerMoi();
+        const pe = etat.moi && etat.moi.personnage;
+        if (pe && canvas.isConnected) {
+          const s = (pe.temps_ecran_s || 0) + (Number(lire(CLE.ecran)) || 0);
+          const fin = Math.min(Date.now(), Date.parse((etat.heures || {}).fin) || Date.now());
+          const pct = Math.min(100, Math.round((s * 1000 * 100) / Math.max(60_000, fin - Date.parse(pe.cree_le))));
+          const h = Math.floor(s / 3600), mn = Math.floor((s % 3600) / 60);
+          const duree = h ? (L === "en" ? `${h}h ${String(mn).padStart(2, "0")}` : `${h} h ${String(mn).padStart(2, "0")}`) : `${mn} min`;
+          $("#rev-ecran").innerHTML = t.revEcran(duree, pct);
+        }
+      }
+      const f = moi && FACTIONS[moi.d.faction];
+      $("#rev-faction").innerHTML = f ? `${t.revFaction(`<b>${f.e} ${esc(lib(f))}</b>`)}${moi.d.multi ? `<br><span class="petit muted">${t.revFactionAide}</span>` : ""}` : "";
+      if (canvas.isConnected) bas.hidden = false;
+    }, moi && !calme ? DUREE_REV.morpheFin : 600);
+  }
 
   // ---------- Création en 4 écrans (FEAT-003, RG-003-7, RG-003-9) ----------
   function creation(code, estMJ) {

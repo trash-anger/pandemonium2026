@@ -6,6 +6,7 @@ import { ATTRIBUTS, auHasard, CLASSES, COULEURS, FACTIONS, genererPseudo, TYPES,
 import { normaliserCode } from "./codes";
 import { baremeDe, lireParametres, type Heures } from "./config";
 import { crediterScan, heuresIso, routeDirect, type Joueur } from "./direct";
+import { routeRevelation } from "./revelation";
 import { brouiller, estFlou, fauxSouvenir, grainePaire, type PersoSouvenir } from "./souvenirs";
 import { devActif } from "./mode";
 
@@ -213,7 +214,7 @@ async function moi(env: EnvJeu, p: LignePerso, t: number) {
       id: p.id, pseudo: p.pseudo, type: p.type, couleur: p.couleur, attributs: JSON.parse(p.attributs), classe: p.classe,
       photos_ok: !!p.photos_ok, est_mj: !!p.est_mj, surconsommation: !!p.surconsommation,
       bloque_jusqu_a: p.bloque_jusqu_a && p.bloque_jusqu_a > new Date(t).toISOString() ? p.bloque_jusqu_a : null,
-      cree_le: p.cree_le, premier_scanne_le: p.premier_scanne_le, souvenirs: p.souvenirs,
+      cree_le: p.cree_le, premier_scanne_le: p.premier_scanne_le, souvenirs: p.souvenirs, temps_ecran_s: p.temps_ecran_s,
     },
     reactions: Object.fromEntries(EMOJIS_REACTION.map((e) => [e, reac.find((x) => x.emoji === e)?.n ?? 0]).filter(([, n]) => n)),
     etiquettes, badges, nb_cartes: nb?.n ?? 0, droits: droits(p, h, t), heures: h,
@@ -258,6 +259,7 @@ export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Res
     if (p === "/api/collection" && req.method === "GET") return collection(req, env, t);
     if (p === "/api/classements" && req.method === "GET") return classements(req, env, t);
     if (p === "/api/direct" && req.method === "GET") return routeDirect(req, env, t, devActif(env) && req.headers.has("X-Dev-Maintenant"));
+    if (p === "/api/revelation" && req.method === "GET") return routeRevelation(req, env, t, devActif(env) && req.headers.has("X-Dev-Maintenant"));
     if (req.method !== "POST") return erreur("methode", 405);
     // Les appels d'écriture viennent de notre page (protection CSRF)
     const origine = req.headers.get("Origin");

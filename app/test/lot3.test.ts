@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { routeApi } from "../src/jeu";
 import { isoVersLocal } from "../src/direct";
+import { construireInstantane, imageParDefaut, SANS_BORNE, validerImage } from "../src/revelation";
 import { d1Memoire } from "./d1-memoire";
 import { ALPHABET } from "../src/codes";
 
@@ -111,5 +112,83 @@ describe("points de faction (barème §2)", () => {
 describe("heures du MJ", () => {
   it("convertit l'heure courante en heure de Montréal", () => {
     expect(isoVersLocal(Date.UTC(2026, 10, 8, 9, 7))).toBe("2026-11-08T04:07");
+  });
+});
+
+describe("révélation de 5 h (FEAT-009, LOT-3 étape B)", () => {
+  const REV = H(10); // 5 h à Montréal
+  const revelation = (t = REV + MIN) => api("/api/revelation", undefined, undefined, t);
+
+  it("CA-009-3 : refusée avant l'heure, puis servie à tous", async () => {
+    const r = await revelation(REV - MIN);
+    expect(r).toMatchObject({ status: 403, erreur: "pas_encore" });
+    expect((await revelation()).status).toBe(200);
+  });
+
+  it("RG-009-5 : une connexion par paire, quel que soit le sens ; instantané figé à l'heure de la révélation", async () => {
+    const a = await joueur("ordre"), b = await joueur("chaos"), c = await joueur("chaos");
+    await scan(a, b.code);
+    await scan(b, a.code); // même paire
+    await scan(a, c.code);
+    const d = await revelation();
+    expect(d.noeuds).toHaveLength(3);
+    expect(d.liens).toHaveLength(2);
+    expect(d.revelation).toBe(new Date(REV).toISOString());
+    expect(d.franchis).toBe(0);
+    expect(d.part).toBe(0.1);
+    expect(d.image.p.length).toBeGreaterThan(100);
+    // Un scan après l'heure ne change plus l'instantané
+    await scan(b, c.code, REV + 2 * MIN);
+    const e = await revelation(REV + 3 * MIN);
+    expect(e.liens).toHaveLength(2);
+    expect(e.noeuds.map((x: any) => x.id)).toEqual(d.noeuds.map((x: any) => x.id));
+  });
+
+  it("RG-011-6 : un joueur multi-factions est rattaché à celle où il a marqué le moins", async () => {
+    const a = await joueur("ordre"), b = await joueur("chaos"), c = await joueur("ordre");
+    env.DB.sqlite.prepare("INSERT INTO etiquettes (code, format, role, lot, etat, personnage_id, faction_id) VALUES ('ZZZZ', 'petit', 'normale', 1, 'reclamee', ?, 'necro')").run(a.id);
+    await scan(a, b.code); // ordre et necro gagnent autant
+    env.DB.sqlite.prepare("INSERT INTO points_faction (personnage_id, faction, points, raison, le) VALUES (?, 'ordre', 3, 'test', ?)").run(a.id, new Date(T0).toISOString());
+    const d = await revelation();
+    const na = d.noeuds.find((x: any) => x.id === a.id);
+    expect(na).toMatchObject({ faction: "necro", multi: 1 });
+    expect(d.noeuds.find((x: any) => x.id === c.id).faction).toBe("ordre");
+  });
+
+  it("les paliers franchis avant l'heure fixent la netteté du dessin", async () => {
+    parametres({ bareme: { paliers: [1, 2, 100, 200, 300] } });
+    const a = await joueur("ordre"), b = await joueur("chaos"), c = await joueur("chaos");
+    await scan(a, b.code);
+    await scan(a, c.code);
+    const d = await revelation();
+    expect(d.franchis).toBe(2);
+    expect(d.part).toBe(0.5);
+  });
+
+  it("une révélation sans personnage n'est pas figée : elle se refait dès qu'il y a quelqu'un", async () => {
+    expect((await revelation()).noeuds).toHaveLength(0);
+    const a = await joueur("ordre"), b = await joueur("chaos");
+    await scan(a, b.code);
+    const d = await revelation(REV + 2 * MIN);
+    expect([d.noeuds.length, d.liens.length]).toEqual([2, 1]);
+  });
+
+  it("l'aperçu du MJ montre tout l'état présent, même daté plus tard (heure simulée du banc)", async () => {
+    const a = await joueur("ordre"), b = await joueur("chaos");
+    await scan(a, b.code); // pendant le jeu, mais après l'heure passée ci-dessous
+    const tot = await construireInstantane(env as never, new Date(T0 - 60 * MIN).toISOString());
+    expect(tot.noeuds).toHaveLength(0);
+    const ap = await construireInstantane(env as never, new Date(T0 - 60 * MIN).toISOString(), SANS_BORNE);
+    expect([ap.noeuds.length, ap.liens.length]).toEqual([2, 1]);
+  });
+
+  it("image cachée : repli « DÉJÀ VU ! » et validation des points envoyés par l'admin", () => {
+    const img = imageParDefaut();
+    expect(img.h).toBe(57); // deux lignes : « DÉJÀ » et « VU ! »
+    expect(img.l).toBeLessThan(img.h * 2);
+    expect(img.p.every(([x, y]) => x >= 0 && x < img.l && y >= 0 && y < img.h)).toBe(true);
+    expect(validerImage({ nom: "x", l: 10, h: 10, p: Array.from({ length: 30 }, (_, i) => [i % 10, Math.floor(i / 10)]) })).toBeTruthy();
+    expect(validerImage({ nom: "x", l: 10, h: 10, p: Array.from({ length: 30 }, () => [10, 0]) })).toBeNull();
+    expect(validerImage({ nom: "x", l: 1000, h: 10, p: [] })).toBeNull();
   });
 });

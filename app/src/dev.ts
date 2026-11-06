@@ -5,6 +5,7 @@ import { auHasard, ATTRIBUTS, CLASSES, COULEURS, FACTIONS, genererPseudo, TYPES 
 import { genererCodes } from "./codes";
 import { definirPin, nouvelAppareil, sha256 } from "./jeu";
 import { bancProd } from "./mode";
+import { ecrireConfig, HEURES_PAR_DEFAUT, lireConfig, lireParametres } from "./config";
 
 export interface EnvDev {
   DB: D1Database;
@@ -76,6 +77,18 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
     await definirPin(env, id, "1234");
     await env.DB.prepare("UPDATE etiquettes SET etat = 'reclamee', personnage_id = ?, faction_id = ?, reclamee_le = ? WHERE code = ?").bind(id, auHasard(FACTIONS), iso, e.code).run();
     return json({ code: e.code, jeton: await nouvelAppareil(env, id, Date.now()) });
+  }
+  if (p === "/__dev/revelation" && req.method === "POST") {
+    // H1 : révélation à 5 h (heure du banc), instantanés effacés ; « paliers » force le nombre de paliers franchis
+    const h = { ...HEURES_PAR_DEFAUT, ...((await lireConfig(env.DB, "heures")) as object) };
+    await ecrireConfig(env.DB, "heures", { ...h, revelation: HEURES_PAR_DEFAUT.revelation });
+    if (corps.paliers !== undefined) {
+      const n = Math.max(0, Math.min(5, Number(corps.paliers) || 0));
+      const prm = await lireParametres(env.DB);
+      await ecrireConfig(env.DB, "parametres", { ...prm, bareme: { ...prm.bareme, paliers: [0, 1, 2, 3, 4].map((i) => (i < n ? 0 : 1e9 + i)) } });
+    }
+    await env.DB.prepare("DELETE FROM revelations").run();
+    return json({ revelation: HEURES_PAR_DEFAUT.revelation });
   }
   if (p === "/__dev/code-de" && req.method === "POST") {
     const id = await persoDuJeton(env, corps.jeton);

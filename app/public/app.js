@@ -938,8 +938,8 @@
       return r.json();
     }
     const h = etat.heures;
+    // Réseau d'abord (le serveur peut refaire l'instantané) ; la copie locale ne sert que hors ligne
     const local = lireJson(CLE_REV);
-    if (local && (!h || local.revelation === h.revelation)) return local;
     // Pile à l'heure, tous les téléphones demandent en même temps : on étale sur quelques secondes
     if (h && Date.now() - Date.parse(h.revelation) < 20_000) await new Promise((ok) => setTimeout(ok, Math.random() * 6000));
     try {
@@ -947,7 +947,7 @@
       ecrire(CLE_REV, JSON.stringify(d));
       return d;
     } catch (e) {
-      if (local && e.erreur === "reseau") return local;
+      if (local && e.erreur === "reseau" && (!h || local.revelation === h.revelation)) return local;
       throw e;
     }
   }

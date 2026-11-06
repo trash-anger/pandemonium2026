@@ -165,6 +165,14 @@ describe("révélation de 5 h (FEAT-009, LOT-3 étape B)", () => {
     expect(d.part).toBe(0.5);
   });
 
+  it("une révélation sans personnage n'est pas figée : elle se refait dès qu'il y a quelqu'un", async () => {
+    expect((await revelation()).noeuds).toHaveLength(0);
+    const a = await joueur("ordre"), b = await joueur("chaos");
+    await scan(a, b.code);
+    const d = await revelation(REV + 2 * MIN);
+    expect([d.noeuds.length, d.liens.length]).toEqual([2, 1]);
+  });
+
   it("l'aperçu du MJ montre tout l'état présent, même daté plus tard (heure simulée du banc)", async () => {
     const a = await joueur("ordre"), b = await joueur("chaos");
     await scan(a, b.code); // pendant le jeu, mais après l'heure passée ci-dessous

@@ -128,12 +128,19 @@ export async function construireInstantane(env: EnvRev, rev: string, borne = rev
   };
 }
 
-/** Instantané figé : construit au premier appel après l'heure, puis relu (le premier enregistré gagne). */
+/**
+ * Instantané figé : construit au premier appel après l'heure, puis relu (le premier enregistré gagne).
+ * Un instantané sans personnage n'est jamais figé : révélation déclenchée trop tôt, ou données du banc
+ * datées de l'heure simulée. Il est reconstruit à chaque appel jusqu'à ce qu'il y ait quelqu'un.
+ */
 export async function instantane(env: EnvRev, rev: string, t: number): Promise<string> {
   const deja = await env.DB.prepare("SELECT donnees FROM revelations WHERE revelation = ?").bind(rev).first<{ donnees: string }>();
-  if (deja) return deja.donnees;
-  const donnees = JSON.stringify(await construireInstantane(env, rev));
-  await env.DB.prepare("INSERT OR IGNORE INTO revelations (revelation, donnees, cree_le) VALUES (?, ?, ?)").bind(rev, donnees, new Date(t).toISOString()).run();
+  if (deja && !deja.donnees.includes('"noeuds":[]')) return deja.donnees;
+  const inst = await construireInstantane(env, rev);
+  const donnees = JSON.stringify(inst);
+  if (!inst.noeuds.length) return donnees;
+  await env.DB.prepare("INSERT INTO revelations (revelation, donnees, cree_le) VALUES (?, ?, ?) ON CONFLICT (revelation) DO UPDATE SET donnees = excluded.donnees, cree_le = excluded.cree_le WHERE revelations.donnees LIKE '%\"noeuds\":[]%'")
+    .bind(rev, donnees, new Date(t).toISOString()).run();
   const r = await env.DB.prepare("SELECT donnees FROM revelations WHERE revelation = ?").bind(rev).first<{ donnees: string }>();
   return r?.donnees ?? donnees;
 }

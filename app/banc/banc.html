@@ -209,6 +209,14 @@ async function scanneEntre(a, b) {
   aller("/" + code, a);
 }
 
+// H1 : révélation à 5 h dans l'heure du banc (les données du banc sont datées de l'heure simulée)
+async function reveler(paliers) {
+  await api("/__dev/revelation", paliers === undefined ? {} : { paliers });
+  regler("2026-11-08T05:00", "5:00");
+  setTimeout(() => aller("/revelation"), 400);
+  log("banc", `révélation à 5 h${paliers === undefined ? "" : ` · ${paliers} palier(s) franchi(s)`}`);
+}
+
 // ---------- Catalogue des tests (liste validée) ----------
 // a: [libellé, fonction] ; fonction absente → bouton désactivé jusqu'au lot indiqué
 const H = (l, t) => [l, () => regler(t, `${l}`)];
@@ -284,7 +292,8 @@ const TESTS = [
     ["G1", "Scanner intégré, lampe, photo, mur", "LOT-5", [["Scanner", null, "LOT-5"], ["Lampe", null, "LOT-5"], ["Photo", null, "LOT-5"], ["Mur", null, "LOT-5"]]],
   ]],
   ["H. Fin de soirée", [
-    ["H1", "Révélation : graphe, zoom sur TOI, jumeau, 1 à 5 paliers", "LOT-3", [["Révéler", null, "LOT-3"], ["Paliers 1…5", null, "LOT-3"]]],
+    ["H1", "Révélation : graphe, zoom sur TOI, jumeau, 1 à 5 paliers", "LOT-3", [
+      ["Révéler (5 h 00)", () => reveler()], ...[0, 2, 5].map((n) => [`${n} palier${n > 1 ? "s" : ""}`, () => reveler(n)])]],
     ["H2", "Temps d'écran, badges et classements, lendemain", "LOT-3", [["Temps d'écran", null, "LOT-3"], ["Badges", null, "LOT-3"], ["Lendemain", null, "LOT-8"]]],
   ]],
 ];

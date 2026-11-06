@@ -188,6 +188,21 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 #hors-ligne{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:70;background:var(--gold);color:var(--ink);border:0;border-radius:999px;
   padding:8px 14px;font-family:var(--mono);font-size:13px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.5);min-height:36px;cursor:pointer;white-space:nowrap}
 
+/* LOT-3 : barre de la quête collective, annonces du MJ, glitch global */
+.barre-quete{display:block;margin:-10px 0 14px;padding:8px 12px 9px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;color:var(--fg);text-decoration:none;font-size:13px}
+.barre-quete[hidden]{display:none}
+.barre-quete .haut{display:flex;justify-content:space-between;gap:8px;font-family:var(--mono);letter-spacing:.04em}
+.barre-quete .jauge-q{height:6px;background:#2a2433;border-radius:4px;margin-top:6px;overflow:hidden}
+.barre-quete .jauge-q i{display:block;height:100%;background:linear-gradient(90deg,var(--green),#9dffc4);transition:width .6s ease}
+.barre-quete.solde{border-color:var(--gold);background:#2a2410}.barre-quete.solde .jauge-q i{background:linear-gradient(90deg,var(--gold),#ffe7a8)}
+.barre-quete .compte-barre{margin-top:6px;font-family:var(--mono);color:var(--gold);font-weight:700}
+#annonces{position:fixed;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top));z-index:80;max-width:540px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.annonce{background:var(--fg);color:var(--ink);border-radius:16px;padding:14px 16px;box-shadow:0 12px 34px rgba(0,0,0,.6)}
+.annonce small{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.annonce p{margin:6px 0 0;font-weight:700;font-size:18px;line-height:1.35}
+.annonce .lien{color:var(--ink);text-decoration:underline;margin-top:6px;padding:8px 0;min-height:40px;background:none;border:0;font-weight:700}
+.annonce.glitch{background:var(--pink);text-align:center;font-size:20px}
+
 @media (prefers-reduced-motion:no-preference){
   h1{animation:g 7s infinite steps(1)}
   @keyframes g{0%,96%{transform:none}97%{transform:translateX(3px) skewX(-4deg)}98%{transform:translateX(-2px)}}
@@ -199,6 +214,9 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
   /* « Trop tôt pour compter » : fondu lent, bien sous 3 changements par seconde (REQ-003) */
   .trop-tot{animation:clignote 1.6s ease-in-out infinite}
   @keyframes clignote{0%,100%{opacity:1}50%{opacity:.25}}
+  /* Glitch global : 5 décalages en 5 s, soit 1 changement par seconde (REQ-003) */
+  .glitch-global main{animation:glg 5s steps(1) 1}
+  @keyframes glg{0%{transform:translateX(-5px) skewX(6deg);filter:hue-rotate(80deg)}20%{transform:translateX(4px);filter:none}40%{transform:skewX(-5deg);filter:hue-rotate(200deg)}60%{transform:translateX(-3px);filter:none}80%{transform:translateX(2px)}100%{transform:none}}
   .palier-6 .carte.apparait{animation:ap .7s ease-out 3}
   .palier-13 .echo{animation:gl13 1.5s steps(1) 1}
   @keyframes gl13{0%{transform:translateX(-6px) skewX(8deg);filter:hue-rotate(90deg)}40%{transform:translateX(5px) skewX(-6deg);filter:none}80%{transform:translateX(-2px)}100%{transform:none}}

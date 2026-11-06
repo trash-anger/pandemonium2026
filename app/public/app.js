@@ -1,5 +1,6 @@
 // Application du joueur « Déjà vu ! » — LOT-1 : scan, création en 4 écrans, collection, fiche, PIN.
 // LOT-2 : faux souvenirs, déjà vu et paliers, réactions, file d'attente hors ligne, temps d'écran.
+// LOT-3 : quête collective en direct, paliers, soldes éclair, glitch global et messages du MJ.
 // Le serveur est la source de vérité (DEC-052) : le stockage local n'est qu'un cache.
 (() => {
   "use strict";
@@ -7,7 +8,7 @@
   // ---------- Stockage local (un espace par téléphone du banc d'essai : window.name = T1…T4) ----------
   const SUFFIXE = /^T\d$/.test(window.name) ? "-" + window.name : "";
   const CLE = { jeton: "dv-appareil" + SUFFIXE, langue: "dv-langue" + SUFFIXE, moi: "dv-moi" + SUFFIXE, brouillon: "dv-brouillon" + SUFFIXE,
-    collection: "dv-collection" + SUFFIXE, file: "dv-file" + SUFFIXE, ecran: "dv-ecran" + SUFFIXE };
+    collection: "dv-collection" + SUFFIXE, file: "dv-file" + SUFFIXE, ecran: "dv-ecran" + SUFFIXE, evts: "dv-evenements" + SUFFIXE };
   const lire = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
   const ecrire = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} };
   const lireJson = (k) => { try { return JSON.parse(lire(k) || "null"); } catch { return null; } };
@@ -199,6 +200,17 @@
       enFile: "Pas de réseau. Ton scan partira tout seul dès que le réseau revient, sans doublon.",
       synchro: (n) => `${n} scan${n > 1 ? "s" : ""} en attente envoyé${n > 1 ? "s" : ""}.`,
       reessayerMaintenant: "Réessayer maintenant",
+      // Quête collective (LOT-3)
+      quete: "Quête", queteComplete: "Quête complète",
+      palierAtteint: (n) => `Palier ${n} atteint !`,
+      paliers: ["Solde éclair : pendant 5 min, chaque nouvelle carte compte double.", "La Matrice a remarqué votre soirée.",
+        "La Matrice prépare un indice bonus pour les jumeaux pas encore réunis.", "Deuxième solde éclair : 5 min de nouvelles cartes doubles.",
+        "Quête complète : l'image de la révélation sera entière."],
+      solde: "Solde éclair", soldeAide: "Chaque nouvelle carte compte double",
+      glitchDefaut: "La Matrice a remarqué votre soirée.",
+      messageMJ: "Message du MJ", fermer: "Fermer",
+      barreRevelation: "Révélation dans", barreFin: "Fermeture dans",
+      annonce30: "Révélation dans 30 minutes. Dernière chance de faire grimper la quête !",
       dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Article déjà dans ton panier.", fenetre: (m) => `Trop tôt pour compter : un même déjà vu compte une fois toutes les ${m} minute${m > 1 ? "s" : ""}.`,
       soiTitre: "C'est toi.", soi: "Ton double existe… quelque part. Les indices arrivent à partir de minuit.",
       encore: "Scanner encore",
@@ -343,6 +355,16 @@
       enFile: "No network. Your scan will be sent automatically when the network is back, with no duplicates.",
       synchro: (n) => `${n} waiting scan${n > 1 ? "s" : ""} sent.`,
       reessayerMaintenant: "Try again now",
+      quete: "Quest", queteComplete: "Quest complete",
+      palierAtteint: (n) => `Tier ${n} reached!`,
+      paliers: ["Flash sale: for 5 min, every new card counts double.", "The Matrix has noticed your party.",
+        "The Matrix is preparing a bonus clue for twins not yet reunited.", "Second flash sale: 5 min of double new cards.",
+        "Quest complete: the reveal image will be whole."],
+      solde: "Flash sale", soldeAide: "Every new card counts double",
+      glitchDefaut: "The Matrix has noticed your party.",
+      messageMJ: "Message from the GM", fermer: "Close",
+      barreRevelation: "Reveal in", barreFin: "Closing in",
+      annonce30: "Reveal in 30 minutes. Last chance to push the quest!",
       dejaVu: (n) => (n ? `DÉJÀ VU ×${n}` : "DÉJÀ VU"), panier: "Item already in your cart.", fenetre: (m) => `Too soon to count: the same déjà vu counts once every ${m} minute${m > 1 ? "s" : ""}.`,
       soiTitre: "That's you.", soi: "Your double is out there… somewhere. Clues start at midnight.",
       encore: "Scan again",
@@ -438,10 +460,11 @@
   function rendre(html, { onglet = null, classe = "" } = {}) {
     const integre = /Instagram|FBAN|FBAV|Snapchat|TikTok|Line\//i.test(navigator.userAgent);
     app.innerHTML = (integre ? `<div class="bandeau">${t.integre}</div>` : "")
-      + `<main class="ecran ${onglet ? "" : "sans-tabs"} ${classe}">${html}</main>` + (onglet ? onglets(onglet) : "");
+      + `<main class="ecran ${onglet ? "" : "sans-tabs"} ${classe}">${onglet ? '<a class="barre-quete" id="barre-quete" href="/" data-nav></a>' : ""}${html}</main>` + (onglet ? onglets(onglet) : "");
     window.scrollTo(0, 0);
     demarrerComptes();
     majIndicateur();
+    majBarre();
   }
   function onglets(actif) {
     const o = (id, href, e, l) => `<a href="${href}" data-nav class="${id === "scan" ? "scan" : ""}"${actif === id ? ' aria-current="page"' : ""}><span class="e">${e}</span>${l}</a>`;
@@ -707,7 +730,7 @@
       case "soi_meme": fixer(); return rendre(`<span class="chip vert">${esc(code)}</span><h1 class="moyen">${t.soiTitre}</h1>${carte(r.carte)}<p>${t.soi}</p>
           <a class="bouton" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
       case "nouvelle_carte":
-        fixer(); vibrer(40); chargerMoi(); precharger();
+        fixer(); vibrer(40); chargerMoi(); precharger(); setTimeout(rafraichirDirect, 300);
         rendre(`<span class="chip vert">${t.nouvelle}</span>${souvenirBloc(r.souvenir)}
           ${carte(r.carte)}<p class="muted">${t.collectionN(r.nb_cartes)}</p>${(r.badges || []).map(badgeGagne).join("")}
           ${reactionsBloc(r.carte.id, r.mes_reactions)}
@@ -796,6 +819,76 @@
     else { visibleDepuis = Date.now(); synchroniser(); }
   });
   setInterval(() => { if (document.visibilityState === "visible") envoyerEcran(); }, 60_000);
+
+  // ---------- Direct (LOT-3) : quête collective, paliers, soldes éclair, glitch et messages du MJ ----------
+  // Interrogé toutes les 10 s quand l'app est visible ; la réponse est commune à tous (cache en périphérie).
+  etat.direct = null;
+  const vusEvts = () => lireJson(CLE.evts);
+  function majBarre() {
+    const b = document.getElementById("barre-quete");
+    const d = etat.direct;
+    if (!b || !d || !etat.moi) { if (b) b.hidden = true; return; }
+    const q = d.quete, now = Date.now(), h = d.heures;
+    const rev = Date.parse(h.revelation), fin = Date.parse(h.fin);
+    const pct = q.prochain ? Math.min(100, (q.total / q.prochain) * 100) : 100;
+    // Compte à rebours (RG-009-11) : 30 min avant la révélation, puis jusqu'à la fermeture
+    const compte = now >= rev - 30 * 60_000 && now < rev ? [t.barreRevelation, h.revelation]
+      : now >= rev && now < fin ? [t.barreFin, h.fin] : null;
+    b.hidden = false;
+    b.classList.toggle("solde", !!d.solde);
+    b.innerHTML = `<div class="haut"><span>${d.solde ? `🔥 ${t.solde} · <span data-fin="${d.solde.fin}"></span>` : `✦ ${t.quete} · P-${q.franchis}/5`}</span>
+      <span class="mono">${q.prochain ? `${Math.floor(q.total)} / ${q.prochain}` : t.queteComplete}</span></div>
+      <div class="jauge-q"><i style="width:${pct}%"></i></div>
+      ${compte ? `<div class="compte-barre">⏳ ${compte[0]} <span data-fin="${compte[1]}"></span></div>` : ""}`;
+    demarrerComptes();
+  }
+  function banniere(id, html, classe = "") {
+    if (document.getElementById(id)) return;
+    let pile = document.getElementById("annonces");
+    if (!pile) { pile = document.createElement("div"); pile.id = "annonces"; document.body.appendChild(pile); }
+    const d = document.createElement("div"); d.id = id; d.className = "annonce " + classe; d.innerHTML = html;
+    classe === "glitch" ? pile.prepend(d) : pile.appendChild(d);
+    const f = d.querySelector("[data-fermer]"); if (f) f.onclick = () => d.remove();
+  }
+  function glitchGlobal(texte) {
+    document.body.classList.add("glitch-global"); vibrer([40, 80, 40]);
+    banniere("glitch-texte", `<b>⚡ ${esc(texte || t.glitchDefaut)}</b>`, "glitch");
+    setTimeout(() => { document.body.classList.remove("glitch-global"); const g = document.getElementById("glitch-texte"); if (g) g.remove(); }, 5000);
+  }
+  function traiterEvenements(d) {
+    let vus = vusEvts();
+    const now = Date.now();
+    // Premier passage : on ne rejoue pas l'historique, seulement les 10 dernières minutes
+    if (!vus) vus = d.evenements.filter((e) => now - Date.parse(e.debut) > 10 * 60_000).map((e) => e.id);
+    for (const e of d.evenements) {
+      if (vus.includes(e.id)) continue;
+      vus.push(e.id);
+      if (e.type === "palier") { vibrer([30, 60, 30]); toast(`${t.palierAtteint(e.donnees.n)} ${t.paliers[e.donnees.n - 1] || ""}`); }
+      else if (e.type === "glitch" && now - Date.parse(e.debut) < 60_000) glitchGlobal(e.donnees.texte);
+      else if (e.type === "message" && (!e.fin || Date.parse(e.fin) > now)) {
+        vibrer(60);
+        banniere("message-" + e.id, `<small>📣 ${t.messageMJ}</small><p>${esc(e.donnees.texte)}</p><button class="lien" data-fermer>${t.fermer}</button>`);
+      }
+    }
+    ecrire(CLE.evts, JSON.stringify(vus.slice(-100)));
+    // Annonce unique 30 min avant la révélation (RG-009-11, CA-016-3 en repli des notifications)
+    const rev = Date.parse(d.heures.revelation);
+    const cleAnnonce = "dv-annonce30" + SUFFIXE + ":" + d.heures.revelation;
+    if (now >= rev - 30 * 60_000 && now < rev && !lire(cleAnnonce)) {
+      ecrire(cleAnnonce, "1"); vibrer(80);
+      banniere("annonce-30", `<small>⏳</small><p>${t.annonce30}</p><button class="lien" data-fermer>${t.fermer}</button>`);
+    }
+  }
+  async function rafraichirDirect() {
+    if (!etat.moi || !etat.moi.personnage) return;
+    try {
+      const d = await api("/api/direct");
+      etat.direct = d; etat.heures = d.heures;
+      majBarre(); traiterEvenements(d);
+    } catch { /* hors ligne : on garde le dernier état */ }
+  }
+  setInterval(() => { if (document.visibilityState === "visible") rafraichirDirect(); }, 10_000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") rafraichirDirect(); });
 
   // ---------- Création en 4 écrans (FEAT-003, RG-003-7, RG-003-9) ----------
   function creation(code, estMJ) {
@@ -1143,4 +1236,5 @@
   if ("serviceWorker" in navigator && !SUFFIXE) navigator.serviceWorker.register("/sw.js").catch(() => {});
   route();
   synchroniser();
+  chargerMoi().then(rafraichirDirect);
 })();

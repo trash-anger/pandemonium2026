@@ -11,12 +11,16 @@ import { effetActif, effetsEnCours, expirerMissions, legendesDe, missionActive, 
 import { contact, contagionDe, corrompre, jumeauDe, tickRoles, verifierRetrouvailles } from "./jumeaux";
 import { brouiller, estFlou, fauxSouvenir, grainePaire, type PersoSouvenir } from "./souvenirs";
 import { devActif } from "./mode";
+import { abonner, clePublique, contenuPour, endpointValide, pushTest, tickPush } from "./push";
+import { tickSuggestions } from "./suivi";
 
 export interface EnvJeu {
   DB: D1Database;
   PUBLIC_ORIGIN: string;
   SESSION_SECRET?: string;
   BANC?: string;
+  VAPID_JWK?: string;
+  SOI?: Fetcher;
 }
 
 const BLOCAGE_SURCONSO_MIN = 10;
@@ -242,6 +246,8 @@ async function notifs(req: Request, env: EnvJeu, t: number, url: URL): Promise<R
   const me = await personnageDe(req, env, t);
   if (!me) return erreur("sans_personnage", 401);
   await tickRoles(env, t); // LOT-4 : groupes de jumeaux et chats noirs, au plus une fois par minute
+  await tickSuggestions(env, t); // LOT-3 E : signaux au MJ, toutes les 10 min
+  await tickPush(env, t); // LOT-3 D : en secours du Cron Trigger, au plus une fois par minute
   const extra = await personnel(env, me.id, t);
   const apres = Number(url.searchParams.get("apres"));
   const q = Number.isFinite(apres) && apres >= 0 && url.searchParams.has("apres")
@@ -275,6 +281,34 @@ async function effectifsFactions(env: EnvJeu): Promise<Record<string, number>> {
 
 const PALIERS_RESCAN: Record<number, string> = { 3: "boucle_detectee", 6: "jour_marmotte", 13: "client_maudit" };
 
+/**
+ * Web Push (LOT-3 D). L'adresse d'abonnement sert de clé au service worker (contenu, renouvellement,
+ * désabonnement) ; s'abonner exige un personnage.
+ */
+async function routePush(req: Request, env: EnvJeu, t: number, p: string, corps: Record<string, unknown>): Promise<Response> {
+  const endpoint = corps.endpoint;
+  if (!endpointValide(endpoint)) return erreur("endpoint");
+  if (p === "/api/push/contenu") return json({ notifications: await contenuPour(env, endpoint) });
+  if (p === "/api/push/desabonner") {
+    await env.DB.prepare("DELETE FROM abonnements_push WHERE endpoint = ?").bind(endpoint).run();
+    return json({ ok: true });
+  }
+  if (p === "/api/push/renouveler") {
+    if (!endpointValide(corps.ancien)) return erreur("endpoint");
+    await env.DB.prepare("UPDATE OR REPLACE abonnements_push SET endpoint = ?, echecs = 0 WHERE endpoint = ?").bind(endpoint, corps.ancien).run();
+    return json({ ok: true });
+  }
+  if (p === "/api/push/abonner") {
+    const me = await personnageDe(req, env, t);
+    if (!me) return erreur("sans_personnage", 401);
+    const nouveau = await abonner(env, me.id, endpoint, t);
+    // Premier abonnement de cet appareil : un push de bienvenue vérifie toute la chaîne
+    const test = nouveau ? await pushTest(env, [endpoint], me.langue) : null;
+    return json({ ok: true, test });
+  }
+  return erreur("inconnu", 404);
+}
+
 // ---------- Routes ----------
 export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Response> {
   const t = maintenant(req, env);
@@ -289,11 +323,13 @@ export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Res
     if (p === "/api/direct" && req.method === "GET") return routeDirect(req, env, t, devActif(env) && req.headers.has("X-Dev-Maintenant"));
     if (p === "/api/notifs" && req.method === "GET") return notifs(req, env, t, url);
     if (p === "/api/revelation" && req.method === "GET") return routeRevelation(req, env, t, devActif(env) && req.headers.has("X-Dev-Maintenant"));
+    if (p === "/api/push/cle" && req.method === "GET") return json({ cle: clePublique(env) });
     if (req.method !== "POST") return erreur("methode", 405);
     // Les appels d'écriture viennent de notre page (protection CSRF)
     const origine = req.headers.get("Origin");
     if (origine && origine !== url.origin) return erreur("origine", 403);
     const corps = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    if (p.startsWith("/api/push/")) return routePush(req, env, t, p, corps);
     if (p === "/api/scan") return scan(req, env, t, corps);
     if (p === "/api/tirage") return tirage(req, env, t, corps);
     if (p === "/api/creer") return creer(req, env, t, corps);

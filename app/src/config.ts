@@ -32,10 +32,10 @@ export type Heures = typeof HEURES_PAR_DEFAUT;
 
 // Préréglages du barème (barème §0, ADM-15). « Rapide » est celui de départ.
 export const PREREGLAGES = {
-  lent:        { paliers: [150, 600, 1200, 2000, 3000],    rescan_quete: 0.5,  rescans_par_heure: 15, boucle_infinie: 15, fantome: 10, transmission: 0.7 },
-  normal:      { paliers: [250, 1000, 2000, 3500, 5000],   rescan_quete: 0.25, rescans_par_heure: 10, boucle_infinie: 20, fantome: 15, transmission: 0.6 },
-  rapide:      { paliers: [500, 2000, 4000, 6500, 9000],   rescan_quete: 0.25, rescans_par_heure: 10, boucle_infinie: 30, fantome: 25, transmission: 0.6 },
-  tres_rapide: { paliers: [800, 3000, 6000, 10000, 14000], rescan_quete: 0.1,  rescans_par_heure: 8,  boucle_infinie: 40, fantome: 35, transmission: 0.5 },
+  lent:        { cartes_par_joueur: 8, paliers: [150, 600, 1200, 2000, 3000],    rescan_quete: 0.5,  rescans_par_heure: 15, boucle_infinie: 15, fantome: 10, transmission: 0.7 },
+  normal:      { cartes_par_joueur: 15, paliers: [250, 1000, 2000, 3500, 5000],   rescan_quete: 0.25, rescans_par_heure: 10, boucle_infinie: 20, fantome: 15, transmission: 0.6 },
+  rapide:      { cartes_par_joueur: 25, paliers: [500, 2000, 4000, 6500, 9000],   rescan_quete: 0.25, rescans_par_heure: 10, boucle_infinie: 30, fantome: 25, transmission: 0.6 },
+  tres_rapide: { cartes_par_joueur: 40, paliers: [800, 3000, 6000, 10000, 14000], rescan_quete: 0.1,  rescans_par_heure: 8,  boucle_infinie: 40, fantome: 35, transmission: 0.5 },
 };
 export type NomPrereglage = keyof typeof PREREGLAGES;
 export type Bareme = (typeof PREREGLAGES)["normal"];

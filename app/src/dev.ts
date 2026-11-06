@@ -4,8 +4,12 @@ import bancHtml from "../banc/banc.html";
 import { auHasard, ATTRIBUTS, CLASSES, COULEURS, FACTIONS, genererPseudo, TYPES } from "./catalogue";
 import { genererCodes } from "./codes";
 import { definirPin, nouvelAppareil, sha256 } from "./jeu";
-import { bancProd } from "./mode";
-import { ecrireConfig, HEURES_PAR_DEFAUT, lireConfig, lireParametres } from "./config";
+import { bancEnvironnement, bancProd } from "./mode";
+import { CODES_FIXES, PIN_FIXE } from "./banc-fixe";
+import { create as creerQr } from "qrcode/lib/core/qrcode";
+import { render as qrSvg } from "qrcode/lib/renderer/svg-tag";
+import { localVersIso } from "./temps";
+import { ecrireConfig, FUSEAU, HEURES_PAR_DEFAUT, lireConfig, lireParametres, type Heures } from "./config";
 import { attribution, confierMission, heureDuJoueur, ouvrirPause, fermerPause, sanctionner } from "./mj";
 import { corrompre, creerGroupe, devenirChat, indiceBonus } from "./jumeaux";
 
@@ -46,6 +50,8 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
   const p = url.pathname;
   // En production, seules les étiquettes du banc (Stock de test) sont utilisées ou modifiées
   const prod = bancProd(env), duBanc = prod ? " AND banc = 1" : "";
+  // Les tirages au hasard laissent les codes fixes (0001…) à la planche imprimée
+  const horsFixes = " AND code NOT GLOB '0[0-9][0-9][0-9]'";
   if (p === "/banc") return new Response(prod ? bancHtml.replace(/<body([^>]*)>/, `<body$1>${BANDEAU_PROD}`) : bancHtml, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
   if (p === "/__dev/agent.js") return new Response(AGENT, { headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-store" } });
   if (!p.startsWith("/__dev/")) return null;
@@ -74,7 +80,7 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
   const corps = req.method === "POST" ? ((await req.clone().json().catch(() => ({}))) as Record<string, unknown>) : {};
   if (p === "/__dev/personnage" && req.method === "POST") {
     // Personnage complet en un clic (PIN 1234), lié à une étiquette vierge tirée au hasard
-    const e = await env.DB.prepare(`SELECT code FROM etiquettes WHERE etat = 'vierge' AND role = 'normale'${duBanc} ORDER BY random() LIMIT 1`).first<{ code: string }>();
+    const e = await env.DB.prepare(`SELECT code FROM etiquettes WHERE etat = 'vierge' AND role = 'normale'${duBanc}${horsFixes} ORDER BY random() LIMIT 1`).first<{ code: string }>();
     if (!e) return json({ erreur: "Plus d'étiquette vierge : clique « Stock de test »." }, 404);
     const id = crypto.randomUUID().slice(0, 12), type = auHasard(TYPES), couleur = auHasard(COULEURS), iso = new Date(Number(corps.maintenant) || Date.now()).toISOString();
     const attributs = ATTRIBUTS.filter(() => Math.random() < 0.3);
@@ -192,7 +198,7 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
     const miennes = (await env.DB.prepare("SELECT faction_id AS f FROM etiquettes WHERE personnage_id = ?").bind(id).all<{ f: string }>()).results.map((x) => x.f);
     const libres = FACTIONS.filter((f) => !miennes.includes(f));
     const n = Math.max(0, Number(corps.n ?? 3) - miennes.length);
-    const codes = (await env.DB.prepare(`SELECT code FROM etiquettes WHERE etat = 'vierge' AND role = 'normale'${duBanc} ORDER BY random() LIMIT ?`).bind(n).all<{ code: string }>()).results;
+    const codes = (await env.DB.prepare(`SELECT code FROM etiquettes WHERE etat = 'vierge' AND role = 'normale'${duBanc}${horsFixes} ORDER BY random() LIMIT ?`).bind(n).all<{ code: string }>()).results;
     const iso = new Date().toISOString();
     await env.DB.batch(codes.map((c, i) => env.DB.prepare("UPDATE etiquettes SET etat = 'reclamee', personnage_id = ?, faction_id = ?, reclamee_le = ? WHERE code = ?").bind(id, libres[i % libres.length], iso, c.code)));
     return json({ ajoutees: codes.length });
@@ -224,6 +230,40 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
     }
     return json({ ok: true });
   }
+  if (p === "/__dev/codes-fixes" && req.method === "POST") {
+    // Codes 0001, 0002… de la planche imprimée (scripts/planche-banc.mjs) : jamais en production
+    if (prod || !bancEnvironnement(env)) return json({ erreur: "Codes fixes : en local et sur l'aperçu seulement." }, 403);
+    return json(await installerCodesFixes(env));
+  }
+  if (p === "/__dev/qr.svg") {
+    // QR affiché sous les téléphones du banc, à scanner avec un vrai téléphone
+    const d = (url.searchParams.get("d") || "").slice(0, 200);
+    if (!d) return json({ erreur: "Paramètre d manquant" }, 400);
+    return new Response(qrSvg(creerQr(d, { errorCorrectionLevel: "Q" }), { margin: 1, color: { dark: "#000000", light: "#ffffff" } }),
+      { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "max-age=3600" } });
+  }
+  if (p === "/__dev/etiquettes-de" && req.method === "POST") {
+    // Toutes les étiquettes du personnage d'un téléphone du banc
+    const id = await persoDuJeton(env, corps.jeton);
+    if (!id) return json({ codes: [] });
+    const r = await env.DB.prepare("SELECT e.code, e.faction_id AS faction, p.pseudo FROM etiquettes e JOIN personnages p ON p.id = e.personnage_id WHERE e.personnage_id = ? ORDER BY e.reclamee_le")
+      .bind(id).all<{ code: string; faction: string; pseudo: string }>();
+    return json({ codes: r.results.map((x) => ({ code: x.code, faction: x.faction })), pseudo: r.results[0]?.pseudo ?? null });
+  }
+  if (p === "/__dev/soiree" && req.method === "POST") {
+    // Décale toute la soirée sur l'heure réelle : vrais téléphones et banc (horloge réelle) partagent la même heure.
+    // { a: "23:58" } : il est maintenant 23 h 58 de la soirée ; { defaut: true } : heures normales.
+    if (prod || !bancEnvironnement(env)) return json({ erreur: "Heures de la soirée : en local et sur l'aperçu seulement." }, 403);
+    if (corps.defaut) { await ecrireConfig(env.DB, "heures", HEURES_PAR_DEFAUT); return json({ heures: HEURES_PAR_DEFAUT }); }
+    const m = String(corps.a ?? "").match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return json({ erreur: "Heure attendue : « HH:MM »" }, 400);
+    const jour = Number(m[1]) >= 12 ? "2026-11-07" : "2026-11-08";
+    const decal = Date.now() - Date.parse(localVersIso(`${jour}T${m[1].padStart(2, "0")}:${m[2]}`));
+    const heures = Object.fromEntries(Object.entries(HEURES_PAR_DEFAUT).map(([k, v]) => [k, isoVersLocal(Date.parse(localVersIso(v)) + decal)])) as Heures;
+    await ecrireConfig(env.DB, "heures", heures);
+    await env.DB.prepare("DELETE FROM revelations").run(); // instantanés calculés avec les anciennes heures
+    return json({ heures });
+  }
   if (p === "/__dev/etiquette") {
     // GET ?etat=vierge&role=normale → un code au hasard ; POST {code, etat} → change l'état
     if (req.method === "POST") {
@@ -233,7 +273,7 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
       return json({ ok: true });
     }
     const etat = url.searchParams.get("etat") || "vierge", role = url.searchParams.get("role") || "normale";
-    const e = await env.DB.prepare(`SELECT code FROM etiquettes WHERE etat = ? AND role = ?${duBanc} ORDER BY random() LIMIT 1`).bind(etat, role).first<{ code: string }>();
+    const e = await env.DB.prepare(`SELECT code FROM etiquettes WHERE etat = ? AND role = ?${duBanc}${horsFixes} ORDER BY random() LIMIT 1`).bind(etat, role).first<{ code: string }>();
     return e ? json(e) : json({ erreur: "Aucune étiquette : clique « Stock de test »." }, 404);
   }
   if (p === "/__dev/etat") {
@@ -242,6 +282,53 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
     return json({ comptes, personnages: await n("personnages"), scans: await n("scans"), collection: await n("collection") });
   }
   return json({ erreur: "Route de dev inconnue" }, 404);
+}
+
+/** Instant → « 2026-11-07T21:00 » à Montréal (format des heures de la soirée). */
+function isoVersLocal(t: number): string {
+  const p = new Intl.DateTimeFormat("en-CA", { timeZone: FUSEAU, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).formatToParts(new Date(t));
+  const v = (k: string) => p.find((x) => x.type === k)!.value;
+  return `${v("year")}-${v("month")}-${v("day")}T${v("hour")}:${v("minute")}`;
+}
+
+/**
+ * Crée ou remet en place les codes fixes du banc et leurs personnages (PIN 1234). Rejouable : les étiquettes
+ * existantes reprennent leur rôle, les personnages fixes retrouvent leur étiquette et leur PIN ; les vierges
+ * déjà réclamées pendant un essai le restent (« Partie à zéro » les libère).
+ */
+async function installerCodesFixes(env: EnvDev) {
+  const db = env.DB, iso = new Date().toISOString();
+  const lot = ((await db.prepare("SELECT MAX(lot) AS m FROM etiquettes").first<{ m: number | null }>())?.m ?? 0) + 1;
+  const enBase = CODES_FIXES.filter((c) => c.role);
+  await db.batch(enBase.flatMap((c) => {
+    const format = c.role === "normale" ? "petit" : "grand";
+    const r = [
+      db.prepare("INSERT OR IGNORE INTO etiquettes (code, format, role, etat, lot, banc) VALUES (?, ?, ?, ?, ?, 1)").bind(c.code, format, c.role, c.etat === "desactivee" ? "desactivee" : "vierge", lot),
+      db.prepare("UPDATE etiquettes SET role = ?, format = ?, banc = 1 WHERE code = ?").bind(c.role, format, c.code),
+    ];
+    // Spéciales et retirée : état imposé ; une vierge réclamée pendant un essai garde son personnage
+    if (c.role === "speciale_mj" || c.etat === "desactivee")
+      r.push(db.prepare("UPDATE etiquettes SET etat = ?, personnage_id = NULL, faction_id = NULL, reclamee_le = NULL WHERE code = ?").bind(c.etat, c.code));
+    return r;
+  }));
+  const depart = (await lireParametres(db)).memoire.depart;
+  let crees = 0;
+  for (const c of CODES_FIXES) {
+    const p = c.personnage;
+    if (!p) continue;
+    const existe = await db.prepare("SELECT 1 AS x FROM personnages WHERE id = ?").bind(p.id).first();
+    if (!existe) {
+      await db.prepare("INSERT INTO personnages (id, pseudo, type, couleur, attributs, classe, pin_sel, pin_empreinte, langue, est_mj, cree_le, souvenirs) VALUES (?, ?, ?, ?, '[]', ?, '', '', 'fr', ?, ?, ?)")
+        .bind(p.id, genererPseudo(p.type, p.couleur, "fr"), p.type, p.couleur, p.classe, p.mj ? 1 : 0, iso, depart).run();
+      crees++;
+    }
+    await definirPin(env, p.id, PIN_FIXE);
+    await db.batch([
+      db.prepare("DELETE FROM pin_essais WHERE code = ?").bind(c.code),
+      db.prepare("UPDATE etiquettes SET etat = 'reclamee', personnage_id = ?, faction_id = ?, reclamee_le = COALESCE(reclamee_le, ?) WHERE code = ?").bind(p.id, p.faction, iso, c.code),
+    ]);
+  }
+  return { etiquettes: enBase.length, personnages_crees: crees };
 }
 
 // Agent chargé dans chaque page du jeu servie en local. Il écoute le banc (window.parent)

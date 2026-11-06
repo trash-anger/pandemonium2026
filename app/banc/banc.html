@@ -13,7 +13,7 @@ header h1{font-family:var(--display);font-size:20px;margin:0;text-shadow:-2px 0 
 .grp{display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--muted)}
 .horloge{font-family:var(--mono);font-size:15px;color:var(--green);margin-left:auto}
 .corps{display:grid;grid-template-columns:1fr 860px;min-height:0}
-.scene{display:flex;gap:34px;justify-content:center;align-items:flex-start;padding:26px;overflow:auto;background:radial-gradient(ellipse at 50% 0%,#2a1222,var(--bg) 65%)}
+.scene{display:flex;flex-wrap:wrap;gap:34px;justify-content:center;align-items:flex-start;align-content:flex-start;padding:26px;overflow:auto;background:radial-gradient(ellipse at 50% 0%,#2a1222,var(--bg) 65%)}
 .tel{display:flex;flex-direction:column;gap:8px}
 .tel.cible .cadre{box-shadow:0 0 0 3px var(--pink),0 0 40px rgba(255,79,139,.35)}
 .barre{display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px}
@@ -36,7 +36,14 @@ h2{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--pink)
 .journal{border-top:1px solid var(--line);display:grid;grid-template-rows:auto 1fr;min-height:0}
 .journal .tete{display:flex;justify-content:space-between;align-items:center;padding:6px 18px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--muted)}
 #log{overflow:auto;margin:0;padding:4px 18px 12px;font-family:var(--mono);font-size:12px;line-height:1.55;color:var(--muted)}
-#log .T1{color:#ff9cc0}#log .T2{color:#9ff7c4}#log .T3{color:#ffe29a}#log .T4{color:#b7d3ff}#log .banc{color:var(--fg)}#log .err{color:#ff6b6b}
+#log .T1{color:#ff9cc0}#log .T2{color:#9ff7c4}#log .T3{color:#ffe29a}#log .T4{color:#b7d3ff}#log .T5{color:#ffb98a}#log .T6{color:#d9b8ff}
+.qrs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:var(--l,400px);font-family:var(--mono);font-size:11px;color:var(--muted)}
+.qrs figure{margin:0;background:#fff;color:#000;border-radius:8px;padding:6px 6px 4px;text-align:center}
+.qrs img{display:block;width:118px;height:118px}.qrs figcaption{font-weight:800;font-size:13px;letter-spacing:.12em}
+.qrs .qui{flex-basis:100%;text-align:center}
+table.matrice{border-collapse:collapse;margin:4px 0 6px;font-family:var(--mono);font-size:12px}
+table.matrice th{color:var(--muted);font-weight:400;padding:2px 6px}table.matrice td{padding:2px}
+table.matrice button{min-width:64px}table.matrice td.soi button{border-style:dashed}#log .banc{color:var(--fg)}#log .err{color:#ff6b6b}
 </style></head>
 <body>
 <header>
@@ -62,10 +69,15 @@ const etat = {
   tels: [
     { app: "iPhone 15", lang: "fr", url: "/" }, { app: "Pixel 7", lang: "en", url: "/" },
     { app: "iPhone SE", lang: "fr", url: "/" }, { app: "Petit Android", lang: "fr", url: "/" },
+    { app: "iPhone 15", lang: "fr", url: "/" }, { app: "Pixel 7", lang: "fr", url: "/" },
   ],
   horloge: { iso: null, vitesse: 1, libelle: "horloge réelle" }, reduit: false, zoom: 1.25,
 };
+const MAX_TELS = 6;
 try { Object.assign(etat, JSON.parse(localStorage.getItem("dv-banc") || "{}")); } catch {}
+// Ancien état enregistré avec 4 téléphones : complète jusqu'à 6
+while (etat.tels.length < MAX_TELS) etat.tels.push({ app: "iPhone 15", lang: "fr", url: "/" });
+etat.n = Math.min(Math.max(1, etat.n), MAX_TELS);
 const sauver = () => { try { localStorage.setItem("dv-banc", JSON.stringify(etat)); } catch {} };
 const $ = (s) => document.querySelector(s);
 
@@ -89,7 +101,8 @@ function rendreScene() {
       <select>${Object.keys(APPAREILS).map((a) => `<option${a === t.app ? " selected" : ""}>${a}</option>`).join("")}</select>
       <button class="lang">${t.lang.toUpperCase()}</button><button class="rel" title="Recharger">↻</button></div>
       <div class="barre"><input value="${t.url}" spellcheck="false"><button class="go">aller</button></div>
-      <div class="cadre" style="zoom:${etat.zoom}"><iframe name="${id}" width="${w}" height="${h}" src="${avecLang(t.url, t.lang)}"></iframe></div>`;
+      <div class="cadre" style="zoom:${etat.zoom}"><iframe name="${id}" width="${w}" height="${h}" src="${avecLang(t.url, t.lang)}"></iframe></div>
+      <div class="qrs" id="qrs-${id}" style="--l:${Math.round((w + 24) * etat.zoom)}px"></div>`;
     el.querySelector("b").onclick = () => { etat.cible = id; sauver(); rendreCibles(); rendreScene(); };
     el.querySelector("select").onchange = (e) => { t.app = e.target.value; sauver(); rendreScene(); };
     el.querySelector(".lang").onclick = () => { t.lang = t.lang === "fr" ? "en" : "fr"; sauver(); rendreScene(); };
@@ -97,11 +110,28 @@ function rendreScene() {
     el.querySelector(".go").onclick = () => aller(el.querySelector("input").value, id);
     el.querySelector("input").onkeydown = (e) => e.key === "Enter" && aller(e.target.value, id);
     sc.appendChild(el);
+    qrsVus[id] = null; majQrs(id);
   }
 }
+
+// ---------- QR des étiquettes de chaque téléphone : à scanner avec un vrai téléphone ----------
+const qrsVus = {};
+async function majQrs(id) {
+  const z = document.getElementById("qrs-" + id); if (!z) return;
+  let r = { codes: [], pseudo: null };
+  try { const j = await identite(id); if (j) r = await api("/__dev/etiquettes-de", { jeton: j }); } catch { return; }
+  const cle = JSON.stringify(r); if (qrsVus[id] === cle) return; qrsVus[id] = cle;
+  // Majuscules : comme les vraies étiquettes (mode alphanumérique du QR)
+  const url = (c) => "/__dev/qr.svg?d=" + encodeURIComponent((location.origin + "/" + c).toUpperCase());
+  z.innerHTML = r.codes.length
+    ? `<div class="qui">${id} · ${r.pseudo ? r.pseudo.replace(/[<&]/g, "") : ""} · ${r.codes.length} étiquette${r.codes.length > 1 ? "s" : ""}</div>` +
+      r.codes.map((c) => `<figure title="${c.faction || ""}"><img alt="QR ${c.code}" src="${url(c.code)}"><figcaption>${c.code}</figcaption></figure>`).join("")
+    : `<div class="qui">${id} · pas encore de personnage</div>`;
+}
+setInterval(() => { for (let i = 1; i <= etat.n; i++) majQrs("T" + i); }, 4000);
 function rendreNbs() {
-  $("#nbs").innerHTML = [1, 2, 3, 4].map((k) => `<button class="${k === etat.n ? "on" : ""}" data-k="${k}">${k}</button>`).join("");
-  $("#nbs").querySelectorAll("button").forEach((b) => (b.onclick = () => { etat.n = +b.dataset.k; if (etat.cible !== "tous" && +etat.cible.slice(1) > etat.n) etat.cible = "tous"; sauver(); rendreNbs(); rendreCibles(); rendreScene(); }));
+  $("#nbs").innerHTML = Array.from({ length: MAX_TELS }, (_, i) => i + 1).map((k) => `<button class="${k === etat.n ? "on" : ""}" data-k="${k}">${k}</button>`).join("");
+  $("#nbs").querySelectorAll("button").forEach((b) => (b.onclick = () => { etat.n = +b.dataset.k; if (etat.cible !== "tous" && +etat.cible.slice(1) > etat.n) etat.cible = "tous"; sauver(); rendreNbs(); rendreCibles(); rendreScene(); rendreTests(); }));
 }
 function rendreCibles() {
   const ids = ["tous", ...Array.from({ length: etat.n }, (_, i) => "T" + (i + 1))];
@@ -133,6 +163,7 @@ addEventListener("message", (ev) => {
     // Réapplique l'état du banc à chaque chargement
     if (etat.horloge.iso) envoyer(id, { type: "horloge", iso: horlogeCourante(), vitesse: etat.horloge.vitesse });
     if (etat.reduit) envoyer(id, { type: "reduit", actif: true });
+    setTimeout(() => majQrs(id), 300);
   } else if (m.type === "identite") { const ok = attentes[m.demande]; if (ok) { delete attentes[m.demande]; ok(m.jeton); } }
   else if (m.type === "log") log(id, m.texte);
 });
@@ -237,6 +268,24 @@ async function retrouvailles(a, b, attente = 3) {
   setTimeout(() => scanneEntre(b, a).catch((e) => log("banc", e.message, "err")), attente * 1000);
 }
 
+// A3b : toute la soirée décalée sur l'heure réelle ; l'horloge du banc repasse en réelle
+async function soireeReelle(a) {
+  const r = await api("/__dev/soiree", a ? { a } : { defaut: true });
+  regler(null);
+  const h = r.heures;
+  log("banc", a ? `soirée en heure réelle : il est ${a} · début ${h.debut.slice(11)}, minuit ${h.minuit.slice(11)}, révélation ${h.revelation.slice(11)}, fin ${h.fin.slice(11)}` : "heures normales (sam 21 h → dim 6 h)");
+}
+
+// C1 : matrice de scans, une ligne par téléphone qui scanne
+function matrice() {
+  const n = etat.n, ids = Array.from({ length: n }, (_, i) => "T" + (i + 1));
+  const t = document.createElement("table"); t.className = "matrice";
+  t.innerHTML = `<tr><th title="ligne : qui scanne ; colonne : qui est scanné">scanne ↓ →</th>${ids.map((b) => `<th>${b}</th>`).join("")}</tr>` +
+    ids.map((a) => `<tr><th>${a}</th>${ids.map((b) => `<td class="${a === b ? "soi" : ""}"><button data-a="${a}" data-b="${b}" title="${a === b ? `${a} se scanne` : `${a} scanne ${b}`}">${a === b ? "soi" : `${a}→${b}`}</button></td>`).join("")}</tr>`).join("");
+  t.querySelectorAll("button").forEach((b) => (b.onclick = () => scanneEntre(b.dataset.a, b.dataset.b).catch((e) => log("banc", e.message, "err"))));
+  return t;
+}
+
 // H1 : révélation à 5 h dans l'heure du banc (les données du banc sont datées de l'heure simulée)
 async function reveler(paliers) {
   await api("/__dev/revelation", paliers === undefined ? {} : { paliers });
@@ -251,13 +300,16 @@ const H = (l, t) => [l, () => regler(t, `${l}`)];
 const TESTS = [
   ["A. Cadre", [
     ["A1", "Modèle, langue, animations réduites", "", [["voir les barres des téléphones", null, "en haut de chaque téléphone"]]],
-    ["A2", "1 à 4 téléphones, un joueur chacun", "", [["choisir en haut", null, "en-tête"]]],
+    ["A2", "1 à 6 téléphones, un joueur chacun ; QR de leurs étiquettes sous l'écran", "", [["choisir en haut", null, "en-tête"]]],
     ["A3", "Horloge simulée (heure de Montréal)", "", [
       H("sam 20:59", "2026-11-07T20:59"), H("21:00", "2026-11-07T21:00"), H("minuit", "2026-11-08T00:00"), H("1:00", "2026-11-08T01:00"),
       H("2:00", "2026-11-08T02:00"), H("4:59", "2026-11-08T04:59"), H("5:00", "2026-11-08T05:00"), H("6:00", "2026-11-08T06:00"),
       ["×1", () => vitesse(1)], ["×60", () => vitesse(60)], ["réelle", () => regler(null)]]],
+    ["A3b", "Soirée en heure réelle, pour les vrais téléphones (il est maintenant…)", "", [
+      ...["21:01", "23:58", "0:58", "1:58", "4:58"].map((a) => [a, () => soireeReelle(a)]), ["Heures normales", () => soireeReelle(null)]]],
     ["A4", "Réinitialiser, stock de test, réseau", "", [
       ["Stock de test", async () => { await api("/__dev/stock", {}); log("banc", "stock : 30 petites, 16 MJ, 10 grandes"); }],
+      ["Codes fixes 0001…", async () => { const r = await api("/__dev/codes-fixes", {}); log("banc", r.erreur || `codes fixes : ${r.etiquettes} étiquettes, ${r.personnages_crees} personnages créés (PIN 1234)`); }],
       ["Tout réinitialiser", async () => { const c = prompt("Effacer TOUTE la base, étiquettes comprises ? Tape TOUT pour confirmer."); if ((c || "").trim().toUpperCase() !== "TOUT") return; await api("/__dev/reinitialiser", { confirmation: "TOUT" }); log("banc", "base locale vidée"); diffuser({ type: "recharger" }); }],
       ["État serveur", async () => log("banc", JSON.stringify((await api("/__dev/etat")).comptes))],
       ["Partie à zéro", async () => { if (!confirm("Effacer les personnages et remettre les étiquettes à vierge ?")) return; await api("/__dev/partie-zero", {}); cibles().forEach((id) => envoyer(id, { type: "oublier" })); log("banc", "partie remise à zéro"); }],
@@ -290,9 +342,8 @@ const TESTS = [
       ["Premier scan subi (costume figé)", async () => { for (const id of cibles()) await api("/__dev/premier-scan", { jeton: await identite(id) }); aller("/moi"); }]]],
   ]],
   ["C. Collection et déjà vu", [
-    ["C1", "Nouvelle carte, faux souvenir en premier", "LOT-1", [
-      ["T1 scanne T2", () => scanneEntre("T1", "T2")], ["T2 scanne T1", () => scanneEntre("T2", "T1")],
-      ["T1 se scanne", () => scanneEntre("T1", "T1")], ["Ma collection", () => aller("/collection")]]],
+    ["C1", "Nouvelle carte, faux souvenir en premier ; matrice : ligne = qui scanne, colonne = qui est scanné", "LOT-1", [
+      ["Ma collection", () => aller("/collection")]], "matrice"],
     ["C2", "Rescans ×2, ×3, ×6, ×13 ; rescan < 5 min", "LOT-2", [["×2", null, "LOT-2"], ["×3", null, "LOT-2"], ["×6", null, "LOT-2"], ["×13", null, "LOT-2"], ["< 5 min", null, "LOT-2"]]],
     ["C3", "Jauge de souvenirs < 5, à 0 (Amnésie)", "LOT-2", [["Floue", null, "LOT-2"], ["Amnésie", null, "LOT-2"]]],
     ["C4", "Réactions, comparaison", "LOT-2", [["Réactions", null, "LOT-2"], ["Comparaison", null, "LOT-6"]]],
@@ -335,12 +386,14 @@ const TESTS = [
   ]],
 ];
 function rendreTests() {
-  const z = $("#tests"); z.innerHTML = "";
+  const z = $("#tests"), haut = z.scrollTop; z.innerHTML = "";
+  queueMicrotask(() => (z.scrollTop = haut));
   for (const [section, tests] of TESTS) {
     const h = document.createElement("h2"); h.textContent = section; z.appendChild(h);
-    for (const [id, titre, lot, acts] of tests) {
+    for (const [id, titre, lot, acts, extra] of tests) {
       const d = document.createElement("div"); d.className = "t";
       d.innerHTML = `<div class="id">${id}</div><div class="titre">${titre}${lot ? `<i>${lot}</i>` : ""}</div><div class="acts"></div>`;
+      if (extra === "matrice") d.querySelector(".acts").before(Object.assign(matrice(), { style: "grid-column:2" }));
       for (const [libelle, fn, note] of acts) {
         const b = document.createElement("button"); b.textContent = libelle;
         if (fn) b.onclick = async () => { try { await fn(); } catch (e) { log("banc", `${id} ${libelle} : ${e.message}`, "err"); } };

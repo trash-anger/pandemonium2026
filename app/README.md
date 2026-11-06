@@ -30,6 +30,30 @@ Chaque téléphone du banc a son propre stockage local (clés suffixées par `T1
 
 Le navigateur s'identifie par un jeton anonyme (en-tête `X-Appareil`, stocké localement) ; le serveur n'en garde que l'empreinte.
 
+### Codes fixes du banc (planche imprimée)
+
+Pour tester avec de vrais téléphones, sans retaper de codes au hasard : 34 étiquettes numérotées (`src/banc-fixe.ts`), installées par le bouton « Codes fixes 0001… » du banc (A4), en local et sur l'aperçu seulement (refusé en production). Elles commencent toutes par 0, chiffre absent des vrais codes : aucune collision possible, et elles répondent « code inconnu » sur p.uyt.re.
+
+| Codes | Rôle |
+|---|---|
+| 0001 à 0004 | 4 joueurs fixes (personnages créés d'avance, PIN 1234) |
+| 0005 | étiquette personnelle du MJ, avec son personnage (PIN 1234) |
+| 0011 à 0020 | légendaires L-1 à L-10, toujours le même effet (pas de mélange) |
+| 0021 à 0025 | pièges T-1 à T-5, toujours le même effet |
+| 0031 à 0042 | vierges |
+| 0051 / 0099 | retirée / inconnue |
+
+Le bouton est rejouable : il remet les PIN à 1234 et recrée les personnages fixes effacés par « Partie à zéro ». Planche à imprimer (papier Lettre, noir et blanc, 3 pages : récapitulatif puis QR) :
+
+```sh
+npm run planche                  # QR vers l'aperçu
+npm run planche -- <origine>     # ou vers une autre adresse
+```
+
+Le banc affiche aussi, sous chaque téléphone (jusqu'à 6), les QR de ses étiquettes : un vrai téléphone peut les scanner à l'écran. En C1, une matrice fait scanner n'importe quel téléphone du banc par n'importe quel autre. L'horloge simulée (A3) ne vaut que pour les téléphones du banc : pour tester avec un vrai téléphone, A3b « Soirée en heure réelle » décale toute la soirée sur l'heure réelle (« 23:58 » : minuit dans 2 min), local et aperçu seulement. Plan de tests imprimable : `npm run plan-tests` (`sorties/plan-tests.pdf`).
+
+Elle s'écrit dans `sorties/codes-banc.pdf` (Chrome requis pour le PDF ; sinon, imprimer `sorties/codes-banc.html`). Avant de scanner pour de vrai, mettre le début de la soirée dans le passé dans l'admin de l'aperçu.
+
 ## Déployer (première fois)
 
 ```sh

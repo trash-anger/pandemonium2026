@@ -72,18 +72,25 @@ export async function attribution(env: EnvMJ, t: number) {
 }
 
 // ---------- Pause « Fermé pour inventaire » (ADM-17) ----------
-export async function pauseEnCours(db: D1Database, t: number) {
+/**
+ * Pause en cours. La pause est une action en direct du MJ : elle se mesure en heure réelle, quelle que soit
+ * l'horloge (simulée sur le banc) du téléphone qui scanne.
+ */
+export async function pauseEnCours(db: D1Database) {
+  const n = iso(Date.now());
   return db.prepare("SELECT id, debut, fin FROM evenements WHERE type = 'pause' AND debut <= ? AND (fin IS NULL OR fin > ?) ORDER BY id DESC LIMIT 1")
-    .bind(iso(t), iso(t)).first<{ id: number; debut: string; fin: string | null }>();
+    .bind(n, n).first<{ id: number; debut: string; fin: string | null }>();
 }
+/** Heure de réouverture dans l'horloge du joueur (identique en production). */
+export const reouvertureVue = (p: { fin: string | null } | null, t: number) => (p?.fin ? iso(t + Date.parse(p.fin) - Date.now()) : null);
 export async function ouvrirPause(env: EnvMJ, minutes: number, auteur: string) {
-  const t = await heureGlobale(env);
+  const t = Date.now();
   await fermerPause(env);
   await evenement(env.DB, { type: "pause", donnees: { minutes }, debut: iso(t), fin: minutes > 0 ? iso(t + minutes * MIN) : null, auteur });
 }
 export async function fermerPause(env: EnvMJ) {
-  const t = await heureGlobale(env);
-  await env.DB.prepare("UPDATE evenements SET fin = ? WHERE type = 'pause' AND (fin IS NULL OR fin > ?)").bind(iso(t), iso(t)).run();
+  const n = iso(Date.now());
+  await env.DB.prepare("UPDATE evenements SET fin = ? WHERE type = 'pause' AND (fin IS NULL OR fin > ?)").bind(n, n).run();
 }
 
 // ---------- Dernier exemplaire (L-7) : remis en rayon à 21 h, minuit et 3 h ----------
@@ -148,12 +155,12 @@ interface Joueur { id: string; pseudo: string; type: string; couleur: string; at
  */
 export async function scanMJ(env: EnvMJ, t: number, me: Joueur, e: { code: string; role: string }): Promise<{ resultat: string; reponse: Record<string, unknown> } | null> {
   const db = env.DB;
-  const pause = me.est_mj ? null : await pauseEnCours(db, t);
+  const pause = me.est_mj ? null : await pauseEnCours(db);
   if (pause) {
     // RG-020-5 : toutes ses étiquettes deviennent un piège spécial, 2 min à chaque scan, hors « une seule fois »
     const jusqu_a = iso(t + PAUSE_BLOCAGE_MIN * MIN);
     await bloquer(db, me.id, jusqu_a, "pause");
-    return { resultat: "pause", reponse: { type: "piege", code: e.code, effet: "pause", jusqu_a, reouverture: pause.fin } };
+    return { resultat: "pause", reponse: { type: "piege", code: e.code, effet: "pause", jusqu_a, reouverture: reouvertureVue(pause, t) } };
   }
   if (e.role !== "speciale_mj") return null;
   const effet = (await attribution(env, t)).effets.get(e.code);
@@ -408,7 +415,7 @@ export async function etatMJ(env: EnvMJ) {
   const sanctions = (await db.prepare("SELECT s.id, s.niveau, s.le, p.pseudo FROM sanctions s JOIN personnages p ON p.id = s.personnage_id WHERE s.annulee_le IS NULL ORDER BY s.id DESC LIMIT 30")
     .all<{ id: number; niveau: number; le: string; pseudo: string }>()).results;
   return {
-    t: iso(t), pause: await pauseEnCours(db, t), prochainMelange: a.prochain, codes, obtenus,
+    t: iso(t), pause: await pauseEnCours(db), prochainMelange: a.prochain, codes, obtenus,
     dernierExemplaire: { remise: r.courante, prochaine: r.prochaine, disponible: !!r.courante && !vendu },
     clients, missions, sanctions,
   };

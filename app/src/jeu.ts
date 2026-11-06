@@ -7,7 +7,7 @@ import { normaliserCode } from "./codes";
 import { baremeDe, lireParametres, type Heures } from "./config";
 import { crediterScan, heuresIso, routeDirect, type Joueur } from "./direct";
 import { routeRevelation } from "./revelation";
-import { effetActif, effetsEnCours, expirerMissions, legendesDe, missionActive, pauseEnCours, scanMJ, verifierMissions } from "./mj";
+import { effetActif, effetsEnCours, expirerMissions, legendesDe, missionActive, pauseEnCours, reouvertureVue, scanMJ, verifierMissions } from "./mj";
 import { brouiller, estFlou, fauxSouvenir, grainePaire, type PersoSouvenir } from "./souvenirs";
 import { devActif } from "./mode";
 
@@ -348,8 +348,8 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
   // ADM-18 niveau 5 « Interdit de magasin » : le personnage ne scanne plus
   if (me?.suspendu) return enregistrer("suspendu", { type: "suspendu", code: e.code });
   if (me?.bloque_jusqu_a && me.bloque_jusqu_a > iso) {
-    const pause = me.bloque_cause === "pause" ? await pauseEnCours(env.DB, t) : null;
-    return enregistrer("bloque", { type: "bloque", code: e.code, jusqu_a: me.bloque_jusqu_a, cause: me.bloque_cause, reouverture: pause?.fin ?? null });
+    const pause = me.bloque_cause === "pause" ? await pauseEnCours(env.DB) : null;
+    return enregistrer("bloque", { type: "bloque", code: e.code, jusqu_a: me.bloque_jusqu_a, cause: me.bloque_cause, reouverture: reouvertureVue(pause, t) });
   }
   if (etiquetteMJ && me) {
     // FEAT-022 : légendaire ou piège selon le mélange ; pause « Fermé pour inventaire » (ADM-17)

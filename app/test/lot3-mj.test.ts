@@ -1,5 +1,5 @@
 // LOT-3 (étape C) : costume du MJ (FEAT-022), pause (ADM-17), sanctions (ADM-18), missions personnelles (ADM-19).
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routeApi } from "../src/jeu";
 import { annulerSanction, attribution, confierMission, ouvrirPause, sanctionner, EFFETS_SPECIAUX } from "../src/mj";
 import { d1Memoire } from "./d1-memoire";
@@ -153,7 +153,11 @@ describe("pièges (FEAT-022)", () => {
 });
 
 describe("pause « Fermé pour inventaire » (ADM-17)", () => {
+  afterEach(() => vi.useRealTimers());
+
   it("RG-020-5 : toutes les étiquettes du MJ bloquent 2 min, à chaque scan", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(T0);
     const a = await joueur(), b = await joueur(), mj = etiquette("personnelle_mj");
     await ouvrirPause(env as never, 10, "test");
     const r = await scan(a, await porteur("L-1"));
@@ -164,7 +168,21 @@ describe("pause « Fermé pour inventaire » (ADM-17)", () => {
     expect(await scan(a, b.code, T0 + MIN)).toMatchObject({ type: "bloque", cause: "pause" });
     // Après la pause, la légendaire s'obtient normalement
     const apres = T0 + 11 * MIN;
+    vi.setSystemTime(apres);
     expect((await scan(a, await porteur("L-1", apres), apres)).type).toBe("legendaire");
+  });
+
+  it("la pause vaut en heure réelle, même pour un téléphone du banc à une autre heure simulée", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(H(0)); // heure réelle : 19 h ; le joueur, lui, vit à 21 h 30 (T0)
+    const a = await joueur(), b = await joueur();
+    await api("/api/moi", undefined, b.jeton, H(9)); // un autre téléphone du banc est déjà à 4 h du matin
+    await ouvrirPause(env as never, 5, "test");
+    const r = await scan(a, await porteur("L-4"));
+    expect(r).toMatchObject({ type: "piege", effet: "pause" });
+    expect(Date.parse(r.reouverture) - T0).toBe(5 * MIN);
+    vi.setSystemTime(H(0, 6));
+    expect((await scan(a, await porteur("L-4", T0 + 3 * MIN), T0 + 3 * MIN)).type).toBe("legendaire");
   });
 });
 

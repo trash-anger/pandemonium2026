@@ -393,3 +393,25 @@ La part de la soirée se calcule depuis la création du personnage jusqu'à l'in
 - Relire un échantillon de 50 souvenirs générés, dans les deux langues ([CA-006-3](fonctionnalites/faux-souvenirs.md)).
 - Vérifier qu'aucun gabarit n'accorde un mot avec le genre d'un joueur ou d'un attribut.
 - Vérifier que les noms de lieux réels (Laval, Galeries d'Anjou, Costco, Dollarama) restent utilisés sur le ton de la blague, sans rien de dénigrant.
+
+### 6.5 Légendaires et pièges (noms affichés)
+
+| Code | Français | English |
+|---|---|---|
+| L-1 | Cape de Déjà-vu +2 | Déjà-vu Cloak +2 |
+| L-2 | Retour sans reçu | Return Without Receipt |
+| L-3 | La Pilule rouge | The Red Pill |
+| L-4 | Miroir de la cabine d'essayage | Fitting-Room Mirror |
+| L-5 | Bon de réduction −100 % | −100% Coupon |
+| L-6 | Boucle temporelle | Time Loop |
+| L-7 | Dernier exemplaire | Last One in Stock |
+| L-8 | Dé à 20 faces doré | Golden D20 |
+| L-9 | Ticket de caisse infini | Infinite Receipt |
+| L-10 | Mannequin de vitrine | Window Mannequin |
+| T-1 | File d'attente du Black Friday | Black Friday Queue |
+| T-2 | Paiement refusé | Payment Declined |
+| T-3 | Mise à jour obligatoire | Mandatory Update |
+| T-4 | Abonnement premium | Premium Subscription |
+| T-5 | CAPTCHA infini | Endless CAPTCHA |
+
+Les gags des pièges (REQ-003 : aucun clignotement) : T-1, un numéro de file qui baisse lentement ; T-2, une carte refusée ; T-3, une barre de mise à jour qui recule parfois ; T-4, le bouton « Refuser » qui rétrécit à chaque clic ; T-5, un CAPTCHA qui se renouvelle à chaque vérification. Les textes complets sont dans `app/public/app.js` (objet `TMJ`).

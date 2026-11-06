@@ -4,11 +4,12 @@ import { genererCodes, normaliserCode } from "./codes";
 import { ecrireConfig, HEURES_PAR_DEFAUT, lireConfig, lireParametres, PREREGLAGES, type CleConfig } from "./config";
 import { etatDirect, evenement, isoVersLocal } from "./direct";
 import { csvNiimbot } from "./csv";
+import { annulerMission, annulerSanction, confierMission, etatMJ, fermerPause, MISSIONS, ouvrirPause, RECOMPENSES_M7, reussirMission, sanctionner } from "./mj";
 import { construireInstantane, ecrireImage, lireImage, SANS_BORNE, validerImage } from "./revelation";
 import { langue, pageAdmin, pageApp, pageConnexion, type Compte, type EtiquetteVue, type Lot } from "./pages";
 import { definirPin, routeApi } from "./jeu";
 import { localVersIso } from "./temps";
-import { avecAgent, devActif, routeDev } from "./dev";
+import { avecAgent, devActif, routeDev, TABLES_PARTIE } from "./dev";
 import { bancEnvironnement, bancProd, peutOuvrirBanc } from "./mode";
 
 export interface Env extends EnvAuth {
@@ -155,7 +156,7 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     if (url.pathname === "/admin/partie-zero") {
       if (String(f.get("confirmation")).trim().toUpperCase() !== "ZERO") return retour({ erreur: "Confirmation manquante : rien n'a été effacé." });
       await env.DB.batch([
-        ...["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "compteurs", "points_faction", "evenements", "revelations", "personnages"].map((x) => env.DB.prepare(`DELETE FROM ${x}`)),
+        ...TABLES_PARTIE.map((x) => env.DB.prepare(`DELETE FROM ${x}`)),
         env.DB.prepare("UPDATE etiquettes SET etat = 'vierge', personnage_id = NULL, faction_id = NULL, reclamee_le = NULL WHERE etat = 'reclamee'"),
       ]);
       await journal(env, email, "partie_zero", {});
@@ -202,6 +203,56 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       await ecrireImage(env.DB, img);
       await journal(env, email, "revelation_image", { nom: img.nom, points: img.p.length });
       return retour({ message: `Image cachée « ${img.nom} » enregistrée (${img.p.length} points).` });
+    }
+    // ---------- Costume du MJ : pause, sanctions, missions (ADM-17 à ADM-19) ----------
+    if (url.pathname === "/admin/mj/pause") {
+      const minutes = Number(f.get("minutes"));
+      if (![0, 5, 10, 15].includes(minutes)) return retour({ erreur: "Durée de pause invalide" });
+      await ouvrirPause(env, minutes, email);
+      await journal(env, email, "pause", { minutes });
+      return retour({ message: minutes ? `Fermé pour inventaire pendant ${minutes} min.` : "Fermé pour inventaire jusqu'à réouverture." });
+    }
+    if (url.pathname === "/admin/mj/rouvrir") {
+      await fermerPause(env);
+      await journal(env, email, "pause_fin", {});
+      return retour({ message: "Magasin rouvert : les légendaires et les pièges reprennent." });
+    }
+    const perso = String(f.get("personnage") || "");
+    const nomDe = async (id: string) => (await env.DB.prepare("SELECT pseudo FROM personnages WHERE id = ?").bind(id).first<{ pseudo: string }>())?.pseudo;
+    if (url.pathname === "/admin/mj/sanction") {
+      const niveau = Number(f.get("niveau")), nom = await nomDe(perso);
+      if (!nom || !(niveau >= 1 && niveau <= 5)) return retour({ erreur: "Sanction invalide" });
+      // RG-020-8 : niveau 5, confirmation renforcée (le bouton maintenu 2 s envoie « confirme »)
+      if (niveau === 5 && f.get("confirme") !== "oui") return retour({ erreur: "Niveau 5 : maintiens le bouton 2 s pour confirmer." });
+      await sanctionner(env, perso, niveau, email);
+      await journal(env, email, "sanction", { personnage: perso, pseudo: nom, niveau });
+      return retour({ message: `Sanction de niveau ${niveau} appliquée à ${nom}.` });
+    }
+    if (url.pathname === "/admin/mj/sanction/annuler") {
+      const s = await annulerSanction(env, Number(f.get("id")));
+      if (!s) return retour({ erreur: "Sanction introuvable ou déjà annulée" });
+      await journal(env, email, "sanction_annulee", { id: Number(f.get("id")), niveau: s.niveau });
+      return retour({ message: `Sanction de niveau ${s.niveau} annulée.` });
+    }
+    if (url.pathname === "/admin/mj/mission") {
+      const code = String(f.get("code")), nom = await nomDe(perso);
+      if (!nom || !(code in MISSIONS)) return retour({ erreur: "Mission invalide" });
+      const err = await confierMission(env, perso, code, email, Number(f.get("duree")) || undefined);
+      if (err) return retour({ erreur: err });
+      await journal(env, email, "mission", { personnage: perso, pseudo: nom, code });
+      return retour({ message: code === "M-6" ? `Solde privée offerte à ${nom}.` : `Mission ${code} confiée à ${nom}.` });
+    }
+    if (url.pathname === "/admin/mj/mission/reussie") {
+      const r = String(f.get("recompense") || "points");
+      if (!(RECOMPENSES_M7 as readonly string[]).includes(r)) return retour({ erreur: "Récompense inconnue" });
+      if (!(await reussirMission(env, Number(f.get("id")), undefined, r))) return retour({ erreur: "Mission introuvable ou déjà terminée" });
+      await journal(env, email, "mission_reussie", { id: Number(f.get("id")), recompense: r });
+      return retour({ message: "Mission validée : récompense et badge « Employé du mois » donnés." });
+    }
+    if (url.pathname === "/admin/mj/mission/annuler") {
+      if (!(await annulerMission(env, Number(f.get("id"))))) return retour({ erreur: "Mission introuvable ou déjà terminée" });
+      await journal(env, email, "mission_annulee", { id: Number(f.get("id")) });
+      return retour({ message: "Mission annulée." });
     }
     if (url.pathname === "/admin/prereglage") {
       const nom = String(f.get("nom"));
@@ -278,6 +329,7 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     parametres: await lireParametres(env.DB),
     direct: await etatDirect(env, Date.now()),
     image: await lireImage(env.DB),
+    mj: await etatMJ(env),
     message: url.searchParams.get("message") || undefined,
     erreur: url.searchParams.get("erreur") || undefined,
   });

@@ -52,6 +52,12 @@ export async function crediterScan(env: EnvDirect, t: number, scanneur: Joueur, 
   quete *= MULTI_FACTIONS[Math.min(3, Math.max(1, fs.length))];
   if (scanneur.surconsommation) quete *= 0.5;
   if (sorte === "nouvelle" && (await soldeEnCours(env.DB, iso))) quete *= 2; // P-1, P-4
+  // L-5 « Bon de réduction −100 % » (3 cartes) et M-6 « Solde privée » (5 cartes) : ×2, un usage par nouvelle carte
+  if (sorte === "nouvelle") {
+    const bonus = await env.DB.prepare("UPDATE effets SET reste = reste - 1 WHERE rowid = (SELECT rowid FROM effets WHERE personnage_id = ? AND effet IN ('L-5', 'M-6') AND reste > 0 ORDER BY effet LIMIT 1)")
+      .bind(scanneur.id).run();
+    if (bonus.meta.changes) quete *= 2;
+  }
 
   // Points de faction : à chacune des factions du joueur (RG-011-4), −50 % en surconsommation
   const gains: { id: string; factions: string[]; points: number; raison: string; surconso: number }[] = [];
@@ -74,6 +80,22 @@ export async function crediterScan(env: EnvDirect, t: number, scanneur: Joueur, 
   const total = await ajouterCompteur(env.DB, "quete", quete);
   await franchirPaliers(env, total, t, b.paliers);
   return { quete, total };
+}
+
+/**
+ * Points de faction hors scan (légendaire, mission, sanction) : à chacune des factions du joueur,
+ * ou répartis entre elles (sanction −100). Renvoie le total crédité.
+ */
+export async function ajouterPoints(env: EnvDirect, id: string, points: number, raison: string, t: number, o: { surconso?: boolean; repartir?: boolean } = {}) {
+  const fs = await factionsDe(env.DB, id);
+  if (!fs.length) return 0;
+  const p = o.surconso ? points / 2 : points, par = o.repartir ? p / fs.length : p;
+  const iso = new Date(t).toISOString();
+  await env.DB.batch(fs.flatMap((f) => [
+    env.DB.prepare("INSERT INTO points_faction (personnage_id, faction, points, raison, le) VALUES (?, ?, ?, ?, ?)").bind(id, f, par, raison, iso),
+    env.DB.prepare("INSERT INTO compteurs (cle, valeur) VALUES (?, ?) ON CONFLICT (cle) DO UPDATE SET valeur = valeur + excluded.valeur").bind("faction:" + f, par),
+  ]));
+  return par * fs.length;
 }
 
 async function soldeEnCours(db: D1Database, iso: string) {

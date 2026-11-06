@@ -92,3 +92,10 @@ Les seuils de la jauge de souvenirs (départ, rescans par heure, seuil du flou) 
 - `/api/revelation` : refusé avant l'heure de révélation, puis un instantané figé (table `revelations`), le même pour tous (cache 30 s). Le graphe est dessiné avec D3 (`public/vendor/d3-7.9.0.min.js`, mis en cache par le service worker dès la première visite).
 - Admin → « Révélation : image cachée » : phrase (« / » pour passer à la ligne) ou image, échantillonnée en points dans le navigateur. Le lien « Aperçu de la révélation » montre l'état actuel sans rien figer.
 - Pour répéter : sur le banc, avancer l'heure de révélation (Admin → En direct → −15 min ou « Maintenant »). Chaque nouvelle heure produit un nouvel instantané.
+
+## Costume du MJ (LOT-3, étape C)
+- Les 15 étiquettes « speciale_mj » portent chacune un effet (L-1 à L-10, T-1 à T-5), redistribué toutes les 20 min (HMAC du secret de session : imprévisible, mais identique pour tous). Les étiquettes du banc ont leur propre mélange.
+- Une légendaire ou un piège ne s'obtient qu'une fois par joueur. Le Dernier exemplaire (L-7) n'existe qu'en un seul exemplaire, remis en rayon à 21 h, minuit et 3 h. Le MJ voit l'effet sans le subir.
+- Admin → « Costume du MJ » : pause « Fermé pour inventaire » (5, 10, 15 min ou jusqu'à réouverture), tableau des effets en cours, « Derniers clients » (30 min) avec sanctions 1 à 5 et missions M-1 à M-7. Sanctions et missions aussi depuis la fiche d'une étiquette. Les sanctions sont annulables (ce qui a été retiré est rendu).
+- Les joueurs reçoivent sanctions et missions par `/api/notifs`, relevé avec le direct toutes les 10 s.
+- Banc : boutons L-1…L-10 et T-1…T-5 (ouvrent l'étiquette qui porte l'effet à l'heure du banc), Sanction 1…5, Pause 5 min, Rouvrir, M-1…M-7 (missions de 2 min).

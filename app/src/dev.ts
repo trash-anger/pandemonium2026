@@ -6,6 +6,7 @@ import { genererCodes } from "./codes";
 import { definirPin, nouvelAppareil, sha256 } from "./jeu";
 import { bancProd } from "./mode";
 import { ecrireConfig, HEURES_PAR_DEFAUT, lireConfig, lireParametres } from "./config";
+import { attribution, confierMission, ouvrirPause, fermerPause, sanctionner } from "./mj";
 
 export interface EnvDev {
   DB: D1Database;
@@ -16,7 +17,8 @@ export interface EnvDev {
   BANC_SESSION?: boolean;
 }
 
-const TABLES_PARTIE = ["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "compteurs", "points_faction", "evenements", "revelations", "personnages"]; // appareils avant personnages (clé étrangère)
+export const TABLES_PARTIE = ["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "compteurs", "points_faction", "evenements", "revelations",
+  "effets", "sanctions", "missions", "notifs", "personnages"]; // appareils avant personnages (clé étrangère)
 
 async function persoDuJeton(env: EnvDev, jeton: unknown): Promise<string | null> {
   if (typeof jeton !== "string" || !jeton) return null;
@@ -77,6 +79,30 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
     await definirPin(env, id, "1234");
     await env.DB.prepare("UPDATE etiquettes SET etat = 'reclamee', personnage_id = ?, faction_id = ?, reclamee_le = ? WHERE code = ?").bind(id, auHasard(FACTIONS), iso, e.code).run();
     return json({ code: e.code, jeton: await nouvelAppareil(env, id, Date.now()) });
+  }
+  // ---------- Costume du MJ (F1, F2, D4, D5) ----------
+  if (p === "/__dev/effet" && req.method === "POST") {
+    // Étiquette du banc qui porte l'effet demandé à l'heure du banc (mélange toutes les 20 min)
+    const a = await attribution(env, Number(corps.maintenant) || Date.now());
+    const bancs = new Set((await env.DB.prepare("SELECT code FROM etiquettes WHERE role = 'speciale_mj' AND banc = 1").all<{ code: string }>()).results.map((x) => x.code));
+    const code = [...a.effets.entries()].find(([c, e]) => e === corps.effet && bancs.has(c))?.[0];
+    return code ? json({ code }) : json({ erreur: "Aucune étiquette spéciale du banc : clique « Stock de test »." }, 404);
+  }
+  if (p === "/__dev/sanction" && req.method === "POST") {
+    const id = await persoDuJeton(env, corps.jeton);
+    if (!id) return json({ erreur: "Ce téléphone n'a pas de personnage." }, 404);
+    await sanctionner(env, id, Number(corps.niveau), "banc");
+    return json({ ok: true });
+  }
+  if (p === "/__dev/mission" && req.method === "POST") {
+    const id = await persoDuJeton(env, corps.jeton);
+    if (!id) return json({ erreur: "Ce téléphone n'a pas de personnage." }, 404);
+    const err = await confierMission(env, id, String(corps.code), "banc", Number(corps.duree) || undefined);
+    return err ? json({ erreur: err }, 409) : json({ ok: true });
+  }
+  if (p === "/__dev/pause" && req.method === "POST") {
+    if (Number(corps.minutes) < 0) await fermerPause(env); else await ouvrirPause(env, Number(corps.minutes) || 0, "banc");
+    return json({ ok: true });
   }
   if (p === "/__dev/revelation" && req.method === "POST") {
     // H1 : révélation à 5 h (heure du banc), instantanés effacés ; « paliers » force le nombre de paliers franchis

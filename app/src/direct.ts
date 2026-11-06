@@ -10,7 +10,7 @@ interface EnvDirect { DB: D1Database }
 
 const SOLDE_MIN = 5;
 const GLITCH_S = 5;
-/** Effets des paliers P-1 à P-5 (barème §1.2). P-3 (indice des jumeaux) prendra effet au LOT-4. */
+/** Effets des paliers P-1 à P-5 (barème §1.2). P-3 : un indice bonus pour les jumeaux pas encore réunis (jumeaux.ts). */
 export const EFFETS_PALIERS = ["solde", "glitch", "indice_jumeaux", "solde", "image_complete"] as const;
 const MULTI_FACTIONS = [1, 1, 1.25, 1.5]; // RG-011-5 : selon 1, 2 ou 3 factions
 

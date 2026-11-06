@@ -3,6 +3,7 @@
 import type { etatDirect } from "./direct";
 import type { ImageCachee } from "./revelation";
 import type { etatMJ } from "./mj";
+import type { etatRoles } from "./jumeaux";
 
 export type Langue = "fr" | "en";
 
@@ -56,7 +57,7 @@ function page(l: Langue, titre: string, corps: string, robots = true): Response 
 }
 
 /** Coquille de l'application du joueur (LOT-1) : tout l'affichage est fait par public/app.js. */
-export const VERSION_APP = "l3-4";
+export const VERSION_APP = "l4-1";
 export function pageApp(l: Langue, status = 200): Response {
   const html = `<!doctype html><html lang="${l}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -91,6 +92,7 @@ export function pageAdmin(p: {
   direct?: EtatDirect;
   image?: ImageCachee;
   mj?: Awaited<ReturnType<typeof etatMJ>>;
+  roles?: Awaited<ReturnType<typeof etatRoles>>;
 }) {
   const lecture = p.role === "lecteur";
   const total = p.comptes.reduce((a, c) => a + c.n, 0);
@@ -127,6 +129,7 @@ ${p.banc ? `<p><a class="bouton sec" href="/banc">🧪 Banc d'essai</a></p>` : "
 ${p.message ? `<p class="ok">${esc(p.message)}</p>` : ""}${p.erreur ? `<p class="err">${esc(p.erreur)}</p>` : ""}
 ${p.direct ? blocDirect(p.direct, lecture) : ""}
 ${p.mj ? blocMJ(p.mj, lecture) : ""}
+${p.roles ? blocRoles(p.roles, lecture) : ""}
 ${p.image ? blocRevelation(p.image, lecture) : ""}
 <h2>Étiquettes</h2><div class="grille">${stats}</div>
 <h2>Partie</h2><div class="grille"><div class="stat"><b>${p.joueurs.personnages}</b><span>personnages</span></div><div class="stat"><b>${p.joueurs.cartes}</b><span>cartes collectées</span></div><div class="stat"><b>${p.joueurs.scans}</b><span>scans</span></div></div>
@@ -161,7 +164,7 @@ ${lecture ? "" : `<h2>Zone dangereuse</h2>
 
 type EtatDirect = Awaited<ReturnType<typeof etatDirect>>;
 const NOMS_PREREGLAGES: Record<string, string> = { lent: "Lent", normal: "Normal", rapide: "Rapide", tres_rapide: "Très rapide" };
-const EFFETS_P = ["solde éclair 5 min", "glitch global", "indice bonus jumeaux (LOT-4)", "solde éclair 5 min", "image complète"];
+const EFFETS_P = ["solde éclair 5 min", "glitch global", "indice bonus jumeaux", "solde éclair 5 min", "image complète"];
 const heureMtl = (iso: string) => new Date(iso).toLocaleTimeString("fr-CA", { timeZone: "America/Toronto", hour: "2-digit", minute: "2-digit" });
 
 /** Tableau de bord en direct (ADM-4) et commandes du MJ (ADM-3, ADM-5, ADM-6, ADM-15). */
@@ -334,4 +337,23 @@ ${clients || '<p class="muted">Personne n\'a scanné tes étiquettes récemment.
 ${missions ? `<h3>Missions en cours</h3><table><tr><th>Joueur</th><th>Mission</th><th>Fin</th><th></th></tr>${missions}</table>` : ""}
 ${sanctions ? `<h3>Sanctions</h3><table><tr><th>Heure</th><th>Joueur</th><th>Niveau</th><th></th></tr>${sanctions}</table>` : ""}
 ${lecture ? "" : SCRIPT_MAINTENIR}`;
+}
+
+// ---------- Jumeaux et chats noirs (FEAT-007, FEAT-008) ; contagion en direct (ADM-7) ----------
+function blocRoles(r: Awaited<ReturnType<typeof etatRoles>>, lecture: boolean) {
+  const pct = Math.round(r.part * 100);
+  const alerte = pct > 50 ? `<p class="err">Plus de 50 % de corrompus : la durée de corruption diminue d'elle-même. Baisser la transmission de 10 points ?</p>`
+    : r.actifs >= 20 && pct < 10 ? `<p class="muted">Moins de 10 % de corrompus. Relancer un foyer ?</p>` : "";
+  return `<h2>Jumeaux et chats noirs</h2>
+<div class="carte">
+<p class="mono" style="margin:0">👯 ${r.groupes}/${r.cible} groupes (dont ${r.triples}/${r.cible_triples} triplés) · ${r.reunis} réuni(s)</p>
+<p class="muted" style="font-size:13px;margin:4px 0 0">${r.depart ? `Formation depuis ${heureCourte(r.depart)}` : "Formation : à la 60e activation ou à minuit"} ; tous formés à ${heureCourte(r.complets)}.</p>
+<p class="mono" style="margin:12px 0 0">🐈‍⬛ ${r.chats} chat(s) noir(s) · 🦠 ${r.corrompus}/${r.actifs} corrompus (${pct} %)</p>
+${r.liste_chats.length ? `<p class="muted" style="font-size:13px;margin:4px 0 0">Chats : ${r.liste_chats.map((c) => `${EMOJI_TYPE[c.type] ?? "❔"} ${esc(c.pseudo)}`).join(", ")}</p>` : ""}
+${alerte}</div>
+${lecture ? "" : `<form method="post" action="/admin/contagion" class="rangee">
+<div><label>Transmission (%)</label><input name="transmission" inputmode="numeric" value="${Math.round(r.transmission * 100)}"></div>
+<div><label>Corruption (min)</label><input name="corruption_min" inputmode="numeric" value="${r.corruption_min}"></div>
+<div style="flex:0 0 auto"><button>Appliquer</button></div></form>
+<form method="post" action="/admin/contagion/foyer" onsubmit="return confirm('Corrompre 3 joueurs sains au hasard ?')"><p><button class="bouton sec">🦠 Relancer un foyer</button></p></form>`}`;
 }

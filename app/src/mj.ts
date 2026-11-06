@@ -8,6 +8,7 @@ import { ajouterPoints, evenement, heuresIso } from "./direct";
 import { bancEnvironnement, type EnvMode } from "./mode";
 import { fauxSouvenir, type PersoSouvenir } from "./souvenirs";
 import { localVersIso } from "./temps";
+import { corrompre, guerirParL2, indiceBonus } from "./jumeaux";
 import type { Langue } from "./catalogue";
 
 export interface EnvMJ extends EnvMode { DB: D1Database; SESSION_SECRET?: string }
@@ -195,6 +196,9 @@ export async function scanMJ(env: EnvMJ, t: number, me: Joueur, e: { code: strin
   const badges: string[] = [];
   if (effet === "L-5" && (await donnerBadge(db, me.id, "anticapitaliste", t))) badges.push("anticapitaliste");
   if (effet === "L-8") await db.prepare("UPDATE personnages SET souvenirs = souvenirs + 3 WHERE id = ?").bind(me.id).run();
+  let guerison = false;
+  if (effet === "L-2") guerison = await guerirParL2(env, me.id, t); // annule une corruption en cours
+  if (effet === "L-4" && (await indiceBonus(env, me.id))) await db.prepare("UPDATE effets SET reste = 0 WHERE personnage_id = ? AND effet = 'L-4'").bind(me.id).run();
   if (effet === "L-10") {
     await evenement(db, { type: "vitrine", donnees: { pseudo: me.pseudo, type: me.type, couleur: me.couleur }, debut: iso(t), fin: iso(t + DUREE_EFFET_MIN["L-10"] * MIN) });
   }
@@ -202,7 +206,7 @@ export async function scanMJ(env: EnvMJ, t: number, me: Joueur, e: { code: strin
   if (n >= LEGENDAIRES.length && (await donnerBadge(db, me.id, "garde_robe_mj", t))) badges.push("garde_robe_mj");
   const points = await ajouterPoints(env, me.id, POINTS_LEGENDAIRE, "legendaire", t, { surconso: !!me.surconsommation });
   const souvenir = effet === "L-9" ? await ticketInfini(db, { id: me.id, pseudo: me.pseudo, type: me.type, couleur: me.couleur, attributs: JSON.parse(me.attributs) }) : undefined;
-  return { resultat: "legendaire", reponse: { type: "legendaire", code: e.code, effet, fin, reste, badges, points, souvenir, collection: n } };
+  return { resultat: "legendaire", reponse: { type: "legendaire", code: e.code, effet, fin, reste, badges, points, souvenir, collection: n, guerison } };
 }
 
 /** Légendes de la collection (RG-022-1) : les légendaires obtenues, avec leur état. */
@@ -224,7 +228,8 @@ export async function sanctionner(env: EnvMJ, id: string, niveau: number, auteur
   if (niveau === 1) d.badge = await donnerBadge(db, id, "client_difficile", t);
   if (niveau === 2) await bloquer(db, id, iso(t + 5 * MIN), "sanction");
   if (niveau === 3) {
-    // Corruption de 10 min sans immunité : prise en compte par le chat noir (LOT-4)
+    // Corruption de 10 min sans immunité (FEAT-008) : contagieuse comme les autres
+    await corrompre(env, id, t, "sanction", { duree: 10, sansImmunite: true, forcer: true });
     await db.prepare("INSERT INTO effets (personnage_id, effet, obtenu_le, fin) VALUES (?, 'S-3', ?, ?) ON CONFLICT DO UPDATE SET obtenu_le = excluded.obtenu_le, fin = excluded.fin")
       .bind(id, iso(t), iso(t + 10 * MIN)).run();
     d.souvenirs = Math.min(5, p.souvenirs);
@@ -251,7 +256,10 @@ export async function annulerSanction(env: EnvMJ, sid: number) {
   const t = await heureDuJoueur(db, id);
   if (s.niveau === 1 && d.badge) await db.prepare("DELETE FROM badges WHERE personnage_id = ? AND badge = 'client_difficile'").bind(id).run();
   if (s.niveau === 2 || s.niveau === 4) await db.prepare("UPDATE personnages SET bloque_jusqu_a = NULL, bloque_cause = NULL WHERE id = ? AND bloque_cause = 'sanction'").bind(id).run();
-  if (s.niveau === 3) await db.prepare("DELETE FROM effets WHERE personnage_id = ? AND effet = 'S-3'").bind(id).run();
+  if (s.niveau === 3) {
+    await db.prepare("DELETE FROM effets WHERE personnage_id = ? AND effet = 'S-3'").bind(id).run();
+    await db.prepare("DELETE FROM corruptions WHERE personnage_id = ? AND cause = 'sanction'").bind(id).run();
+  }
   if (d.souvenirs) await db.prepare("UPDATE personnages SET souvenirs = souvenirs + ? WHERE id = ?").bind(d.souvenirs, id).run();
   if (d.points) await ajouterPoints(env, id, -d.points, "sanction_annulee", t, { repartir: true });
   if (s.niveau === 5) await db.prepare("UPDATE personnages SET suspendu = 0 WHERE id = ?").bind(id).run();
@@ -376,13 +384,15 @@ export async function reussirMission(env: EnvMJ, mid: number, t?: number, recomp
   const def = MISSIONS[m.code];
   const r = m.code === "M-7" ? recompense ?? "points" : null;
   const surconso = !!(await db.prepare("SELECT surconsommation AS s FROM personnages WHERE id = ?").bind(id).first<{ s: number }>())?.s;
-  if (def.points || r === "points") await ajouterPoints(env, id, def.points ?? 20, "mission", tt, { surconso });
+  // M-5 : un indice bonus sur son jumeau, ou +20 points s'il n'en a pas (ADM-19)
+  const indice = m.code === "M-5" && (await indiceBonus(env, id));
+  if (!indice && (def.points || r === "points")) await ajouterPoints(env, id, def.points ?? 20, "mission", tt, { surconso });
   if (def.souvenirs || r === "souvenirs") await db.prepare("UPDATE personnages SET souvenirs = souvenirs + ? WHERE id = ?").bind(def.souvenirs ?? 3, id).run();
   if (r === "solde") {
     await db.prepare("INSERT INTO effets (personnage_id, effet, obtenu_le, reste) VALUES (?, 'M-6', ?, 5) ON CONFLICT DO UPDATE SET reste = COALESCE(reste, 0) + 5").bind(id, iso(tt)).run();
   }
   const badge = await donnerBadge(db, id, "employe_du_mois", tt);
-  await notifier(db, id, "mission_reussie", { code: m.code, recompense: r ?? (def.points ? "points" : "souvenirs"), badge }, tt);
+  await notifier(db, id, "mission_reussie", { code: m.code, recompense: indice ? "indice" : r ?? (def.points ? "points" : "souvenirs"), badge }, tt);
   return true;
 }
 

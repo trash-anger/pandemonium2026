@@ -92,6 +92,7 @@
     anticapitaliste: ["✊", "Anticapitaliste", "Anti-capitalist", "Trouver un bon de réduction très particulier.", "Find a very special discount voucher."],
     employe_du_mois: ["🏷️", "Employé du mois", "Employee of the Month", "Réussir une mission confiée par le MJ.", "Complete a mission from the GM."],
     client_difficile: ["⚠️", "Client difficile", "Difficult Customer", "Recevoir un avertissement du MJ. Rien de glorieux.", "Get a warning from the GM. Not proud.", true],
+    triples_partiels: ["👥", "Deux sur trois", "Two out of Three", "Retrouver un de tes deux doubles de triplés.", "Find one of your two triplet doubles.", true],
     collegue_de_rayon: ["🤝", "Collègue de rayon", "Aisle Mate", "Scanner une personne de ta faction.", "Scan someone from your faction."],
   };
   const lib = (o) => (L === "en" ? o.en : o.fr);
@@ -631,7 +632,7 @@
       if (h.revelation && h.fin && now >= Date.parse(h.revelation) && now < Date.parse(h.fin)) {
         compte = `<p class="mono petit muted" style="margin:0 0 4px">${t.cdFin}</p><div class="compte" data-fin="${h.fin}"></div>`;
       }
-      if (!d.nb_cartes) ligne = t.mPremiere;
+      ligne = ligneRoles(d, !d.nb_cartes) || (!d.nb_cartes ? t.mPremiere : ligne); // textes §5.2 : chat noir, jumeau, première carte, corrompu
     }
     const ty = typeDe(pe.type);
     rendre(`${compte ? `<div class="boite">${compte}</div>` : ""}
@@ -753,11 +754,11 @@
           ${carte(r.carte)}<p class="muted">${t.collectionN(r.nb_cartes)}</p>${(r.badges || []).map(badgeGagne).join("")}
           ${reactionsBloc(r.carte.id, r.mes_reactions)}
           <a class="bouton" href="/saisie" data-nav>${t.encore}</a><a class="bouton sec" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
-        return brancherReactions();
+        brancherReactions(); return apresScanRoles(r);
       case "deja_vu":
         fixer(); vibrer(r.palier ? [30, 60, 30] : 20); chargerMoi(); precharger();
         rendre(ecranDejaVu(r), { onglet: "accueil", classe: r.palier ? "palier-" + r.palier : "" });
-        return brancherReactions();
+        brancherReactions(); return apresScanRoles(r);
       default: return ecranErreur({}, () => scanner(code));
     }
   }
@@ -861,7 +862,9 @@
       ${compte ? `<div class="compte-barre">⏳ ${compte[0]} <span data-fin="${compte[1]}"></span></div>` : ""}`;
     demarrerComptes();
   }
+  let attenteJusqua = 0; // pendant l'attente du scan mutuel (90 s), aucune bannière ne masque le compte à rebours
   function banniere(id, html, classe = "") {
+    if (Date.now() < attenteJusqua) return;
     if (document.getElementById(id)) return;
     let pile = document.getElementById("annonces");
     if (!pile) { pile = document.createElement("div"); pile.id = "annonces"; document.body.appendChild(pile); }
@@ -884,6 +887,7 @@
       vus.push(e.id);
       if (e.type === "palier") { vibrer([30, 60, 30]); toast(`${t.palierAtteint(e.donnees.n)} ${t.paliers[e.donnees.n - 1] || ""}`); }
       else if (e.type === "glitch" && now - Date.parse(e.debut) < 60_000) glitchGlobal(e.donnees.texte);
+      else if (e.type === "jumeaux_reunis") { vibrer(40); banniere("evt-" + e.id, `<small>👯</small><p>${esc(J().premiersTous((e.donnees.pseudos || []).join(" & ")))}</p><button class="lien" data-fermer>${t.fermer}</button>`); }
       else if (e.type === "message" && (!e.fin || Date.parse(e.fin) > now)) {
         vibrer(60);
         banniere("message-" + e.id, `<small>📣 ${t.messageMJ}</small><p>${esc(e.donnees.texte)}</p><button class="lien" data-fermer>${t.fermer}</button>`);
@@ -951,7 +955,7 @@
       sanctionAnnulee: "Le MJ a annulé ta sanction. Ce qui t'avait été retiré t'est rendu.", messageMJ: "Le MJ",
       missionAnnonce: (m) => `Le MJ te confie une mission. Tu as ${m} min.`, missionReussie: "Mission accomplie. Badge : Employé du mois.",
       missionEchouee: "Temps écoulé. Le MJ ne t'en veut pas. Pas trop.", missionAnnulee: "Le MJ a annulé ta mission.",
-      recompenses: { points: "+20 points de faction pour tes factions.", souvenirs: "+3 souvenirs.", solde: "Tes 5 prochaines nouvelles cartes comptent double." },
+      recompenses: { points: "+20 points de faction pour tes factions.", souvenirs: "+3 souvenirs.", solde: "Tes 5 prochaines nouvelles cartes comptent double.", indice: "Un indice bonus sur ton double." },
       missions: {
         "M-1": ["Ramène-moi des clients", () => "Scanne 3 personnes que tu n'as jamais scannées."],
         "M-2": ["Tournée des factions", () => "Scanne un membre de chacune des 5 factions."],
@@ -1001,7 +1005,7 @@
       sanctionAnnulee: "The GM cancelled your sanction. What was taken is given back.", messageMJ: "The GM",
       missionAnnonce: (m) => `The GM has a mission for you. You have ${m} min.`, missionReussie: "Mission accomplished. Badge: Employee of the Month.",
       missionEchouee: "Time's up. The GM isn't mad. Not too mad.", missionAnnulee: "The GM cancelled your mission.",
-      recompenses: { points: "+20 faction points for your factions.", souvenirs: "+3 memories.", solde: "Your next 5 new cards count double." },
+      recompenses: { points: "+20 faction points for your factions.", souvenirs: "+3 memories.", solde: "Your next 5 new cards count double.", indice: "A bonus clue about your double." },
       missions: {
         "M-1": ["Bring me customers", () => "Scan 3 people you've never scanned."],
         "M-2": ["Faction tour", () => "Scan a member of each of the 5 factions."],
@@ -1026,7 +1030,7 @@
     if (r.deja) return `<span class="chip or">${m.legendaire}</span><h1 class="moyen">${esc(nom)}</h1><p>${m.deja}</p>`;
     const memoire = r.souvenir ? `<div class="souvenir ticket-infini"><p>${esc(r.souvenir[L] || r.souvenir.fr).replace(/\n\n/g, "</p><p>")}</p></div>` : "";
     return `<div class="legendaire apparait"><span class="chip or">${m.legendaire} · ${esc(r.effet)}</span><h1 class="moyen">${esc(nom)}</h1><p class="effet">${effet}</p>
-      ${r.fin ? `<p class="mono petit">⏳ <span data-fin="${r.fin}"></span></p>` : ""}
+      ${r.fin ? `<p class="mono petit">⏳ <span data-fin="${r.fin}"></span></p>` : ""}${r.guerison ? `<p class="ok">🦠 ${J().guerison}</p>` : ""}
       <p class="mono petit muted">${r.points ? m.points(15) + " · " : ""}${m.collection(r.collection || 0)}</p></div>${memoire}${(r.badges || []).map(badgeGagne).join("")}`;
   }
 
@@ -1095,11 +1099,12 @@
     let r;
     try { r = await api("/api/notifs" + (apres !== null ? "?apres=" + encodeURIComponent(apres) : "")); } catch { return; }
     ecrire(CLE_NOTIFS, String(r.dernier || 0));
-    Object.assign(etat.moi, { mission_mj: r.mission_mj, effets: r.effets });
+    Object.assign(etat.moi, { mission_mj: r.mission_mj, effets: r.effets, jumeau: r.jumeau, contagion: r.contagion, pilule: r.pilule });
     etat.moi.personnage.bloque_jusqu_a = r.bloque_jusqu_a; etat.moi.personnage.suspendu = r.suspendu;
     ecrire(CLE.moi, JSON.stringify(etat.moi));
     const m = M();
     for (const n of r.notifs || []) {
+      if (notifRoles(n)) continue; // LOT-4 : jumeaux, retrouvailles, chat noir, corruption
       const d = n.donnees || {};
       let html = null, classe = "";
       if (n.type === "sanction") { html = `<small>⚠️ ${m.messageMJ}</small><p>${m.sanctions[d.niveau - 1] || ""}</p>`; classe = "alerte"; }
@@ -1114,6 +1119,7 @@
       if (html) { vibrer([60, 80, 60]); banniere("notif-" + n.id, `${html}<button class="lien" data-fermer>${t.fermer}</button>`, classe); }
     }
     if ((r.notifs || []).length && location.pathname === "/collection") collection();
+    verifierIndices(etat.moi);
     majEffets();
   }
 
@@ -1127,7 +1133,7 @@
     }).join("");
     const v = ((etat.direct && etat.direct.evenements) || []).filter((e) => e.type === "vitrine" && e.fin && Date.parse(e.fin) > now).pop();
     const vitrine = v ? `<div class="vitrine apparait"><small>${m.vitrine}</small><b>${typeDe(v.donnees.type).e} ${esc(v.donnees.pseudo)}</b><span class="mono petit" data-fin="${v.fin}"></span></div>` : "";
-    return `<div id="zone-effets">${vitrine}${puces ? `<div class="puces-effets">${puces}</div>` : ""}</div>`;
+    return `<div id="zone-effets">${vitrine}${puces ? `<div class="puces-effets">${puces}</div>` : ""}${blocRoles(d)}</div>`;
   }
   /** Le direct (toutes les 10 s) met à jour la vitrine et les effets sans redessiner l'accueil. */
   function majEffets() {
@@ -1152,6 +1158,192 @@
         ${x.souvenir ? `<div class="souvenir ticket-infini"><p>${esc(x.souvenir[L] || x.souvenir.fr).replace(/\n\n/g, "</p><p>")}</p></div>` : ""}`, { onglet: "collection" });
       $("#b-retour").onclick = collection;
     }));
+  }
+
+  // ---------- Jumeaux et triplés (FEAT-007), chats noirs et glitch contagieux (FEAT-008) ----------
+  const TJ = {
+    fr: {
+      double: "Ton double", doubles: "Tes doubles", doubleN: (i) => `Double n° ${i}`,
+      attribue: "Ton double existe. Trouve-le.", attribueTriples: "Vous êtes des triplés. Trouve tes deux doubles.",
+      dejaCroise: "Tu as déjà croisé ton double ! Les retrouvailles exigent tout de même un nouveau scan mutuel.",
+      avantMinuit: "Premier indice à minuit.", prochain: "Prochain indice dans", nouvelIndice: "Nouvel indice sur ton double",
+      tousIndices: "Tous les indices sont tombés.", voirIndices: "Voir tous les indices",
+      type: (e, n) => `Costume : ${e} ${n}`, couleur: (n) => `Couleur dominante : ${n}`, porte: (x) => `Porte : ${x}`, porteP: (x) => `Ne porte pas : ${x}`, pseudo: (p) => `Pseudo : ${p}`,
+      attenteTitre: "C'est peut-être ton double…", attente: "Fais-toi scanner à ton tour, vite !",
+      attenteFinie: "Trop tard pour cette fois. Rescannez-vous tous les deux, dans les 90 s.",
+      fusion: "RETROUVAILLES", fusionTexte: "Jumeaux retrouvés !", fusionTriples: "Le lot est complet !", fusionPartielle: "Deux sur trois. Il te reste un double à retrouver.",
+      premiers: "Premiers doubles réunis de la soirée !", premiersTous: (n) => `Premiers doubles réunis : ${n}.`, retrouve: "retrouvé",
+      fui: "Ton double a fui la Matrice.",
+      mChat: "Tu es un chat noir. Ne le dis à personne. Contamine 3 personnes en 10 min.",
+      mJumeau: (i) => `Ton double est quelque part. Dernier indice : ${i}.`, mJumeauAttente: "Ton double est quelque part. Premier indice à minuit.",
+      mCorrompu: "Tu glitches. Chaque scan peut contaminer.",
+      chatTitre: "🐈‍⬛ Rôle secret", chat: "Tu es un chat noir. Ne le dis à personne. Contamine 3 personnes en 10 min. Ta contagion dure toute la soirée.",
+      corrompu: "Corruption détectée. Tu glitches.", corrompuChat: "Tu as croisé un chat noir. Tu glitches.", corrompuAide: "Chaque scan peut contaminer, dans les deux sens.",
+      protege: "Retour sans reçu ! Ta légendaire a annulé la corruption.", contamine: "Contamination réussie. Miaou.", guerison: "Ta corruption est annulée.",
+      puceChat: "🐈‍⬛ Chat noir · secret", puceCorrompu: "🦠 Corrompu", puceImmunise: "🛡️ Immunisé", pilule: (p, n) => `💊 ${p} % de corrompus · ${n} chat${n > 1 ? "s" : ""} noir${n > 1 ? "s" : ""}`,
+      indiceBonus: "Un indice bonus sur ton double.",
+    },
+    en: {
+      double: "Your double", doubles: "Your doubles", doubleN: (i) => `Double #${i}`,
+      attribue: "Your double exists. Find them.", attribueTriples: "You're triplets. Find your two doubles.",
+      dejaCroise: "You've already crossed paths with your double! A new mutual scan is still needed to reunite.",
+      avantMinuit: "First clue at midnight.", prochain: "Next clue in", nouvelIndice: "New clue about your double",
+      tousIndices: "All the clues are out.", voirIndices: "See all clues",
+      type: (e, n) => `Costume: ${e} ${n}`, couleur: (n) => `Main colour: ${n}`, porte: (x) => `Wearing: ${x}`, porteP: (x) => `Not wearing: ${x}`, pseudo: (p) => `Name: ${p}`,
+      attenteTitre: "This might be your double…", attente: "Get them to scan you back, quick!",
+      attenteFinie: "Too late this time. Scan each other again, within 90 s.",
+      fusion: "REUNITED", fusionTexte: "Twins reunited!", fusionTriples: "The set is complete!", fusionPartielle: "Two out of three. One double left to find.",
+      premiers: "First doubles reunited tonight!", premiersTous: (n) => `First doubles reunited: ${n}.`, retrouve: "found",
+      fui: "Your double has fled the Matrix.",
+      mChat: "You're a black cat. Tell no one. Infect 3 people in 10 min.",
+      mJumeau: (i) => `Your double is out there. Latest clue: ${i}.`, mJumeauAttente: "Your double is out there. First clue at midnight.",
+      mCorrompu: "You're glitching. Every scan can infect.",
+      chatTitre: "🐈‍⬛ Secret role", chat: "You're a black cat. Tell no one. Infect 3 people in 10 min. You stay contagious all night.",
+      corrompu: "Corruption detected. You're glitching.", corrompuChat: "You crossed a black cat. You're glitching.", corrompuAide: "Every scan can infect, both ways.",
+      protege: "Return without receipt! Your legendary cancelled the corruption.", contamine: "Infection successful. Meow.", guerison: "Your corruption is cancelled.",
+      puceChat: "🐈‍⬛ Black cat · secret", puceCorrompu: "🦠 Corrupted", puceImmunise: "🛡️ Immune", pilule: (p, n) => `💊 ${p}% corrupted · ${n} black cat${n > 1 ? "s" : ""}`,
+      indiceBonus: "A bonus clue about your double.",
+    },
+  };
+  const J = () => TJ[L] || TJ.fr;
+
+  /** Texte d'un indice { k, v, vrai } (RG-007-5). */
+  function texteIndice(x) {
+    const j = J();
+    if (x.k === "type") { const ty = typeDe(x.v); return j.type(ty.e, lib(ty)); }
+    if (x.k === "couleur") return j.couleur(lib(couleurDe(x.v)));
+    if (x.k === "attribut") { const a = attrDe(x.v), n = a ? `${a.e} ${lib(a).toLowerCase()}` : x.v; return x.vrai ? j.porte(n) : j.porteP(n); }
+    return j.pseudo(x.v);
+  }
+  const dernierIndice = (jm) => {
+    const d = jm.doubles.find((x) => !x.retrouve && x.indices.length);
+    return d ? texteIndice(d.indices[d.indices.length - 1]) : null;
+  };
+  const actif = (iso) => iso && Date.parse(iso) > Date.now();
+  const contagionDe = (d) => d.contagion || {};
+  const estCorrompu = (d) => actif(contagionDe(d).corrompu_jusqu_a);
+  /** Chat noir depuis moins de 10 min : la ligne « Et maintenant ? » l'incite à contaminer. */
+  const chatRecent = (d) => contagionDe(d).chat_noir && contagionDe(d).chat_noir_le && Date.now() - Date.parse(contagionDe(d).chat_noir_le) < 10 * 60_000;
+
+  /** Ligne « Et maintenant ? » du LOT-4 (textes §5.2), ou null. */
+  function ligneRoles(d, aucuneCarte) {
+    const jm = d.jumeau, j = J();
+    if (chatRecent(d)) return j.mChat;
+    if (jm && !jm.reuni && !jm.fui) { const i = dernierIndice(jm); return i ? j.mJumeau(i) : jm.nb_indices ? null : j.mJumeauAttente; }
+    if (aucuneCarte) return null;
+    if (estCorrompu(d)) return j.mCorrompu;
+    return null;
+  }
+
+  /** Puces de rôle (chat, corruption, immunité, pilule rouge) et encadré du double : dans la zone qui se met à jour. */
+  function blocRoles(d) {
+    const j = J(), c = contagionDe(d), puces = [];
+    if (c.chat_noir) puces.push(`<span class="puce-effet puce-chat">${j.puceChat}</span>`);
+    if (actif(c.corrompu_jusqu_a)) puces.push(`<span class="puce-effet puce-corrompu">${j.puceCorrompu} · <span data-fin="${c.corrompu_jusqu_a}"></span></span>`);
+    else if (actif(c.immunise_jusqu_a)) puces.push(`<span class="puce-effet puce-immun">${j.puceImmunise} · <span data-fin="${c.immunise_jusqu_a}"></span></span>`);
+    if (d.pilule) puces.push(`<span class="puce-effet">${j.pilule(d.pilule.part, d.pilule.chats)}</span>`);
+    document.body.classList.toggle("corrompu", !!actif(c.corrompu_jusqu_a));
+    return (puces.length ? `<div class="puces-effets">${puces.join("")}</div>` : "") + encadreDouble(d.jumeau, true);
+  }
+
+  /** Encadré du double : dernier indice (accueil) ou tous les indices (fiche). */
+  function encadreDouble(jm, court) {
+    if (!jm) return "";
+    const j = J(), triples = jm.taille === 3;
+    const titre = `👯 ${triples ? j.doubles : j.double}`;
+    if (jm.reuni) {
+      const noms = jm.doubles.map((x) => x.carte ? `${typeDe(x.carte.type).e} ${esc(x.carte.pseudo)}` : "").join(" · ");
+      return court ? "" : `<div class="boite double reuni"><b>${titre}</b><p>✅ ${triples ? j.fusionTriples : j.fusionTexte}</p><p>${noms}</p></div>`;
+    }
+    if (jm.fui) return `<div class="boite double"><b>${titre}</b><p>${j.fui}</p></div>`;
+    const prochain = jm.prochain ? `<p class="mono petit muted" style="margin:8px 0 0">${jm.nb_indices ? j.prochain : j.avantMinuit} ${jm.nb_indices ? `<span data-fin="${jm.prochain}"></span>` : ""}</p>` : `<p class="petit muted">${j.tousIndices}</p>`;
+    if (court) {
+      const i = dernierIndice(jm);
+      return `<a class="boite double" href="/moi" data-nav><b>${titre}</b><p>${i ? esc(i) : j.avantMinuit}</p>${jm.prochain && jm.nb_indices ? prochain : ""}<small class="lien">${j.voirIndices} →</small></a>`;
+    }
+    const listes = jm.doubles.map((x, k) => `${triples ? `<p class="petit muted" style="margin:10px 0 4px">${j.doubleN(k + 1)}${x.retrouve ? ` · ✅ ${j.retrouve}` : ""}</p>` : ""}
+      ${x.retrouve && x.carte ? `<p>${typeDe(x.carte.type).e} <b>${esc(x.carte.pseudo)}</b></p>` : `<ol class="indices">${x.indices.map((i) => `<li>${esc(texteIndice(i))}</li>`).join("")}</ol>`}`).join("");
+    return `<div class="boite double" id="double"><b>${titre}</b>${listes}${prochain}</div>`;
+  }
+
+  /** Glitch personnel (RG-008-2) : le même effet que le glitch global (REQ-003 : 1 changement par seconde au plus). */
+  function glitchPerso(texte) { glitchGlobal(texte); vibrer([50, 40, 50, 40, 120]); }
+
+  /** Après un scan : retrouvailles, attente du scan mutuel, contagion. */
+  function apresScanRoles(r) {
+    const j = J();
+    if (r.jumeau && r.jumeau.retrouvailles) { setTimeout(() => ecranFusion(r.jumeau.retrouvailles), 700); return; }
+    const haut = [];
+    if (r.jumeau && r.jumeau.attente_jusqu_a) {
+      viderBannieres(); // le compte à rebours de 90 s passe avant tout
+      haut.push(`<div class="boite double attente apparait"><b>👯 ${j.attenteTitre}</b><p>${j.attente}</p>
+        <div class="compte" data-fin="${r.jumeau.attente_jusqu_a}" data-fini="${esc(j.attenteFinie)}"></div></div>`);
+      attendreRetrouvailles(r.jumeau.attente_jusqu_a);
+    }
+    const c = r.contagion || {};
+    if (c.corrompu) { haut.push(`<div class="boite alerte"><b>🦠 ${c.corrompu.par_chat ? j.corrompuChat : j.corrompu}</b><p class="petit">${j.corrompuAide}</p></div>`); glitchPerso(c.corrompu.par_chat ? j.corrompuChat : j.corrompu); }
+    if (c.protege) haut.push(`<div class="boite"><b>✦ ${j.protege}</b></div>`);
+    if (c.contamine) toast("🐈‍⬛ " + j.contamine);
+    if ((c.badges || []).length) haut.push(c.badges.map(badgeGagne).join(""));
+    if (haut.length) {
+      const barre = document.getElementById("barre-quete"), m = app.querySelector("main") || app;
+      barre && m.contains(barre) ? barre.insertAdjacentHTML("afterend", haut.join("")) : m.insertAdjacentHTML("afterbegin", haut.join(""));
+      demarrerComptes();
+    }
+  }
+
+  const viderBannieres = () => document.querySelectorAll(".annonce").forEach((x) => x.remove());
+  /** Pendant la fenêtre de 90 s, on relève les messages toutes les 2 s : les retrouvailles s'affichent chez les deux au même moment. */
+  let minuteurAttente = null;
+  function attendreRetrouvailles(fin) {
+    clearInterval(minuteurAttente); attenteJusqua = Date.parse(fin);
+    minuteurAttente = setInterval(() => { if (Date.now() > Date.parse(fin) + 3000) return clearInterval(minuteurAttente); releverNotifs(); }, 2000);
+  }
+
+  /** Animation de fusion des cartes, souvenir d'origine et badges (RG-007-9, RG-007-10). */
+  function ecranFusion(x) {
+    clearInterval(minuteurAttente); attenteJusqua = 0;
+    const j = J(), pe = etat.moi && etat.moi.personnage;
+    if (!pe) return;
+    vibrer([60, 60, 60, 60, 200]); viderBannieres();
+    const mini = (c, cote) => `<div class="mini fusion-${cote}" style="--teinte:${couleurDe(c.couleur).hex}"><div class="e">${typeDe(c.type).e}</div><div class="pseudo">${esc(c.pseudo)}</div></div>`;
+    const texte = x.complet ? (x.triples ? j.fusionTriples : j.fusionTexte) : j.fusionPartielle;
+    rendre(`<div class="fusion"><div class="fusion-cartes">${mini(pe, "g")}${mini(x.avec, "d")}</div>
+      <h1 class="moyen">${j.fusion}</h1><p class="fusion-texte">${texte}</p>${x.premier ? `<p class="or">🏆 ${j.premiers}</p>` : ""}</div>
+      ${x.souvenir ? `<div class="souvenir origine"><p>${esc(x.souvenir[L] || x.souvenir.fr)}</p></div>` : ""}
+      ${(x.badges || []).map(badgeGagne).join("")}
+      <a class="bouton" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
+    chargerMoi();
+  }
+
+  /** Messages personnels du LOT-4 (relevés avec le direct). Renvoie true si le message est traité. */
+  function notifRoles(n) {
+    const j = J(), d = n.donnees || {};
+    if (n.type === "jumeau") {
+      banniere("notif-" + n.id, `<small>👯</small><p><b>${d.taille === 3 ? j.attribueTriples : j.attribue}</b>${d.deja_croise ? `<br>${j.dejaCroise}` : ""}</p><button class="lien" data-fermer>${t.fermer}</button>`);
+      vibrer([80, 60, 80]); return true;
+    }
+    if (n.type === "retrouvailles") { ecranFusion(d); return true; }
+    if (n.type === "chat_noir") { banniere("notif-" + n.id, `<small>${j.chatTitre}</small><p>${j.chat}</p><button class="lien" data-fermer>${t.fermer}</button>`, "alerte"); vibrer([100, 50, 100]); return true; }
+    if (n.type === "corrompu") {
+      glitchPerso(d.par_chat ? j.corrompuChat : j.corrompu);
+      if ((d.badges || []).length) banniere("notif-" + n.id, `${d.badges.map(badgeGagne).join("")}<button class="lien" data-fermer>${t.fermer}</button>`);
+      return true;
+    }
+    return false;
+  }
+
+  /** Nouvel indice (calendrier de 10 min, palier P-3, L-4, M-5) : bannière quand le nombre d'indices augmente. */
+  const CLE_INDICES = "dv-indices" + SUFFIXE;
+  function verifierIndices(d) {
+    const jm = d.jumeau;
+    if (!jm || jm.reuni) return;
+    const vu = Number(lire(CLE_INDICES) || 0);
+    if (jm.nb_indices > vu) {
+      ecrire(CLE_INDICES, String(jm.nb_indices));
+      const i = dernierIndice(jm);
+      if (i) { vibrer(60); banniere("indice-" + jm.nb_indices, `<small>👯 ${J().nouvelIndice}</small><p>${esc(i)}</p><button class="lien" data-fermer>${t.fermer}</button>`); }
+    }
   }
 
   // ---------- Révélation de 5 h (FEAT-009, RG-009-5 à RG-009-16, RG-015-5) ----------
@@ -1702,7 +1894,7 @@
   async function fiche() {
     if (!(await chargerMoi())) return aller("/", true);
     const d = etat.moi, pe = d.personnage, dr = d.droits;
-    rendre(`<h2>${t.moiTitre}</h2>${carte({ ...pe, factions: d.etiquettes.map((e) => e.faction) })}
+    rendre(`<h2>${t.moiTitre}</h2>${carte({ ...pe, factions: d.etiquettes.map((e) => e.faction) })}${encadreDouble(d.jumeau, false)}
       <h3>${t.jauge}</h3><div class="jauge" style="--n:${Math.min(20, pe.souvenirs ?? 10)}"><b>🧠 ${pe.souvenirs ?? 10}</b><i></i></div><p class="petit muted">${t.jaugeAide}</p>
       <h3>${t.reactionsRecues}</h3>${Object.keys(d.reactions || {}).length ? `<p class="reactions-recues">${Object.entries(d.reactions).map(([e, n]) => `<span>${e} <b>${n}</b></span>`).join("")}</p>` : `<p class="muted petit">${t.aucuneReaction}</p>`}
       <h3>${t.pseudo}</h3>${dr.pseudo ? `<form id="f-pseudo" class="duo" style="grid-template-columns:1fr auto"><input type="text" id="pseudo" maxlength="28" value="${esc(pe.pseudo)}"><button class="bouton" style="margin:0;width:auto">${t.enregistrer}</button></form>` : `<p class="muted">🔒 ${t.pseudoFige}</p>`}

@@ -6,7 +6,8 @@ import { genererCodes } from "./codes";
 import { definirPin, nouvelAppareil, sha256 } from "./jeu";
 import { bancProd } from "./mode";
 import { ecrireConfig, HEURES_PAR_DEFAUT, lireConfig, lireParametres } from "./config";
-import { attribution, confierMission, ouvrirPause, fermerPause, sanctionner } from "./mj";
+import { attribution, confierMission, heureDuJoueur, ouvrirPause, fermerPause, sanctionner } from "./mj";
+import { corrompre, creerGroupe, devenirChat, indiceBonus } from "./jumeaux";
 
 export interface EnvDev {
   DB: D1Database;
@@ -18,7 +19,7 @@ export interface EnvDev {
 }
 
 export const TABLES_PARTIE = ["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "compteurs", "points_faction", "evenements", "revelations",
-  "effets", "sanctions", "missions", "notifs", "personnages"]; // appareils avant personnages (clé étrangère)
+  "effets", "sanctions", "missions", "notifs", "groupes", "retrouvailles", "corruptions", "personnages"]; // appareils avant personnages (clé étrangère)
 
 async function persoDuJeton(env: EnvDev, jeton: unknown): Promise<string | null> {
   if (typeof jeton !== "string" || !jeton) return null;
@@ -104,6 +105,57 @@ export async function routeDev(req: Request, env: EnvDev, url: URL): Promise<Res
     if (Number(corps.minutes) < 0) await fermerPause(env); else await ouvrirPause(env, Number(corps.minutes) || 0, "banc");
     return json({ ok: true });
   }
+  // ---------- Jumeaux et chats noirs (E1, E2) ----------
+  if (p === "/__dev/jumeaux" && req.method === "POST") {
+    const ids = [];
+    for (const j of (corps.jetons as unknown[]) ?? []) { const id = await persoDuJeton(env, j); if (id) ids.push(id); }
+    if (ids.length < 2 || ids.length > 3) return json({ erreur: "Il faut 2 ou 3 téléphones avec un personnage." }, 400);
+    await env.DB.prepare(`UPDATE personnages SET groupe_id = NULL WHERE id IN (${ids.map(() => "?").join(",")})`).bind(...ids).run();
+    const t = Math.max(...(await Promise.all(ids.map((id) => heureDuJoueur(env.DB, id)))));
+    return json({ groupe: await creerGroupe(env, ids, t) });
+  }
+  const roleDe = async () => {
+    const id = await persoDuJeton(env, corps.jeton);
+    return id ? { id, t: await heureDuJoueur(env.DB, id) } : null;
+  };
+  if (p === "/__dev/indice" && req.method === "POST") {
+    const x = await roleDe();
+    return x && (await indiceBonus(env, x.id)) ? json({ ok: true }) : json({ erreur: "Pas de jumeau : « Attribuer » d'abord." }, 409);
+  }
+  if (p === "/__dev/chat-noir" && req.method === "POST") {
+    const x = await roleDe();
+    if (!x) return json({ erreur: "Ce téléphone n'a pas de personnage." }, 404);
+    await devenirChat(env, x.id, x.t);
+    return json({ ok: true });
+  }
+  if (p === "/__dev/corrompre" && req.method === "POST") {
+    const x = await roleDe();
+    if (!x) return json({ erreur: "Ce téléphone n'a pas de personnage." }, 404);
+    const r = await corrompre(env, x.id, x.t, "foyer", { forcer: true });
+    await env.DB.prepare("INSERT INTO notifs (personnage_id, type, donnees, le) VALUES (?, 'corrompu', ?, ?)").bind(x.id, JSON.stringify({ jusqu_a: r.corrompu_jusqu_a, par_chat: false }), new Date(x.t).toISOString()).run();
+    return json(r);
+  }
+  if (p === "/__dev/immunite" && req.method === "POST") {
+    // Corruption terminée à l'instant, immunité de 20 min
+    const x = await roleDe();
+    if (!x) return json({ erreur: "Ce téléphone n'a pas de personnage." }, 404);
+    const iso = (ms: number) => new Date(x.t + ms).toISOString();
+    await env.DB.prepare("INSERT INTO corruptions (personnage_id, debut, fin, immun_jusqu_a, cause) VALUES (?, ?, ?, ?, 'banc')").bind(x.id, iso(-10 * 60_000), iso(0), iso(20 * 60_000)).run();
+    return json({ ok: true });
+  }
+  if (p === "/__dev/vague" && req.method === "POST") {
+    // Plus de 50 % de corrompus : la durée des nouvelles corruptions diminue (RG-008-5c)
+    const ids = (await env.DB.prepare("SELECT id FROM personnages WHERE est_mj = 0 AND suspendu = 0 AND chat_noir_le IS NULL").all<{ id: string }>()).results.map((r) => r.id);
+    let n = 0;
+    for (const id of ids.slice(0, Math.ceil(ids.length * 0.6))) { await corrompre(env, id, await heureDuJoueur(env.DB, id), "foyer", { forcer: true }); n++; }
+    return json({ n, total: ids.length });
+  }
+  if (p === "/__dev/transmission" && req.method === "POST") {
+    const prm = await lireParametres(env.DB);
+    await ecrireConfig(env.DB, "parametres", { ...prm, bareme: { ...prm.bareme, transmission: Number(corps.valeur) } });
+    return json({ ok: true });
+  }
+
   if (p === "/__dev/revelation" && req.method === "POST") {
     // H1 : révélation à 5 h (heure du banc), instantanés effacés ; « paliers » force le nombre de paliers franchis
     const h = { ...HEURES_PAR_DEFAUT, ...((await lireConfig(env.DB, "heures")) as object) };

@@ -16,7 +16,7 @@ export const CLASSES = ["barbare", "barde", "clerc", "druide", "magicien", "pala
 export const BADGES = [
   "tueur_de_poussin", "achat_compulsif", "surconsommation", "trans_classe", "installe_portail", "boucle_detectee",
   "jour_marmotte", "client_maudit", "jumeaux_retrouves", "fermer_boucle", "patient_zero", "dernier_survivant",
-  "amnesie", "serie_complete", "garde_robe_mj", "anticapitaliste", "employe_du_mois", "client_difficile", "collegue_de_rayon",
+  "amnesie", "serie_complete", "triples_partiels", "garde_robe_mj", "anticapitaliste", "employe_du_mois", "client_difficile", "collegue_de_rayon",
 ] as const;
 
 export type Langue = "fr" | "en";

@@ -8,6 +8,7 @@ import { baremeDe, lireParametres, type Heures } from "./config";
 import { crediterScan, heuresIso, routeDirect, type Joueur } from "./direct";
 import { routeRevelation } from "./revelation";
 import { effetActif, effetsEnCours, expirerMissions, legendesDe, missionActive, pauseEnCours, reouvertureVue, scanMJ, verifierMissions } from "./mj";
+import { contact, contagionDe, corrompre, jumeauDe, tickRoles, verifierRetrouvailles } from "./jumeaux";
 import { brouiller, estFlou, fauxSouvenir, grainePaire, type PersoSouvenir } from "./souvenirs";
 import { devActif } from "./mode";
 
@@ -230,13 +231,17 @@ async function moi(env: EnvJeu, p: LignePerso, t: number) {
 /** Mission personnelle du MJ et effets en cours (légendaires, solde privée) : dans /api/moi et /api/notifs. */
 async function personnel(env: EnvJeu, id: string, t: number) {
   await expirerMissions(env, t, id);
-  return { mission_mj: await missionActive(env.DB, id), effets: await effetsEnCours(env.DB, id, t) };
+  return {
+    mission_mj: await missionActive(env.DB, id), effets: await effetsEnCours(env.DB, id, t),
+    jumeau: await jumeauDe(env, id, t), ...(await contagionDe(env, id, t)), // LOT-4
+  };
 }
 
 /** GET /api/notifs?apres=N : messages personnels (sanctions, missions) ; sans N, ceux des 30 dernières minutes. */
 async function notifs(req: Request, env: EnvJeu, t: number, url: URL): Promise<Response> {
   const me = await personnageDe(req, env, t);
   if (!me) return erreur("sans_personnage", 401);
+  await tickRoles(env, t); // LOT-4 : groupes de jumeaux et chats noirs, au plus une fois par minute
   const extra = await personnel(env, me.id, t);
   const apres = Number(url.searchParams.get("apres"));
   const q = Number.isFinite(apres) && apres >= 0 && url.searchParams.has("apres")
@@ -371,6 +376,13 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
   if (!me) return enregistrer("spectateur", { type: "spectateur", code: e.code, carte }, cible);
   if (cible === me.id) return enregistrer("soi_meme", { type: "soi_meme", code: e.code, carte }, cible);
 
+  // LOT-4 : glitch contagieux dans les deux sens (FEAT-008) ; retrouvailles par scan mutuel (FEAT-007)
+  const roles: Record<string, unknown> = {};
+  const cont = await contact(env, t, me, await joueurDe(env, cible));
+  if (Object.keys(cont).length) roles.contagion = cont;
+  const jum = await verifierRetrouvailles(env, t, me.id, cible);
+  if (jum) roles.jumeau = jum;
+
   const ins = await env.DB.prepare(
     "INSERT INTO collection (possesseur_id, personnage_id, premier_scan_le, dernier_scan_le, code) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING",
   ).bind(me.id, cible, iso, iso, e.code).run();
@@ -387,10 +399,10 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
     const credit = await crediterScan(env, t, me, await joueurDe(env, cible), "nouvelle");
     return enregistrer("nouvelle_carte", {
       type: "nouvelle_carte", code: e.code, carte, nb_cartes: nb?.n ?? 1, badges,
-      souvenir: souvenirVu(me, carte!, m.seuil_flou), mes_reactions: [], quete_total: credit.total,
+      souvenir: souvenirVu(me, carte!, m.seuil_flou), mes_reactions: [], quete_total: credit.total, ...roles,
     }, cible, credit.quete);
   }
-  return dejaVu(env, t, h, me, carte!, e.code, enregistrer);
+  return dejaVu(env, t, h, me, carte!, e.code, enregistrer, roles);
 }
 
 /**
@@ -400,6 +412,7 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
 async function dejaVu(
   env: EnvJeu, t: number, h: Record<keyof Heures, string>, me: LignePerso, carte: PersoSouvenir, code: string,
   enregistrer: (resultat: string, reponse: object, cible: string | null, quete?: number) => Promise<Response>,
+  roles: Record<string, unknown> = {},
 ): Promise<Response> {
   const iso = new Date(t).toISOString(), cible = carte.id;
   const params = await lireParametres(env.DB), m = params.memoire;
@@ -446,7 +459,7 @@ async function dejaVu(
     type: "deja_vu", code, carte, n, compte, fenetre_min: fenetreMin, badges, palier, heures,
     premier_rescan: !dejaRescanne, // CA-005-4 : l'invitation ne s'affiche qu'une fois
     souvenir: souvenirVu(me, carte, m.seuil_flou), souvenirs: me.souvenirs, perte,
-    mes_reactions: await mesReactions(env, me.id, cible), quete_total: credit.total,
+    mes_reactions: await mesReactions(env, me.id, cible), quete_total: credit.total, ...roles,
   }, cible, credit.quete);
 }
 
@@ -505,6 +518,7 @@ async function creer(req: Request, env: EnvJeu, t: number, c: Record<string, unk
   const jeton = await nouvelAppareil(env, id, t);
   await env.DB.prepare("INSERT OR IGNORE INTO scans (id_client, scanneur_id, code, cible_id, source, resultat, horodatage_serveur) VALUES (?, ?, ?, ?, 'qr_externe', 'creation', ?)")
     .bind(typeof c.id_client === "string" ? c.id_client.slice(0, 64) : null, id, e.code, id, iso).run();
+  await tickRoles(env, t, id); // LOT-4 : chaque activation peut former un groupe de jumeaux (DEC-071)
   const perso = await env.DB.prepare("SELECT * FROM personnages WHERE id = ?").bind(id).first<LignePerso>();
   return json({ jeton, ...(await moi(env, perso!, t)) });
 }
@@ -543,6 +557,7 @@ async function ajouterEtiquette(req: Request, env: EnvJeu, t: number, c: Record<
     // RG-003-10 : les autres malus (points, quête, corruption) s'appliquent aux LOT-3 et LOT-4 via ce drapeau
     jusqu_a = new Date(t + BLOCAGE_SURCONSO_MIN * 60_000).toISOString();
     await env.DB.prepare("UPDATE personnages SET surconsommation = 1, bloque_jusqu_a = ?, bloque_cause = 'surconsommation' WHERE id = ?").bind(jusqu_a, me.id).run();
+    await corrompre(env, me.id, t, "surconsommation", { forcer: true, sansImmunite: true }); // RG-008-5d
     if (await donnerBadge(env, me.id, "surconsommation", t)) badges.push("surconsommation");
   }
   await env.DB.prepare("INSERT INTO scans (scanneur_id, code, cible_id, source, resultat, horodatage_serveur) VALUES (?, ?, ?, 'app', 'ajout_etiquette', ?)").bind(me.id, e.code, me.id, iso).run();

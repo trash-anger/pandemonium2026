@@ -132,6 +132,7 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .mission-boite{margin-bottom:16px}
 .pouls{background:#10251a;border:1px solid var(--green);border-radius:12px;padding:10px 12px;font-size:15px;margin:8px 0}
 .mission-boite{border-color:var(--pink)}
+.push-boite{border-color:var(--green,#3dff8f);margin-bottom:16px}.push-boite .titre-inst{margin:0 0 6px}.push-boite .bouton{margin:12px 0 4px}.push-boite .lien{display:block;margin:0 auto}
 .sep{border:0;border-top:1px solid var(--line);margin:10px 0}
 .mission{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center}
 .mission .e{font-size:34px;text-align:center}.mission>div>b{display:block;font-size:17px}.mission small{display:block;color:var(--muted);font-size:14px;line-height:1.4;margin-top:2px}

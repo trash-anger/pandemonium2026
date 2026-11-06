@@ -9,7 +9,9 @@
     "db:remote": "wrangler d1 migrations apply deja-vu --remote",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "apercu": "node scripts/apercu-etiquettes.mjs"
+    "apercu": "node scripts/apercu-etiquettes.mjs",
+    "planche": "node scripts/planche-banc.mjs",
+    "plan-tests": "node scripts/plan-tests.mjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261104.1",

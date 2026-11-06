@@ -636,13 +636,67 @@
     }
     const ty = typeDe(pe.type);
     rendre(`${compte ? `<div class="boite">${compte}</div>` : ""}
-      ${blocEffets(d)}<p class="maintenant"><small>${t.maintenant}</small>${esc(ligne)}</p>
+      ${blocEffets(d)}<p class="maintenant"><small>${t.maintenant}</small>${esc(ligne)}</p>${blocPush(d)}
       ${h.revelation && now >= Date.parse(h.revelation) ? `<a class="bouton rev-revoir" href="/revelation" data-nav>${t.revRevoir}</a>` : ""}
       <a class="gros-scan" href="/saisie" data-nav><span>📷</span>${t.scanner}</a>
       <div class="discret"><a href="/moi" data-nav><b>${ty.e}</b><span>${t.maCarte}</span><div class="petit" style="margin-top:4px">${esc(pe.pseudo)}</div></a>
       <a href="/collection" data-nav><b>${d.nb_cartes}</b><span>${t.maCollection}</span><div class="petit" style="margin-top:4px">${t.cartes(d.nb_cartes)}</div></a>
       ${(() => { const m = compteMedailles(); return `<a href="/medailles" data-nav class="carte-medailles"><b>${m.gagnes}<small>/${m.total}</small></b><span>${t.ongMedailles}</span>
         <div class="petit" style="margin-top:4px">${m.bonus ? `<em class="or" style="font-style:normal">+${m.bonus} ${t.bonus(m.bonus)}</em> ${m.emojis}` : ""}</div>${medaillesNonVues() ? '<i class="pastille"></i>' : ""}</a>`; })()}</div>`, { onglet: "accueil" });
+    brancherPush();
+  }
+
+  // ---------- Notifications push (FEAT-016, LOT-3 D) ----------
+  // RG-016-1 : demandée après la première carte, avec une raison, jamais au chargement. Sur iPhone, seule l'app
+  // installée a PushManager : dans Safari, la carte n'apparaît pas (l'écran d'installation parle des notifications).
+  const TP = {
+    fr: { titre: "🔔 Ne rate rien", texte: "Ton double, le chat noir, les missions du MJ et la révélation : on te prévient même téléphone verrouillé.",
+      activer: "Activer les notifications", plusTard: "Plus tard", refus: "Notifications refusées : les annonces resteront en bannière dans l'app.", ok: "Notifications activées.",
+      echec: "Impossible d'activer les notifications pour l'instant. Les annonces restent en bannière dans l'app." },
+    en: { titre: "🔔 Don't miss a thing", texte: "Your double, the black cat, GM missions and the reveal: we'll tell you, even with your phone locked.",
+      activer: "Turn on notifications", plusTard: "Later", refus: "Notifications declined: announcements will stay as banners in the app.", ok: "Notifications on.",
+      echec: "Couldn't turn on notifications right now. Announcements stay as banners in the app." },
+  };
+  const CLE_PUSH = "dv-push-plus-tard" + SUFFIXE;
+  const pushPossible = () => !SUFFIXE && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  function blocPush(d) {
+    if (!pushPossible() || Notification.permission !== "default" || !d.nb_cartes) return "";
+    if (Date.now() - (Number(lire(CLE_PUSH)) || 0) < 2 * 3600e3) return ""; // « Plus tard » : on redemande 2 h après
+    const x = TP[L] || TP.fr;
+    return `<div class="boite push-boite" id="push-boite"><p class="titre-inst">${x.titre}</p><p class="petit">${x.texte}</p>
+      <button class="bouton sec" id="b-push">${x.activer}</button><button class="lien" id="b-push-non">${x.plusTard}</button></div>`;
+  }
+  function brancherPush() {
+    const b = $("#b-push"), n = $("#b-push-non");
+    if (b) b.onclick = activerPush;
+    if (n) n.onclick = () => { ecrire(CLE_PUSH, String(Date.now())); $("#push-boite").remove(); };
+  }
+  async function activerPush() {
+    const x = TP[L] || TP.fr;
+    const p = await Notification.requestPermission().catch(() => "denied");
+    const boite = $("#push-boite"); if (boite) boite.remove();
+    if (p !== "granted") { if (p === "denied") toast(x.refus); return; }
+    toast((await abonnerPush()) ? x.ok : x.echec);
+  }
+  const versOctets = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
+  async function abonnerPush() {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      let abo = await reg.pushManager.getSubscription();
+      if (!abo) {
+        const { cle } = await api("/api/push/cle");
+        if (!cle) return false;
+        abo = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: versOctets(cle) });
+      }
+      await api("/api/push/abonner", { endpoint: abo.endpoint });
+      return true;
+    } catch { return false; }
+  }
+  // Permission déjà accordée : (ré)abonne cet appareil une fois par lancement (nouveau personnage, abonnement perdu)
+  let pushVerifie = false;
+  function verifierPush() {
+    if (pushVerifie || !pushPossible() || Notification.permission !== "granted" || !etat.moi || !etat.moi.personnage) return;
+    pushVerifie = true; abonnerPush();
   }
 
   function saisie() {
@@ -907,7 +961,7 @@
     try {
       const d = await api("/api/direct");
       etat.direct = d; etat.heures = d.heures;
-      majBarre(); traiterEvenements(d);
+      majBarre(); traiterEvenements(d); verifierPush();
       ouvrirRevelationSiHeure(d.heures);
       releverNotifs();
     } catch { /* hors ligne : on garde le dernier état */ }
@@ -1116,6 +1170,7 @@
       if (n.type === "mission_reussie") html = `<small>🏷️ ${m.messageMJ}</small><p>${m.missionReussie}<br>${m.recompenses[d.recompense] || ""}</p>`;
       if (n.type === "mission_echouee") html = `<small>⏳ ${m.messageMJ}</small><p>${m.missionEchouee}</p>`;
       if (n.type === "mission_annulee") html = `<small>${m.messageMJ}</small><p>${m.missionAnnulee}</p>`;
+      if (n.type === "suggestion") html = `<small>🎛️ Suggestion de réglage</small><p>${esc(d.texte || "")}</p><p><a class="bouton sec" href="/admin#suggestions">Ouvrir l'admin</a></p>`; // MJ seulement
       if (html) { vibrer([60, 80, 60]); banniere("notif-" + n.id, `${html}<button class="lien" data-fermer>${t.fermer}</button>`, classe); }
     }
     if ((r.notifs || []).length && location.pathname === "/collection") collection();

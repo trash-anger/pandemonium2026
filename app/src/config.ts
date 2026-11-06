@@ -14,7 +14,8 @@ export const HEURES_PAR_DEFAUT = {
 };
 
 export const PARAMETRES_PAR_DEFAUT = {
-  prereglage: "rapide", // barème §0
+  prereglage: "rapide", // barème §0 : lent, normal, rapide, tres_rapide
+  bareme: {} as Partial<Bareme>, // saisies manuelles, prioritaires sur le préréglage (ADM-15)
   jumeaux: { paires: 45, triples: 10, seuil_activations: 60, fenetre_scan_mutuel_s: 90, indice_toutes_min: 10 },
   chats_noirs: { joueurs_par_chat: 50 },
   contagion: { transmission: 0.6, corruption_min: 10, immunite: 0.8, immunite_min: [20, 40, 60] },
@@ -22,12 +23,28 @@ export const PARAMETRES_PAR_DEFAUT = {
   pieges: { blocage_min: [1, 5] },
   surconsommation: { max_factions: 3 },
   // Barème §3 (DEC-031) : jauge de départ, rescans faits par heure glissante avant de perdre des souvenirs, seuil du flou
-  memoire: { depart: 10, rescans_par_heure: 10, seuil_flou: 5 },
+  memoire: { depart: 10, seuil_flou: 5 }, // rescans par heure : voir le barème
   // RG-005-3 : un rescan d'une même paire ne compte qu'une fois par fenêtre (minutes)
   rescan: { fenetre_min: 5 },
 };
 
 export type Heures = typeof HEURES_PAR_DEFAUT;
+
+// Préréglages du barème (barème §0, ADM-15). « Rapide » est celui de départ.
+export const PREREGLAGES = {
+  lent:        { paliers: [150, 600, 1200, 2000, 3000],    rescan_quete: 0.5,  rescans_par_heure: 15, boucle_infinie: 15, fantome: 10, transmission: 0.7 },
+  normal:      { paliers: [250, 1000, 2000, 3500, 5000],   rescan_quete: 0.25, rescans_par_heure: 10, boucle_infinie: 20, fantome: 15, transmission: 0.6 },
+  rapide:      { paliers: [500, 2000, 4000, 6500, 9000],   rescan_quete: 0.25, rescans_par_heure: 10, boucle_infinie: 30, fantome: 25, transmission: 0.6 },
+  tres_rapide: { paliers: [800, 3000, 6000, 10000, 14000], rescan_quete: 0.1,  rescans_par_heure: 8,  boucle_infinie: 40, fantome: 35, transmission: 0.5 },
+};
+export type NomPrereglage = keyof typeof PREREGLAGES;
+export type Bareme = (typeof PREREGLAGES)["normal"];
+
+/** Barème en vigueur : le préréglage actif, complété par les saisies manuelles du MJ. */
+export function baremeDe(p: { prereglage?: string; bareme?: Partial<Bareme> }): Bareme & { prereglage: NomPrereglage } {
+  const nom = (p.prereglage && p.prereglage in PREREGLAGES ? p.prereglage : "rapide") as NomPrereglage;
+  return { ...PREREGLAGES[nom], ...(p.bareme ?? {}), prereglage: nom };
+}
 
 export const CLES_CONFIG = {
   heures: HEURES_PAR_DEFAUT,

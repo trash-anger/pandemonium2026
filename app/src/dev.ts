@@ -15,7 +15,7 @@ export interface EnvDev {
   BANC_SESSION?: boolean;
 }
 
-const TABLES_PARTIE = ["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "personnages"]; // appareils avant personnages (clé étrangère)
+const TABLES_PARTIE = ["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "compteurs", "points_faction", "evenements", "personnages"]; // appareils avant personnages (clé étrangère)
 
 async function persoDuJeton(env: EnvDev, jeton: unknown): Promise<string | null> {
   if (typeof jeton !== "string" || !jeton) return null;

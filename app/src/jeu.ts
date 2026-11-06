@@ -4,9 +4,9 @@
 import { signer, verifier } from "./auth";
 import { ATTRIBUTS, auHasard, CLASSES, COULEURS, FACTIONS, genererPseudo, TYPES, tirerFaction, type Langue } from "./catalogue";
 import { normaliserCode } from "./codes";
-import { HEURES_PAR_DEFAUT, lireConfig, lireParametres, type Heures } from "./config";
+import { baremeDe, lireParametres, type Heures } from "./config";
+import { crediterScan, heuresIso, routeDirect, type Joueur } from "./direct";
 import { brouiller, estFlou, fauxSouvenir, grainePaire, type PersoSouvenir } from "./souvenirs";
-import { localVersIso } from "./temps";
 import { devActif } from "./mode";
 
 export interface EnvJeu {
@@ -45,12 +45,6 @@ export function maintenant(req: Request, env: EnvJeu): number {
   return Date.now();
 }
 
-async function heuresIso(db: D1Database) {
-  const h = { ...HEURES_PAR_DEFAUT, ...((await lireConfig(db, "heures")) as Partial<Heures>) };
-  const r: Record<keyof Heures, string> = {} as never;
-  for (const k of Object.keys(HEURES_PAR_DEFAUT) as (keyof Heures)[]) r[k] = localVersIso(h[k]);
-  return r;
-}
 
 async function maxFactions(db: D1Database): Promise<number> {
   return (await lireParametres(db)).surconsommation.max_factions ?? 3;
@@ -60,6 +54,10 @@ async function maxFactions(db: D1Database): Promise<number> {
 /** Réactions d'Halloween, liste fermée (RG-014-3). */
 export const EMOJIS_REACTION = ["🎃", "👻", "💀", "🦇", "🕷️", "🧛", "🔮", "🖤"];
 const UNE_HEURE_MS = 3_600_000;
+
+async function joueurDe(env: EnvJeu, id: string): Promise<Joueur> {
+  return (await env.DB.prepare("SELECT id, est_mj, surconsommation FROM personnages WHERE id = ?").bind(id).first<Joueur>()) ?? { id, est_mj: 0, surconsommation: 0 };
+}
 
 const versSouvenir = (p: LignePerso): PersoSouvenir => ({ id: p.id, pseudo: p.pseudo, type: p.type, couleur: p.couleur, attributs: JSON.parse(p.attributs) });
 
@@ -259,6 +257,7 @@ export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Res
     }
     if (p === "/api/collection" && req.method === "GET") return collection(req, env, t);
     if (p === "/api/classements" && req.method === "GET") return classements(req, env, t);
+    if (p === "/api/direct" && req.method === "GET") return routeDirect(req, env, t, devActif(env) && req.headers.has("X-Dev-Maintenant"));
     if (req.method !== "POST") return erreur("methode", 405);
     // Les appels d'écriture viennent de notre page (protection CSRF)
     const origine = req.headers.get("Origin");
@@ -307,10 +306,10 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
   const h = await heuresIso(env.DB);
   const me = await personnageDe(req, env, t);
 
-  const enregistrer = async (resultat: string, reponse: object, cible: string | null = null) => {
+  const enregistrer = async (resultat: string, reponse: object, cible: string | null = null, quete = 0) => {
     await env.DB.prepare(
-      "INSERT OR IGNORE INTO scans (id_client, scanneur_id, code, cible_id, source, resultat, horodatage_client, horodatage_serveur, reponse) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    ).bind(idClient, me?.id ?? null, e.code, cible, source, resultat, typeof c.horodatage === "string" ? c.horodatage : null, iso, JSON.stringify(reponse)).run();
+      "INSERT OR IGNORE INTO scans (id_client, scanneur_id, code, cible_id, source, resultat, horodatage_client, horodatage_serveur, reponse, quete) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    ).bind(idClient, me?.id ?? null, e.code, cible, source, resultat, typeof c.horodatage === "string" ? c.horodatage : null, iso, JSON.stringify(reponse), quete).run();
     return json(reponse);
   };
 
@@ -347,10 +346,11 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
     ).bind(me.id, cible).first();
     const badges = memeFaction && (await donnerBadge(env, me.id, "collegue_de_rayon", t)) ? ["collegue_de_rayon"] : [];
     const m = (await lireParametres(env.DB)).memoire;
+    const credit = await crediterScan(env, t, me, await joueurDe(env, cible), "nouvelle");
     return enregistrer("nouvelle_carte", {
       type: "nouvelle_carte", code: e.code, carte, nb_cartes: nb?.n ?? 1, badges,
-      souvenir: souvenirVu(me, carte!, m.seuil_flou), mes_reactions: [],
-    }, cible);
+      souvenir: souvenirVu(me, carte!, m.seuil_flou), mes_reactions: [], quete_total: credit.total,
+    }, cible, credit.quete);
   }
   return dejaVu(env, t, h, me, carte!, e.code, enregistrer);
 }
@@ -361,7 +361,7 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
  */
 async function dejaVu(
   env: EnvJeu, t: number, h: Record<keyof Heures, string>, me: LignePerso, carte: PersoSouvenir, code: string,
-  enregistrer: (resultat: string, reponse: object, cible: string | null) => Promise<Response>,
+  enregistrer: (resultat: string, reponse: object, cible: string | null, quete?: number) => Promise<Response>,
 ): Promise<Response> {
   const iso = new Date(t).toISOString(), cible = carte.id;
   const params = await lireParametres(env.DB), m = params.memoire;
@@ -378,11 +378,12 @@ async function dejaVu(
   if (palier && (await donnerBadge(env, me.id, PALIERS_RESCAN[palier], t))) badges.push(PALIERS_RESCAN[palier]);
 
   let perte = false;
+  const credit = compte ? await crediterScan(env, t, me, await joueurDe(env, cible), "rescan") : { quete: 0, total: null };
   if (compte) {
     await env.DB.prepare("UPDATE personnages SET souvenirs = souvenirs + 1 WHERE id = ?").bind(cible).run(); // RG-005-6
     const dansLHeure = await env.DB.prepare("SELECT COUNT(*) AS n FROM scans WHERE scanneur_id = ? AND resultat = 'deja_vu' AND horodatage_serveur > ?")
       .bind(me.id, new Date(t - UNE_HEURE_MS).toISOString()).first<{ n: number }>();
-    if ((dansLHeure?.n ?? 0) >= m.rescans_par_heure) {
+    if ((dansLHeure?.n ?? 0) >= baremeDe(params).rescans_par_heure) {
       // Boucle infinie (RG-005-5) : la jauge ne descend pas sous 0 ; à 0, badge « Amnésie »
       const r = await env.DB.prepare("UPDATE personnages SET souvenirs = souvenirs - 1 WHERE id = ? AND souvenirs > 0").bind(me.id).run();
       perte = r.meta.changes > 0;
@@ -406,8 +407,8 @@ async function dejaVu(
     type: "deja_vu", code, carte, n, compte, fenetre_min: fenetreMin, badges, palier, heures,
     premier_rescan: !dejaRescanne, // CA-005-4 : l'invitation ne s'affiche qu'une fois
     souvenir: souvenirVu(me, carte, m.seuil_flou), souvenirs: me.souvenirs, perte,
-    mes_reactions: await mesReactions(env, me.id, cible),
-  }, cible);
+    mes_reactions: await mesReactions(env, me.id, cible), quete_total: credit.total,
+  }, cible, credit.quete);
 }
 
 function valider(c: Record<string, unknown>) {

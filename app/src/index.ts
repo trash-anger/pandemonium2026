@@ -1,7 +1,8 @@
 // Worker « Déjà vu ! » : application du joueur (/api/*), étiquettes et panneau du MJ.
 import { debutConnexion, deconnexion, retourConnexion, utilisateurConnecte, type EnvAuth } from "./auth";
 import { genererCodes, normaliserCode } from "./codes";
-import { ecrireConfig, lireConfig, lireParametres, type CleConfig } from "./config";
+import { ecrireConfig, HEURES_PAR_DEFAUT, lireConfig, lireParametres, PREREGLAGES, type CleConfig } from "./config";
+import { etatDirect, evenement, isoVersLocal } from "./direct";
 import { csvNiimbot } from "./csv";
 import { langue, pageAdmin, pageApp, pageConnexion, type Compte, type EtiquetteVue, type Lot } from "./pages";
 import { definirPin, routeApi } from "./jeu";
@@ -153,11 +154,48 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     if (url.pathname === "/admin/partie-zero") {
       if (String(f.get("confirmation")).trim().toUpperCase() !== "ZERO") return retour({ erreur: "Confirmation manquante : rien n'a été effacé." });
       await env.DB.batch([
-        ...["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "personnages"].map((x) => env.DB.prepare(`DELETE FROM ${x}`)),
+        ...["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "compteurs", "points_faction", "evenements", "personnages"].map((x) => env.DB.prepare(`DELETE FROM ${x}`)),
         env.DB.prepare("UPDATE etiquettes SET etat = 'vierge', personnage_id = NULL, faction_id = NULL, reclamee_le = NULL WHERE etat = 'reclamee'"),
       ]);
       await journal(env, email, "partie_zero", {});
       return retour({ message: "Partie remise à zéro." });
+    }
+
+    // ---------- En direct (ADM-3, ADM-5, ADM-6, ADM-15) ----------
+    const t = Date.now(), iso = new Date(t).toISOString();
+    if (url.pathname === "/admin/direct/message") {
+      const texte = String(f.get("texte") || "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 200);
+      if (!texte) return retour({ erreur: "Message vide : rien n'a été envoyé." });
+      await evenement(env.DB, { type: "message", donnees: { texte }, debut: iso, fin: new Date(t + 15 * 60_000).toISOString(), auteur: email });
+      await journal(env, email, "message", { texte });
+      return retour({ message: "Message envoyé à tous les joueurs (visible 15 min)." });
+    }
+    if (url.pathname === "/admin/direct/glitch") {
+      const texte = String(f.get("texte") || "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 120);
+      await evenement(env.DB, { type: "glitch", donnees: texte ? { texte } : {}, debut: iso, fin: new Date(t + 5000).toISOString(), auteur: email });
+      await journal(env, email, "glitch", { texte });
+      return retour({ message: "Glitch global déclenché." });
+    }
+    if (url.pathname === "/admin/direct/revelation") {
+      const action = String(f.get("action"));
+      const h = { ...HEURES_PAR_DEFAUT, ...((await lireConfig(env.DB, "heures")) as object) } as typeof HEURES_PAR_DEFAUT;
+      const actuelle = Date.parse(localVersIso(h.revelation));
+      const nouvelle = action === "maintenant" ? isoVersLocal(t)
+        : action === "plus15" ? isoVersLocal(actuelle + 15 * 60_000)
+        : action === "moins15" ? isoVersLocal(actuelle - 15 * 60_000)
+        : action === "defaut" ? HEURES_PAR_DEFAUT.revelation : null;
+      if (!nouvelle) return retour({ erreur: "Action inconnue" });
+      await ecrireConfig(env.DB, "heures", { ...h, revelation: nouvelle });
+      await journal(env, email, "revelation", { action, revelation: nouvelle });
+      return retour({ message: `Révélation fixée à ${nouvelle.replace("T", " ")}.` });
+    }
+    if (url.pathname === "/admin/prereglage") {
+      const nom = String(f.get("nom"));
+      if (!(nom in PREREGLAGES)) return retour({ erreur: "Préréglage inconnu" });
+      const p = await lireParametres(env.DB);
+      await ecrireConfig(env.DB, "parametres", { ...p, prereglage: nom, bareme: {} });
+      await journal(env, email, "prereglage", { nom });
+      return retour({ message: `Préréglage « ${nom} » appliqué ; saisies manuelles du barème effacées.` });
     }
 
     if (url.pathname === "/admin/config") {
@@ -217,6 +255,7 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     },
     heures: await lireConfig(env.DB, "heures"),
     parametres: await lireParametres(env.DB),
+    direct: await etatDirect(env, Date.now()),
     message: url.searchParams.get("message") || undefined,
     erreur: url.searchParams.get("erreur") || undefined,
   });

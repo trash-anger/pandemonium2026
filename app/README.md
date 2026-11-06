@@ -99,3 +99,12 @@ Les seuils de la jauge de souvenirs (départ, rescans par heure, seuil du flou) 
 - Admin → « Costume du MJ » : pause « Fermé pour inventaire » (5, 10, 15 min ou jusqu'à réouverture), tableau des effets en cours, « Derniers clients » (30 min) avec sanctions 1 à 5 et missions M-1 à M-7. Sanctions et missions aussi depuis la fiche d'une étiquette. Les sanctions sont annulables (ce qui a été retiré est rendu).
 - Les joueurs reçoivent sanctions et missions par `/api/notifs`, relevé avec le direct toutes les 10 s.
 - Banc : boutons L-1…L-10 et T-1…T-5 (ouvrent l'étiquette qui porte l'effet à l'heure du banc), Sanction 1…5, Pause 5 min, Rouvrir, M-1…M-7 (missions de 2 min).
+
+## Jumeaux et chats noirs (LOT-4)
+- **Groupes** : formés par le serveur, à la création d'un personnage et au plus une fois par minute pendant le direct. Départ à la 60e activation ou à minuit ; courbe linéaire jusqu'à 2 h (45 paires et 10 triplés par défaut, étalés). Les partenaires sont pris parmi les joueurs actifs depuis 10 min ; le MJ est exclu.
+- **Indices** : aucun avant minuit, puis un toutes les 10 min (type, couleur, attributs vrais et faux, pseudo). Bonus : palier P-3, L-4, mission M-5.
+- **Retrouvailles** : scan mutuel en 90 s, avec n'importe quelle étiquette. Les deux téléphones montrent la fusion (le premier relève ses messages toutes les 2 s pendant l'attente). Badge, +50 points chacun, +5 à la quête, souvenir d'origine. Triplés : badge secret « Deux sur trois » à la première paire.
+- **Chats noirs** : 1 pour 50 joueurs (au moins un dès 10). **Contagion** : à chaque scan, dans les deux sens, avec la probabilité du barème ; corruption de 10 min (moins au-delà de 50 % de corrompus), immunité dans 80 % des cas. L-1 protège, L-2 annule, la surconsommation corrompt sans immunité, la sanction 3 corrompt 10 min.
+- **Révélation** : les jumeaux retrouvés sont reliés en pointillés dorés. Le bouton « 🦠 Contagion » montre qui a corrompu qui et dévoile les chats noirs. Le « Dernier survivant » (jamais corrompu, le plus de nouvelles cartes) reçoit son badge quand l'instantané est figé.
+- Admin → « Jumeaux et chats noirs » : groupes, chats, part de corrompus, réglage de la transmission et de la durée, « Relancer un foyer ».
+- Banc : E1 (Attribuer aux téléphones sélectionnés, Minuit, Indice +1, Retrouvailles T1↔T2, Trop lent, Triplés 2/3) et E2 (Devenir chat noir, Contaminer, Immunité, Vague > 50 %, Transmission 100 % / 60 %).

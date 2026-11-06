@@ -17,8 +17,8 @@ export const PARAMETRES_PAR_DEFAUT = {
   prereglage: "rapide", // barème §0 : lent, normal, rapide, tres_rapide
   bareme: {} as Partial<Bareme>, // saisies manuelles, prioritaires sur le préréglage (ADM-15)
   jumeaux: { paires: 45, triples: 10, seuil_activations: 60, fenetre_scan_mutuel_s: 90, indice_toutes_min: 10 },
-  chats_noirs: { joueurs_par_chat: 50 },
-  contagion: { transmission: 0.6, corruption_min: 10, immunite: 0.8, immunite_min: [20, 40, 60] },
+  chats_noirs: { joueurs_par_chat: 50, minimum_joueurs: 10 },
+  contagion: { transmission: 0.6, corruption_min: 10, immunite: 0.8, immunite_min: [20, 40, 60], immunite_parts: [0.8, 0.1, 0.1], seuil_degressif: 0.5, corruption_min_plancher: 3 },
   legendaires: { melange_min: 20, dernier_exemplaire: ["21:00", "00:00", "03:00"] },
   pieges: { blocage_min: [1, 5] },
   surconsommation: { max_factions: 3 },

@@ -117,6 +117,32 @@ export async function construireInstantane(env: EnvRev, rev: string, borne = rev
   const b = baremeDe(await lireParametres(db));
   const q = (await db.prepare("SELECT COALESCE(SUM(quete), 0) AS n FROM scans WHERE horodatage_serveur < ?").bind(borne).first<{ n: number }>())?.n ?? 0;
   const franchis = b.paliers.filter((s) => q >= s).length;
+  const idx = (id: string | null) => (id ? index.get(id) : undefined);
+  const paireIdx = (rows: { a: string | null; b: string | null }[]) => {
+    const vus = new Set<string>(), r: [number, number][] = [];
+    for (const x of rows) {
+      const a = idx(x.a), c = idx(x.b);
+      if (a === undefined || c === undefined || vus.has(a + ">" + c)) continue;
+      vus.add(a + ">" + c); r.push([a, c]);
+    }
+    return r;
+  };
+  // RG-009-14 : jumeaux retrouvés (pointillés dorés)
+  const jumeaux = paireIdx((await db.prepare("SELECT a, b FROM retrouvailles WHERE le < ?").bind(borne).all<{ a: string; b: string }>()).results);
+  // RG-008-9 : graphe de propagation (qui a corrompu qui) ; les chats noirs sont dévoilés à la révélation
+  const contagion = paireIdx((await db.prepare("SELECT source_id AS a, personnage_id AS b FROM corruptions WHERE source_id IS NOT NULL AND debut < ? ORDER BY debut").bind(borne)
+    .all<{ a: string; b: string }>()).results);
+  const corrompus = [...new Set((await db.prepare("SELECT DISTINCT personnage_id AS id FROM corruptions WHERE debut < ?").bind(borne).all<{ id: string }>()).results
+    .map((x) => idx(x.id)).filter((x): x is number => x !== undefined))];
+  const chats = (await db.prepare("SELECT id FROM personnages WHERE chat_noir_le IS NOT NULL AND chat_noir_le < ?").bind(borne).all<{ id: string }>()).results
+    .map((x) => idx(x.id)).filter((x): x is number => x !== undefined);
+  // BDG-6b « Dernier survivant » : jamais corrompu, le plus de nouvelles cartes ; à égalité, qui les a eues le plus tôt
+  const survivant = await db.prepare(
+    `SELECT c.possesseur_id AS id, COUNT(*) AS n, MAX(c.premier_scan_le) AS atteint FROM collection c JOIN personnages p ON p.id = c.possesseur_id
+     WHERE p.est_mj = 0 AND p.suspendu = 0 AND (p.chat_noir_le IS NULL OR p.chat_noir_le >= ?) AND c.premier_scan_le < ?
+       AND NOT EXISTS (SELECT 1 FROM corruptions k WHERE k.personnage_id = p.id AND k.debut < ?)
+     GROUP BY c.possesseur_id ORDER BY n DESC, atteint ASC LIMIT 1`,
+  ).bind(borne, borne, borne).first<{ id: string }>();
   return {
     v: 1, revelation: rev, quete: Math.floor(q * 100) / 100, franchis, part: PART_AIMANTEE[franchis],
     noeuds: persos.map((p) => {
@@ -124,6 +150,7 @@ export async function construireInstantane(env: EnvRev, rev: string, borne = rev
       return { id: p.id, pseudo: p.pseudo, type: p.type, couleur: p.couleur, faction: r.f, ...(r.multi ? { multi: 1 } : {}), ...(p.est_mj ? { mj: 1 } : {}) };
     }),
     liens,
+    jumeaux, contagion, corrompus, chats, survivant: idx(survivant?.id ?? null) ?? null,
     image: await lireImage(db),
   };
 }
@@ -141,6 +168,12 @@ export async function instantane(env: EnvRev, rev: string, t: number): Promise<s
   if (!inst.noeuds.length) return donnees;
   await env.DB.prepare("INSERT INTO revelations (revelation, donnees, cree_le) VALUES (?, ?, ?) ON CONFLICT (revelation) DO UPDATE SET donnees = excluded.donnees, cree_le = excluded.cree_le WHERE revelations.donnees LIKE '%\"noeuds\":[]%'")
     .bind(rev, donnees, new Date(t).toISOString()).run();
+  const r0 = await env.DB.prepare("SELECT donnees FROM revelations WHERE revelation = ?").bind(rev).first<{ donnees: string }>();
+  // Le badge du dernier survivant est donné quand l'instantané est figé, d'après l'instantané retenu
+  const fige = JSON.parse(r0?.donnees ?? donnees) as typeof inst;
+  if (fige.survivant !== null && fige.noeuds[fige.survivant]) {
+    await env.DB.prepare("INSERT OR IGNORE INTO badges (personnage_id, badge, obtenu_le) VALUES (?, 'dernier_survivant', ?)").bind(fige.noeuds[fige.survivant].id, rev).run();
+  }
   const r = await env.DB.prepare("SELECT donnees FROM revelations WHERE revelation = ?").bind(rev).first<{ donnees: string }>();
   return r?.donnees ?? donnees;
 }

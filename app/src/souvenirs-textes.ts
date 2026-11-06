@@ -145,3 +145,21 @@ export const GABARITS = { fr: [
   "{A} gave {attr_A} to {B} in {annee}. The gift was resold the next day, at a profit. {chute}",
   "Your first meeting was {lieu}, in {annee}. The second, tonight. In between: {attr_A}, {attr_B} and a time loop. {chute}"
 ] };
+
+// Souvenirs d'origine des jumeaux (textes §3.5)
+export const ORIGINES = {
+  fr: {
+    jumeaux: [
+      "Vous venez du même rouleau d'étiquettes, imprimé en {annee}, {lieu}. Même taille, même prix, même code-barres à un chiffre près. La Matrice a coupé le rouleau en deux pour voir ce qui arriverait. Ce qui arrive, c'est ce soir.",
+      "{A} et {B} faisaient partie d'un lot de deux, −50 % sur le second article. Depuis, la question reste ouverte : qui était en solde ? Vous pouvez enfin la régler.",
+    ],
+    triples: ["{A}, {B} et {C} : trois articles identiques, trois rayons différents, une seule étiquette d'origine. Le lot est complet. Ni repris, ni échangé."],
+  },
+  en: {
+    jumeaux: [
+      "You came off the same roll of tags, in {annee}, {lieu}. Same size, same price, same barcode give or take a digit. The Matrix split you up to see what would happen. What happens is tonight.",
+      "{A} and {B} were sold as a two-pack, 50% off the second one. Since then, each of you has believed you were the discounted one. You can finally settle it.",
+    ],
+    triples: ["{A}, {B} and {C}: three identical items, three different aisles, one original tag. The set is complete. No returns, no exchanges."],
+  },
+};

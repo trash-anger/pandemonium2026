@@ -1,7 +1,7 @@
 // Faux souvenirs (FEAT-006) : gabarits combinés, sans IA (RG-006-2), textes §3.
 // Le souvenir d'une paire est toujours le même (RG-006-1), dans les deux sens (RG-006-4) :
 // tous les tirages viennent d'un hash des deux identifiants triés (RG-006-5).
-import { CHUTES, GABARITS, LIEUX } from "./souvenirs-textes";
+import { CHUTES, GABARITS, LIEUX, ORIGINES } from "./souvenirs-textes";
 import type { Langue } from "./catalogue";
 
 export interface PersoSouvenir { id: string; pseudo: string; type: string; couleur: string; attributs: string[] }
@@ -32,7 +32,7 @@ const FORMES_ATTR: Record<Langue, Record<string, string>> = {
 const SANS_ATTRIBUT: Record<Langue, string> = { fr: "un costume qui n'avait pas encore été inventé", en: "an outfit that hadn't been invented yet" };
 
 /** FNV-1a 32 bits puis mélange final : rapide, stable et identique sur tous les appareils. */
-function hash(s: string): number {
+export function hash(s: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i);
@@ -86,4 +86,16 @@ export function estFlou(jauge: number, seuil: number, graine: string): boolean {
 export function brouiller(texte: string, graine: string): string {
   let i = 0;
   return texte.replace(/[\p{L}\d'’-]{3,}/gu, (mot) => (hash(`${graine}#${i++}`) % 5 < 3 ? "▒".repeat(Math.min(mot.length, 6)) : mot));
+}
+
+/** Souvenir d'origine des jumeaux et des triplés (RG-006-7, textes §3.5), affiché aux retrouvailles. */
+export function souvenirOrigine(membres: { id: string; pseudo: string }[], l: Langue): string {
+  const tries = [...membres].sort((x, y) => (x.id < y.id ? -1 : 1));
+  const g = tries.map((m) => m.id).join("|");
+  const liste = tries.length === 3 ? ORIGINES[l].triples : ORIGINES[l].jumeaux;
+  const v: Record<string, string> = {
+    A: tries[0].pseudo, B: tries[1].pseudo, C: tries[2]?.pseudo ?? "",
+    annee: String(1987 + tirer(g, "annee", 2019 - 1987 + 1)), lieu: LIEUX[l][tirer(g, "lieu", LIEUX[l].length)],
+  };
+  return liste[tirer(g, "origine", liste.length)].replace(/\{(\w+)\}/g, (m, k: string) => v[k] ?? m);
 }

@@ -223,6 +223,20 @@ async function surTelephones(fn, quoi) {
   }
 }
 
+// E1 : jumeaux (2 téléphones) ou triplés (3) parmi les téléphones sélectionnés
+async function attribuerJumeaux() {
+  const ids = cibles().slice(0, 3), jetons = [];
+  for (const id of ids) { const j = await identite(id); if (j) jetons.push(j); }
+  await api("/__dev/jumeaux", { jetons });
+  log("banc", `${jetons.length === 3 ? "triplés" : "jumeaux"} : ${ids.slice(0, jetons.length).join(", ")}`);
+}
+// Scan mutuel : a scanne b, puis b scanne a après « attente » secondes (au-delà de 90 s, pas de retrouvailles)
+async function retrouvailles(a, b, attente = 3) {
+  await scanneEntre(a, b);
+  log("banc", `${b} scannera ${a} dans ${attente} s`);
+  setTimeout(() => scanneEntre(b, a).catch((e) => log("banc", e.message, "err")), attente * 1000);
+}
+
 // H1 : révélation à 5 h dans l'heure du banc (les données du banc sont datées de l'heure simulée)
 async function reveler(paliers) {
   await api("/__dev/revelation", paliers === undefined ? {} : { paliers });
@@ -298,8 +312,14 @@ const TESTS = [
       ["Rouvrir", async () => { await api("/__dev/pause", { minutes: -1 }); log("banc", "magasin rouvert"); }], ["Suggestion", null, "LOT-3"]]],
   ]],
   ["E. Jumeaux et chats noirs", [
-    ["E1", "Jumeau, indice, retrouvailles < 90 s, triplés, déjà scanné", "LOT-4", [["Attribuer", null, "LOT-4"], ["Indice", null, "LOT-4"], ["Retrouvailles", null, "LOT-4"], ["Triplés 2/3", null, "LOT-4"]]],
-    ["E2", "Chat noir, contamination, immunité, guérison, vague > 50 %", "LOT-4", [["Devenir chat noir", null, "LOT-4"], ["Contaminer", null, "LOT-4"], ["Immunité", null, "LOT-4"], ["Vague", null, "LOT-4"]]],
+    ["E1", "Jumeau, indice, retrouvailles < 90 s, triplés, déjà scanné", "LOT-4", [["Attribuer", attribuerJumeaux], H("Minuit", "2026-11-08T00:00"), ["Indice +1", () => surTelephones((j) => api("/__dev/indice", { jeton: j }), "indice bonus")],
+      ["Retrouvailles T1↔T2", () => retrouvailles("T1", "T2")], ["Trop lent (> 90 s)", () => retrouvailles("T1", "T2", 95)], ["Triplés 2/3", () => retrouvailles("T1", "T2")]]],
+    ["E2", "Chat noir, contamination, immunité, guérison, vague > 50 %", "LOT-4", [["Devenir chat noir", () => surTelephones((j) => api("/__dev/chat-noir", { jeton: j }), "chat noir")],
+      ["Contaminer", () => surTelephones((j) => api("/__dev/corrompre", { jeton: j }), "corrompu")],
+      ["Immunité", () => surTelephones((j) => api("/__dev/immunite", { jeton: j }), "immunisé 20 min")],
+      ["Vague > 50 %", async () => { const r = await api("/__dev/vague", {}); log("banc", `${r.n}/${r.total} joueurs corrompus`); }],
+      ["Transmission 100 %", async () => { await api("/__dev/transmission", { valeur: 1 }); log("banc", "transmission 100 %"); }],
+      ["Transmission 60 %", async () => { await api("/__dev/transmission", { valeur: 0.6 }); log("banc", "transmission 60 %"); }]]],
   ]],
   ["F. Costume du MJ", [
     ["F1", "Légendaires L-1 à L-10 ; rupture de stock ; déjà obtenue", "LOT-3", ["L-1", "L-2", "L-3", "L-4", "L-5", "L-6", "L-7", "L-8", "L-9", "L-10"].map((e) => [e, () => scannerEffet(e)])],

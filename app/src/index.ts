@@ -4,7 +4,8 @@ import { genererCodes, normaliserCode } from "./codes";
 import { ecrireConfig, HEURES_PAR_DEFAUT, lireConfig, lireParametres, PREREGLAGES, type CleConfig } from "./config";
 import { etatDirect, evenement, isoVersLocal } from "./direct";
 import { csvNiimbot } from "./csv";
-import { annulerMission, annulerSanction, confierMission, etatMJ, fermerPause, MISSIONS, ouvrirPause, RECOMPENSES_M7, reussirMission, sanctionner } from "./mj";
+import { etatRoles, relancerFoyer } from "./jumeaux";
+import { annulerMission, annulerSanction, confierMission, etatMJ, fermerPause, heureDuJoueur, heureGlobale, MISSIONS, ouvrirPause, RECOMPENSES_M7, reussirMission, sanctionner } from "./mj";
 import { construireInstantane, ecrireImage, lireImage, SANS_BORNE, validerImage } from "./revelation";
 import { langue, pageAdmin, pageApp, pageConnexion, type Compte, type EtiquetteVue, type Lot } from "./pages";
 import { definirPin, routeApi } from "./jeu";
@@ -254,6 +255,20 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       await journal(env, email, "mission_annulee", { id: Number(f.get("id")) });
       return retour({ message: "Mission annulée." });
     }
+    // ---------- Contagion en direct (ADM-7, RG-008-7) ----------
+    if (url.pathname === "/admin/contagion") {
+      const tr = Number(f.get("transmission")), d = Number(f.get("corruption_min"));
+      if (!(tr >= 0 && tr <= 100) || !(d >= 1 && d <= 60)) return retour({ erreur: "Réglage de contagion invalide" });
+      const p = await lireParametres(env.DB);
+      await ecrireConfig(env.DB, "parametres", { ...p, bareme: { ...p.bareme, transmission: tr / 100 }, contagion: { ...p.contagion, corruption_min: d } });
+      await journal(env, email, "contagion", { transmission: tr, corruption_min: d });
+      return retour({ message: `Contagion : transmission ${tr} %, corruption ${d} min. Les prochains scans appliquent ces valeurs.` });
+    }
+    if (url.pathname === "/admin/contagion/foyer") {
+      const n = await relancerFoyer(env, (id) => heureDuJoueur(env.DB, id), 3);
+      await journal(env, email, "foyer", { n });
+      return retour({ message: n ? `Foyer relancé : ${n} joueur(s) corrompu(s).` : "Aucun joueur sain à corrompre." });
+    }
     if (url.pathname === "/admin/prereglage") {
       const nom = String(f.get("nom"));
       if (!(nom in PREREGLAGES)) return retour({ erreur: "Préréglage inconnu" });
@@ -330,6 +345,7 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     direct: await etatDirect(env, Date.now()),
     image: await lireImage(env.DB),
     mj: await etatMJ(env),
+    roles: await etatRoles(env, await heureGlobale(env)),
     message: url.searchParams.get("message") || undefined,
     erreur: url.searchParams.get("erreur") || undefined,
   });

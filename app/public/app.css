@@ -235,7 +235,8 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .rev-bas{position:absolute;left:0;right:0;bottom:0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(7,6,10,.92) 30%)}
 .rev-bas p{margin:0 0 8px;max-width:560px;font-size:16px;line-height:1.4}
 .rev-bas b{color:var(--green)}
-.rev-boutons{display:flex;gap:10px;max-width:560px}
+.rev-boutons{display:flex;flex-wrap:wrap;gap:10px;max-width:560px}
+#rev-cont{flex-basis:100%}
 .rev-boutons .bouton{flex:1;margin:0;min-height:44px;padding:10px}
 .rev-carte{position:absolute;left:16px;right:16px;top:calc(96px + env(safe-area-inset-top));max-width:420px;display:flex;gap:12px;align-items:center;background:var(--bg2);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px}
 .rev-carte .e{font-size:30px}
@@ -265,3 +266,28 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .legende b{display:block;color:var(--gold);font-size:14px}.legende small{font-family:var(--mono);font-size:11px;color:var(--muted)}
 .legende.active{border-color:var(--gold)}
 .annonce.alerte{background:var(--pink)}
+
+/* Jumeaux et chats noirs (FEAT-007, FEAT-008) */
+.double{display:block;color:inherit;text-decoration:none;border-color:#6b5a2a}
+.double b{color:var(--gold)}.double p{margin:6px 0 0}.double .lien{display:block;margin-top:8px;font-size:13px;color:var(--muted)}
+.double.attente{border-color:var(--gold);text-align:center}.double.attente .compte{margin:8px auto 0}
+.double.reuni{border-color:var(--green)}
+.indices{margin:8px 0 0;padding-left:20px;line-height:1.5}
+.puce-chat{background:#1a1a1a;border-color:#888;color:#ddd}
+.puce-corrompu{background:#2a0f1b;border-color:var(--pink);color:var(--pink)}
+.puce-immun{background:#0f2a1d;border-color:var(--green);color:var(--green)}
+.fusion{text-align:center;margin-top:12px}
+.fusion-cartes{display:flex;justify-content:center;gap:0;margin:8px 0 16px}
+.fusion-cartes .mini{width:120px}
+.fusion-texte{font-size:20px;font-weight:700}
+.souvenir.origine{border-color:var(--gold)}
+@media (prefers-reduced-motion:no-preference){
+  /* Fusion : les deux cartes se rapprochent puis se superposent (mouvement lent, pas de flash, REQ-003) */
+  .fusion-g{animation:fg 1.6s ease-in-out both}.fusion-d{animation:fd 1.6s ease-in-out both}
+  @keyframes fg{from{transform:translateX(-60px) rotate(-8deg);opacity:.4}to{transform:translateX(18px) rotate(-2deg)}}
+  @keyframes fd{from{transform:translateX(60px) rotate(8deg);opacity:.4}to{transform:translateX(-18px) rotate(2deg)}}
+  .fusion h1{animation:ap .6s ease-out 1.2s both}
+  /* Corrompu : un léger décalage toutes les 8 s environ, bien sous 3 changements par seconde */
+  body.corrompu main{animation:glc 8s steps(1) infinite}
+  @keyframes glc{0%,93%{transform:none;filter:none}94%{transform:translateX(-3px) skewX(4deg);filter:hue-rotate(90deg)}96%{transform:translateX(2px);filter:none}98%{transform:none}}
+}

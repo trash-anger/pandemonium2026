@@ -635,7 +635,7 @@
     }
     const ty = typeDe(pe.type);
     rendre(`${compte ? `<div class="boite">${compte}</div>` : ""}
-      <p class="maintenant"><small>${t.maintenant}</small>${esc(ligne)}</p>
+      ${blocEffets(d)}<p class="maintenant"><small>${t.maintenant}</small>${esc(ligne)}</p>
       ${h.revelation && now >= Date.parse(h.revelation) ? `<a class="bouton rev-revoir" href="/revelation" data-nav>${t.revRevoir}</a>` : ""}
       <a class="gros-scan" href="/saisie" data-nav><span>📷</span>${t.scanner}</a>
       <div class="discret"><a href="/moi" data-nav><b>${ty.e}</b><span>${t.maCarte}</span><div class="petit" style="margin-top:4px">${esc(pe.pseudo)}</div></a>
@@ -677,8 +677,8 @@
   /** Missions actives (onglet Collection) : mission du MJ (ADM-19, LOT-6) puis mission de départ. Vide s'il n'y en a aucune. */
   function blocMissions(d) {
     const lignes = [];
-    if (d.mission_mj) { // forme attendue au LOT-6 : { titre, condition, fin }
-      const mm = d.mission_mj;
+    if (d.mission_mj) { // ADM-19 : { code, donnees, fin }
+      const mm = missionMJ(d.mission_mj);
       lignes.push(`<div class="mission"><span class="e">🏷️</span><div><b>${esc(mm.titre)} <span class="chip or">${t.missionMJ}</span></b><small>${esc(mm.condition)}</small>
         ${mm.fin ? `<div class="compte" data-fin="${esc(mm.fin)}"></div>` : ""}</div></div>`);
     }
@@ -736,7 +736,11 @@
       case "bientot":
         return rendre(`<span class="chip">${esc(code)}</span><h1>DÉJÀ<br>VU&nbsp;!</h1><div class="boite"><div class="code">${esc(code)}</div><p>${t.attente}</p>
           <p class="mono petit muted" style="margin-bottom:4px">${t.reveil}</p><div class="compte" data-fin="${r.debut}" data-fini="${esc(t.ouvert)}" data-recharger="1"></div></div><footer>${t.pied}</footer>`);
-      case "bloque": fixer(); return rendre(`<span class="chip">${t.bloqueTitre}</span><div class="boite alerte"><div class="compte" data-fin="${r.jusqu_a}"></div><p>${t.bloque}</p></div>`, { onglet: "accueil" });
+      case "bloque": { fixer(); const pg = piegeDeBlocage(r); rendre(ecranPiege(pg), { onglet: "accueil" }); return animerPiege(pg.effet); }
+      case "piege": fixer(); vibrer([80, 60, 80]); chargerMoi(); rendre(ecranPiege(r), { onglet: "accueil" }); return animerPiege(r.effet);
+      case "legendaire": fixer(); vibrer([30, 50, 30, 50, 90]); chargerMoi(); setTimeout(rafraichirDirect, 300);
+        return rendre(`${ecranLegendaire(r)}<a class="bouton" href="/saisie" data-nav>${t.encore}</a><a class="bouton sec" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
+      case "suspendu": fixer(); return rendre(`<span class="chip">⛔</span><h1 class="moyen">${esc(M().sanctions[4].split(".")[0])}</h1><div class="boite alerte"><p>${M().suspendu}</p></div>`, { onglet: "accueil" });
       case "special": fixer(); vibrer(); return rendre(`<span class="chip or">${t.specialTitre}</span><h1 class="moyen">✦ ${esc(code)} ✦</h1><p>${t.special}</p>`, { onglet: o });
       case "creation": return creation(code, r.mj);
       case "a_toi": return aToi(code);
@@ -901,10 +905,254 @@
       etat.direct = d; etat.heures = d.heures;
       majBarre(); traiterEvenements(d);
       ouvrirRevelationSiHeure(d.heures);
+      releverNotifs();
     } catch { /* hors ligne : on garde le dernier état */ }
   }
   setInterval(() => { if (document.visibilityState === "visible") rafraichirDirect(); }, 10_000);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") rafraichirDirect(); });
+
+  // ---------- Costume du MJ : légendaires, pièges, pause, sanctions et missions (FEAT-022, ADM-17 à ADM-19) ----------
+  const TMJ = {
+    fr: {
+      legendaire: "✦ Légendaire", piege: "🪤 Piège", deja: "Déjà vu. Tu l'as déjà dans ta garde-robe.", points: (n) => `+${n} points de faction`,
+      collection: (n) => `${n}/10 légendaires`, rupture: "Rupture de stock", ruptureTexte: (h) => `Le dernier exemplaire est parti. ${h ? `Prochaine remise en rayon à ${h}.` : "Plus de remise en rayon ce soir."}`,
+      pieDeja: "Tu t'es déjà fait avoir. Déjà vu.", protege: "Retour sans reçu ! Ta légendaire t'a protégé de ce piège.", vueMJ: "Vue du MJ : cette étiquette porte en ce moment",
+      bloqueDans: "Scanner bloqué encore", legendes: "✦ Légendes", actif: "actif", pret: "prêt",
+      L: {
+        "L-1": ["Cape de Déjà-vu +2", "Immunité au glitch du chat noir pendant 30 min."],
+        "L-2": ["Retour sans reçu", "Te protège du prochain piège, ou annule une corruption en cours."],
+        "L-3": ["La Pilule rouge", "Pendant 10 min, tu vois la part de corrompus et le nombre de chats noirs actifs."],
+        "L-4": ["Miroir de la cabine d'essayage", "Révèle tout de suite le prochain indice sur ton jumeau."],
+        "L-5": ["Bon de réduction −100 %", "Tes 3 prochaines nouvelles cartes comptent double pour la quête."],
+        "L-6": ["Boucle temporelle", "Pendant 10 min, chaque rescan compte, sans attendre."],
+        "L-7": ["Dernier exemplaire", "Il n'en existe qu'un à la fois, et c'est toi qui l'as. Les suivants trouveront le rayon vide."],
+        "L-8": ["Dé à 20 faces doré", "Pas de duel ce soir : tu gagnes 3 souvenirs à la place."],
+        "L-9": ["Ticket de caisse infini", "Un faux souvenir unique avec le MJ : toutes vos vies antérieures."],
+        "L-10": ["Mannequin de vitrine", "Pendant 15 min, ta carte est en vitrine sur l'écran d'accueil de tout le monde."],
+      },
+      T: {
+        "T-1": "File d'attente du Black Friday", "T-2": "Paiement refusé", "T-3": "Mise à jour obligatoire", "T-4": "Abonnement premium", "T-5": "CAPTCHA infini",
+        pause: "Fermé pour inventaire",
+      },
+      file: (n) => `Tu es le ${n.toLocaleString("fr-CA")}<sup>e</sup> dans la file.`, fileAide: "Merci de votre patience. Votre scan est important pour nous.",
+      refuse: "Carte refusée. Veuillez patienter avant de réessayer.", maj: "Ne pas éteindre votre téléphone.", majEtape: (p) => `Installation de la mise à jour… ${p} %`,
+      premium: "Débloque le scan pour 9,99 $/mois.", sabonner: "S'abonner", refuser: "Refuser", premiumNon: "Paiement refusé. Évidemment.",
+      captcha: "Prouve que tu n'es pas un robot. Sélectionne toutes les images qui contiennent des étiquettes.", verifier: "Vérifier", captchaNon: "Mauvaise réponse. Réessaie.",
+      pause: (m) => `FERMÉ POUR INVENTAIRE. Le MJ fait une pause. Ton scanner est bloqué 2 min. ${m ? `Réouverture dans ${m} min.` : "Réouverture : quand le MJ reviendra."}`,
+      sanctionBloque: "Retour en caisse. Le MJ a bloqué ton scanner.", surconso: "Patience, client fidèle. Ce scan ne compte pas.",
+      suspendu: "Interdit de magasin. Ton personnage est suspendu. Va voir le MJ.",
+      sanctions: [
+        "Le MJ t'a à l'œil. Prochaine fois, ce sera moins drôle. Badge : Client difficile.",
+        "Retour en caisse. Ton scanner est bloqué 5 min.",
+        "Article défectueux. Tu glitches pendant 10 min et tu as perdu des souvenirs.",
+        "Rappel de produit. Scanner bloqué 30 min, points de faction retirés, mémoire effacée.",
+        "Interdit de magasin. Ton personnage est suspendu. Va voir le MJ.",
+      ],
+      sanctionAnnulee: "Le MJ a annulé ta sanction. Ce qui t'avait été retiré t'est rendu.", messageMJ: "Le MJ",
+      missionAnnonce: (m) => `Le MJ te confie une mission. Tu as ${m} min.`, missionReussie: "Mission accomplie. Badge : Employé du mois.",
+      missionEchouee: "Temps écoulé. Le MJ ne t'en veut pas. Pas trop.", missionAnnulee: "Le MJ a annulé ta mission.",
+      recompenses: { points: "+20 points de faction pour tes factions.", souvenirs: "+3 souvenirs.", solde: "Tes 5 prochaines nouvelles cartes comptent double." },
+      missions: {
+        "M-1": ["Ramène-moi des clients", () => "Scanne 3 personnes que tu n'as jamais scannées."],
+        "M-2": ["Tournée des factions", () => "Scanne un membre de chacune des 5 factions."],
+        "M-3": ["Service après-vente", () => "Retrouve et rescanne ta toute première rencontre de la soirée."],
+        "M-4": ["Contrôle qualité", (a, b) => `Trouve quelqu'un avec ${a} et ${b}, et scanne-le.`],
+        "M-5": ["Livraison express", () => "Envoie-moi 2 personnes qui ne m'ont jamais scanné."],
+        "M-6": ["Solde privée", () => "Tes 5 prochaines nouvelles cartes comptent double. Cadeau de la maison."],
+        "M-7": ["Mission spéciale du MJ", () => "Il t'a dit quoi faire."],
+      },
+      vitrine: "🪟 Vu en vitrine", effets: { "S-3": "⚠️ Article défectueux", "M-6": "🎁 Solde privée ×2" }, cartesX2: (n) => `${n} carte${n > 1 ? "s" : ""} ×2`,
+    },
+    en: {
+      legendaire: "✦ Legendary", piege: "🪤 Trap", deja: "Déjà vu. It's already in your wardrobe.", points: (n) => `+${n} faction points`,
+      collection: (n) => `${n}/10 legendaries`, rupture: "Out of stock", ruptureTexte: (h) => `The last one is gone. ${h ? `Restocked at ${h}.` : "No more restocks tonight."}`,
+      pieDeja: "You already fell for this one. Déjà vu.", protege: "Return without receipt! Your legendary protected you from this trap.", vueMJ: "GM view: this tag currently carries",
+      bloqueDans: "Scanner locked for", legendes: "✦ Legends", actif: "active", pret: "ready",
+      L: {
+        "L-1": ["Déjà-vu Cloak +2", "Immune to the black cat's glitch for 30 min."],
+        "L-2": ["Return Without Receipt", "Protects you from the next trap, or cancels an ongoing corruption."],
+        "L-3": ["The Red Pill", "For 10 min, you see the share of corrupted players and the number of active black cats."],
+        "L-4": ["Fitting-Room Mirror", "Reveals the next clue about your twin right away."],
+        "L-5": ["−100% Coupon", "Your next 3 new cards count double for the quest."],
+        "L-6": ["Time Loop", "For 10 min, every rescan counts, no waiting."],
+        "L-7": ["Last One in Stock", "Only one exists at a time, and you've got it. The next ones will find an empty shelf."],
+        "L-8": ["Golden D20", "No duels tonight: you get 3 memories instead."],
+        "L-9": ["Infinite Receipt", "A unique fake memory with the GM: all your past lives."],
+        "L-10": ["Window Mannequin", "For 15 min, your card is in the window on everyone's home screen."],
+      },
+      T: {
+        "T-1": "Black Friday Queue", "T-2": "Payment Declined", "T-3": "Mandatory Update", "T-4": "Premium Subscription", "T-5": "Endless CAPTCHA",
+        pause: "Closed for stocktaking",
+      },
+      file: (n) => `You are number ${n.toLocaleString("en-CA")} in line.`, fileAide: "Thank you for your patience. Your scan is important to us.",
+      refuse: "Card declined. Please wait before trying again.", maj: "Do not turn off your phone.", majEtape: (p) => `Installing update… ${p}%`,
+      premium: "Unlock scanning for $9.99/month.", sabonner: "Subscribe", refuser: "Decline", premiumNon: "Payment declined. Obviously.",
+      captcha: "Prove you're not a robot. Select all images that contain tags.", verifier: "Verify", captchaNon: "Wrong answer. Try again.",
+      pause: (m) => `CLOSED FOR STOCKTAKING. The GM is on a break. Your scanner is locked for 2 min. ${m ? `Reopening in ${m} min.` : "Reopening: when the GM is back."}`,
+      sanctionBloque: "Back to checkout. The GM locked your scanner.", surconso: "Patience, loyal customer. This scan doesn't count.",
+      suspendu: "Banned from the store. Your character is suspended. Go see the GM.",
+      sanctions: [
+        "The GM is watching you. Next time it won't be funny. Badge: Difficult Customer.",
+        "Back to checkout. Your scanner is locked for 5 min.",
+        "Defective item. You're glitching for 10 min and you've lost memories.",
+        "Product recall. Scanner locked for 30 min, faction points removed, memory wiped.",
+        "Banned from the store. Your character is suspended. Go see the GM.",
+      ],
+      sanctionAnnulee: "The GM cancelled your sanction. What was taken is given back.", messageMJ: "The GM",
+      missionAnnonce: (m) => `The GM has a mission for you. You have ${m} min.`, missionReussie: "Mission accomplished. Badge: Employee of the Month.",
+      missionEchouee: "Time's up. The GM isn't mad. Not too mad.", missionAnnulee: "The GM cancelled your mission.",
+      recompenses: { points: "+20 faction points for your factions.", souvenirs: "+3 memories.", solde: "Your next 5 new cards count double." },
+      missions: {
+        "M-1": ["Bring me customers", () => "Scan 3 people you've never scanned."],
+        "M-2": ["Faction tour", () => "Scan a member of each of the 5 factions."],
+        "M-3": ["After-sales service", () => "Find and rescan the very first person you met tonight."],
+        "M-4": ["Quality control", (a, b) => `Find someone wearing ${a} and ${b}, and scan them.`],
+        "M-5": ["Express delivery", () => "Send me 2 people who've never scanned me."],
+        "M-6": ["Private sale", () => "Your next 5 new cards count double. On the house."],
+        "M-7": ["Special GM mission", () => "You know what to do."],
+      },
+      vitrine: "🪟 In the window", effets: { "S-3": "⚠️ Defective item", "M-6": "🎁 Private sale ×2" }, cartesX2: (n) => `${n} card${n > 1 ? "s" : ""} ×2`,
+    },
+  };
+  const M = () => TMJ[L] || TMJ.fr;
+  const nomEffet = (e) => (e.startsWith("L") ? M().L[e][0] : M().T[e] || e);
+  const minutesJusqua = (iso) => Math.max(1, Math.ceil((Date.parse(iso) - Date.now()) / 60000));
+
+  /** Légendaire obtenue, déjà obtenue ou en rupture de stock (RG-022-2, CA-022-4). */
+  function ecranLegendaire(r) {
+    const m = M(), [nom, effet] = m.L[r.effet] || [r.effet, ""];
+    if (r.mj) return `<span class="chip or">${m.legendaire}</span><h1 class="moyen">${esc(nom)}</h1><p class="muted">${m.vueMJ} <b>${esc(r.effet)}</b>.</p><p>${effet}</p>`;
+    if (r.rupture) return `<span class="chip">${m.rupture}</span><h1 class="moyen">${esc(nom)}</h1><div class="boite alerte"><p>${m.ruptureTexte(r.prochaine ? heureCourte(r.prochaine) : null)}</p></div>`;
+    if (r.deja) return `<span class="chip or">${m.legendaire}</span><h1 class="moyen">${esc(nom)}</h1><p>${m.deja}</p>`;
+    const memoire = r.souvenir ? `<div class="souvenir ticket-infini"><p>${esc(r.souvenir[L] || r.souvenir.fr).replace(/\n\n/g, "</p><p>")}</p></div>` : "";
+    return `<div class="legendaire apparait"><span class="chip or">${m.legendaire} · ${esc(r.effet)}</span><h1 class="moyen">${esc(nom)}</h1><p class="effet">${effet}</p>
+      ${r.fin ? `<p class="mono petit">⏳ <span data-fin="${r.fin}"></span></p>` : ""}
+      <p class="mono petit muted">${r.points ? m.points(15) + " · " : ""}${m.collection(r.collection || 0)}</p></div>${memoire}${(r.badges || []).map(badgeGagne).join("")}`;
+  }
+
+  /** Écran d'un piège (T-1…T-5) ou de la pause, avec son compte à rebours et son gag (REQ-003 : pas de flash). */
+  function ecranPiege(r) {
+    const m = M(), nom = m.T[r.effet] || r.effet;
+    if (r.mj) return `<span class="chip">${m.piege}</span><h1 class="moyen">${esc(nom)}</h1><p class="muted">${m.vueMJ} <b>${esc(r.effet)}</b>.</p>`;
+    if (r.deja) return `<span class="chip">${m.piege} · ${esc(nom)}</span><h1 class="moyen">DÉJÀ VU</h1><p>${m.pieDeja}</p>`;
+    if (r.protege) return `<span class="chip or">✦ ${m.L["L-2"][0]}</span><h1 class="moyen">${esc(nom)}</h1><p>${m.protege}</p>`;
+    const compte = r.jusqu_a ? `<p class="mono petit muted" style="margin:12px 0 4px">${m.bloqueDans}</p><div class="compte" data-fin="${r.jusqu_a}" data-recharger="1"></div>` : "";
+    const gag = {
+      "T-1": `<p class="file-num" id="g-file">${m.file(4812)}</p><p class="muted petit">${m.fileAide}</p>`,
+      "T-2": `<div class="carte-refusee">💳</div><p>${m.refuse}</p>`,
+      "T-3": `<div class="jauge-maj"><i id="g-maj"></i></div><p class="mono petit" id="g-maj-t">${m.majEtape(0)}</p><p class="muted petit">${m.maj}</p>`,
+      "T-4": `<p>${m.premium}</p><div class="rangee-premium"><button class="bouton" id="g-abo">${m.sabonner}</button><button class="bouton sec" id="g-non">${m.refuser}</button></div><p class="petit alerte-ligne" id="g-abo-t" hidden>${m.premiumNon}</p>`,
+      "T-5": `<p>${m.captcha}</p><div class="captcha" id="g-captcha"></div><button class="bouton sec" id="g-verif">${m.verifier}</button><p class="petit alerte-ligne" id="g-captcha-t" hidden>${m.captchaNon}</p>`,
+      pause: `<p>${m.pause(r.reouverture ? minutesJusqua(r.reouverture) : null)}</p>`,
+      sanction: `<p>${m.sanctionBloque}</p>`, surconsommation: `<p>${m.surconso}</p>`,
+    }[r.effet] || `<p>${m.surconso}</p>`;
+    const titre = r.effet === "sanction" ? m.sanctions[1].split(".")[0] : r.effet === "surconsommation" ? t.bloqueTitre : nom;
+    return `<span class="chip">${r.effet.startsWith("T") ? m.piege : "⛔"}</span><h1 class="moyen">${esc(titre)}</h1><div class="boite alerte piege">${gag}${compte}</div>`;
+  }
+  /** Anime le gag du piège affiché (minuteurs arrêtés quand l'écran change). */
+  function animerPiege(effet) {
+    if (effet === "T-1") {
+      let n = 4812;
+      const it = setInterval(() => { const e = document.getElementById("g-file"); if (!e) return clearInterval(it); n = Math.max(1, n - 1 - Math.floor(Math.random() * 3)); e.innerHTML = M().file(n); }, 2000);
+    }
+    if (effet === "T-3") {
+      let p = 0;
+      const it = setInterval(() => {
+        const e = document.getElementById("g-maj"); if (!e) return clearInterval(it);
+        p = Math.random() < 0.25 ? Math.max(0, p - 7) : Math.min(99, p + 3); // recule de temps en temps
+        e.style.width = p + "%"; document.getElementById("g-maj-t").textContent = M().majEtape(p);
+      }, 1200);
+    }
+    if (effet === "T-4") {
+      let k = 1;
+      $("#g-non").onclick = () => { k = Math.max(0.35, k - 0.15); $("#g-non").style.transform = `scale(${k})`; };
+      $("#g-abo").onclick = () => { $("#g-abo-t").hidden = false; };
+    }
+    if (effet === "T-5") {
+      const remplir = () => { $("#g-captcha").innerHTML = Array.from({ length: 9 }, () => `<button class="case">${["🏷️", "🔖", "🎫", "🧾"][Math.floor(Math.random() * 4)]}</button>`).join(""); };
+      remplir();
+      $("#g-captcha").onclick = (ev) => { const c = ev.target.closest(".case"); if (c) c.classList.toggle("choisie"); };
+      $("#g-verif").onclick = () => { $("#g-captcha-t").hidden = false; remplir(); };
+    }
+  }
+
+  /** Scan bloqué : on remontre l'écran de la cause (piège, pause, sanction, surconsommation). */
+  const piegeDeBlocage = (r) => ({ type: "piege", effet: r.cause || "surconsommation", jusqu_a: r.jusqu_a, reouverture: r.reouverture });
+
+  /** Mission personnelle (ADM-19) : titre et consigne, pour l'encadré « Missions actives ». */
+  function missionMJ(mm) {
+    const [titre, texte] = M().missions[mm.code] || [mm.code, () => ""];
+    const at = (mm.donnees && mm.donnees.attributs) || mm.attributs || [];
+    const noms = at.map((a) => { const x = attrDe(a); return x ? `${x.e} ${lib(x).toLowerCase()}` : a; });
+    return { titre, condition: texte(noms[0], noms[1]), fin: mm.fin };
+  }
+
+  // Messages personnels : sanctions et missions (relevés avec le direct, toutes les 10 s)
+  const CLE_NOTIFS = "dv-notifs" + SUFFIXE;
+  async function releverNotifs() {
+    if (!etat.moi || !etat.moi.personnage) return;
+    const apres = lire(CLE_NOTIFS);
+    let r;
+    try { r = await api("/api/notifs" + (apres !== null ? "?apres=" + encodeURIComponent(apres) : "")); } catch { return; }
+    ecrire(CLE_NOTIFS, String(r.dernier || 0));
+    Object.assign(etat.moi, { mission_mj: r.mission_mj, effets: r.effets });
+    etat.moi.personnage.bloque_jusqu_a = r.bloque_jusqu_a; etat.moi.personnage.suspendu = r.suspendu;
+    ecrire(CLE.moi, JSON.stringify(etat.moi));
+    const m = M();
+    for (const n of r.notifs || []) {
+      const d = n.donnees || {};
+      let html = null, classe = "";
+      if (n.type === "sanction") { html = `<small>⚠️ ${m.messageMJ}</small><p>${m.sanctions[d.niveau - 1] || ""}</p>`; classe = "alerte"; }
+      if (n.type === "sanction_annulee") html = `<small>${m.messageMJ}</small><p>${m.sanctionAnnulee}</p>`;
+      if (n.type === "mission") {
+        const mm = missionMJ({ code: d.code, attributs: d.attributs, fin: d.fin });
+        html = `<small>🎯 ${m.messageMJ}</small><p>${d.offerte ? "" : m.missionAnnonce(d.fin ? minutesJusqua(d.fin) : 15) + "<br>"}<b>${esc(mm.titre)}</b> : ${esc(mm.condition)}</p>`;
+      }
+      if (n.type === "mission_reussie") html = `<small>🏷️ ${m.messageMJ}</small><p>${m.missionReussie}<br>${m.recompenses[d.recompense] || ""}</p>`;
+      if (n.type === "mission_echouee") html = `<small>⏳ ${m.messageMJ}</small><p>${m.missionEchouee}</p>`;
+      if (n.type === "mission_annulee") html = `<small>${m.messageMJ}</small><p>${m.missionAnnulee}</p>`;
+      if (html) { vibrer([60, 80, 60]); banniere("notif-" + n.id, `${html}<button class="lien" data-fermer>${t.fermer}</button>`, classe); }
+    }
+    if ((r.notifs || []).length && location.pathname === "/collection") collection();
+    majEffets();
+  }
+
+  /** Effets en cours (légendaires, solde privée) et vitrine L-10 : bandeau de l'accueil. */
+  function blocEffets(d) {
+    const m = M(), now = Date.now();
+    const puces = (d.effets || []).map((x) => {
+      const nom = x.effet.startsWith("L") ? `✦ ${m.L[x.effet][0]}` : m.effets[x.effet] || x.effet;
+      const quoi = x.fin && Date.parse(x.fin) > now ? `<span data-fin="${x.fin}"></span>` : x.reste ? (["L-5", "M-6"].includes(x.effet) ? m.cartesX2(x.reste) : m.pret) : m.actif;
+      return `<span class="puce-effet">${esc(nom)} · ${quoi}</span>`;
+    }).join("");
+    const v = ((etat.direct && etat.direct.evenements) || []).filter((e) => e.type === "vitrine" && e.fin && Date.parse(e.fin) > now).pop();
+    const vitrine = v ? `<div class="vitrine apparait"><small>${m.vitrine}</small><b>${typeDe(v.donnees.type).e} ${esc(v.donnees.pseudo)}</b><span class="mono petit" data-fin="${v.fin}"></span></div>` : "";
+    return `<div id="zone-effets">${vitrine}${puces ? `<div class="puces-effets">${puces}</div>` : ""}</div>`;
+  }
+  /** Le direct (toutes les 10 s) met à jour la vitrine et les effets sans redessiner l'accueil. */
+  function majEffets() {
+    const z = document.getElementById("zone-effets");
+    if (!z || !etat.moi) return;
+    const html = blocEffets(etat.moi).replace(/^<div id="zone-effets">|<\/div>$/g, "");
+    if (z.innerHTML !== html) { z.innerHTML = html; demarrerComptes(); }
+  }
+
+  /** Section « Légendes » de la collection (RG-022-1). */
+  function blocLegendes(r) {
+    const m = M();
+    if (!r.legendes || !r.legendes.length) return "";
+    return `<h3>${m.legendes} · ${r.legendes.length}/10</h3><div class="legendes">${r.legendes.map((x, i) => `<button class="legende${x.actif ? " active" : ""}" data-l="${i}">
+      <b>${esc(m.L[x.effet][0])}</b><small>${esc(x.effet)}${x.actif ? " · " + m.actif : ""}</small></button>`).join("")}</div>`;
+  }
+  function brancherLegendes(r) {
+    app.querySelectorAll(".legende").forEach((b) => (b.onclick = () => {
+      const x = r.legendes[+b.dataset.l], [nom, effet] = M().L[x.effet];
+      rendre(`<button class="retour" id="b-retour">${t.retour}</button><span class="chip or">${M().legendaire} · ${esc(x.effet)}</span><h1 class="moyen">${esc(nom)}</h1><p>${effet}</p>
+        ${x.fin && Date.parse(x.fin) > Date.now() ? `<p class="mono petit">⏳ <span data-fin="${x.fin}"></span></p>` : ""}
+        ${x.souvenir ? `<div class="souvenir ticket-infini"><p>${esc(x.souvenir[L] || x.souvenir.fr).replace(/\n\n/g, "</p><p>")}</p></div>` : ""}`, { onglet: "collection" });
+      $("#b-retour").onclick = collection;
+    }));
+  }
 
   // ---------- Révélation de 5 h (FEAT-009, RG-009-5 à RG-009-16, RG-015-5) ----------
   // Le serveur fige un instantané commun ; chaque téléphone calcule la même disposition (d3-force déterministe),
@@ -1370,9 +1618,10 @@
       if (!r || e.erreur !== "reseau") return ecranErreur(e, collection);
     }
     const missions = etat.moi && etat.moi.personnage ? blocMissions(etat.moi) : "";
-    if (!r.cartes.length) return rendre(`<h2>${t.collectionTitre}</h2>${missions}<p class="maintenant">${t.vide}</p><a class="bouton" href="/saisie" data-nav>📷 ${t.scanner}</a>`, { onglet: "collection" });
-    rendre(`<h2>${t.collectionTitre} · ${r.cartes.length}</h2>${missions}<div class="grille-cartes">${r.cartes.map((c, i) => `<button class="mini" data-i="${i}" style="--teinte:${couleurDe(c.couleur).hex}">
+    if (!r.cartes.length) { rendre(`<h2>${t.collectionTitre}</h2>${missions}<p class="maintenant">${t.vide}</p><a class="bouton" href="/saisie" data-nav>📷 ${t.scanner}</a>${blocLegendes(r)}`, { onglet: "collection" }); return brancherLegendes(r); }
+    rendre(`<h2>${t.collectionTitre} · ${r.cartes.length}</h2>${missions}${blocLegendes(r)}<div class="grille-cartes">${r.cartes.map((c, i) => `<button class="mini" data-i="${i}" style="--teinte:${couleurDe(c.couleur).hex}">
         ${c.nb_scans > 1 ? `<span class="n">×${c.nb_scans}</span>` : ""}<div class="e">${typeDe(c.type).e}</div><div class="pseudo">${esc(c.pseudo)}</div></button>`).join("")}</div>`, { onglet: "collection" });
+    brancherLegendes(r);
     app.querySelectorAll(".mini").forEach((x) => (x.onclick = () => {
       const c = r.cartes[+x.dataset.i];
       rendre(`<button class="retour" id="b-retour">${t.retour}</button>${carte(c)}${souvenirBloc(c.souvenir)}

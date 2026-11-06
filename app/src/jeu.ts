@@ -7,6 +7,7 @@ import { normaliserCode } from "./codes";
 import { baremeDe, lireParametres, type Heures } from "./config";
 import { crediterScan, heuresIso, routeDirect, type Joueur } from "./direct";
 import { routeRevelation } from "./revelation";
+import { effetActif, effetsEnCours, expirerMissions, legendesDe, missionActive, pauseEnCours, reouvertureVue, scanMJ, verifierMissions } from "./mj";
 import { brouiller, estFlou, fauxSouvenir, grainePaire, type PersoSouvenir } from "./souvenirs";
 import { devActif } from "./mode";
 
@@ -93,7 +94,7 @@ interface LignePerso {
   id: string; pseudo: string; type: string; couleur: string; attributs: string; classe: string;
   photos_ok: number; est_mj: number; surconsommation: number; bloque_jusqu_a: string | null;
   cree_le: string; premier_scanne_le: string | null; langue: string; pin_sel: string; pin_empreinte: string;
-  souvenirs: number; temps_ecran_s: number;
+  souvenirs: number; temps_ecran_s: number; bloque_cause: string | null; suspendu: number;
 }
 
 async function personnageDe(req: Request, env: EnvJeu, t: number): Promise<LignePerso | null> {
@@ -149,7 +150,7 @@ function requeteClassement(id: IdClassement, parFaction = false) {
   const col = CLASSEMENTS[id];
   return `SELECT c.${col} AS id, COUNT(*) AS n, MAX(c.premier_scan_le) AS atteint
     FROM collection c JOIN personnages p ON p.id = c.${col}
-    WHERE p.est_mj = 0 AND c.premier_scan_le < ?
+    WHERE p.est_mj = 0 AND p.suspendu = 0 AND c.premier_scan_le < ?
     ${parFaction ? "AND c." + col + " IN (SELECT personnage_id FROM etiquettes WHERE faction_id = ?)" : ""}
     GROUP BY c.${col} ORDER BY n DESC, atteint ASC`;
 }
@@ -215,13 +216,35 @@ async function moi(env: EnvJeu, p: LignePerso, t: number) {
       photos_ok: !!p.photos_ok, est_mj: !!p.est_mj, surconsommation: !!p.surconsommation,
       bloque_jusqu_a: p.bloque_jusqu_a && p.bloque_jusqu_a > new Date(t).toISOString() ? p.bloque_jusqu_a : null,
       cree_le: p.cree_le, premier_scanne_le: p.premier_scanne_le, souvenirs: p.souvenirs, temps_ecran_s: p.temps_ecran_s,
+      bloque_cause: p.bloque_jusqu_a && p.bloque_jusqu_a > new Date(t).toISOString() ? p.bloque_cause : null, suspendu: !!p.suspendu,
     },
     reactions: Object.fromEntries(EMOJIS_REACTION.map((e) => [e, reac.find((x) => x.emoji === e)?.n ?? 0]).filter(([, n]) => n)),
     etiquettes, badges, nb_cartes: nb?.n ?? 0, droits: droits(p, h, t), heures: h,
     medailles: await medaillesDe(env, p.id, h),
     factions: await factionsDe(env, p.id),
     partie: await pouls(env),
+    ...(await personnel(env, p.id, t)),
   };
+}
+
+/** Mission personnelle du MJ et effets en cours (légendaires, solde privée) : dans /api/moi et /api/notifs. */
+async function personnel(env: EnvJeu, id: string, t: number) {
+  await expirerMissions(env, t, id);
+  return { mission_mj: await missionActive(env.DB, id), effets: await effetsEnCours(env.DB, id, t) };
+}
+
+/** GET /api/notifs?apres=N : messages personnels (sanctions, missions) ; sans N, ceux des 30 dernières minutes. */
+async function notifs(req: Request, env: EnvJeu, t: number, url: URL): Promise<Response> {
+  const me = await personnageDe(req, env, t);
+  if (!me) return erreur("sans_personnage", 401);
+  const extra = await personnel(env, me.id, t);
+  const apres = Number(url.searchParams.get("apres"));
+  const q = Number.isFinite(apres) && apres >= 0 && url.searchParams.has("apres")
+    ? env.DB.prepare("SELECT id, type, donnees, le FROM notifs WHERE personnage_id = ? AND id > ? ORDER BY id LIMIT 20").bind(me.id, apres)
+    : env.DB.prepare("SELECT id, type, donnees, le FROM notifs WHERE personnage_id = ? AND le >= ? ORDER BY id LIMIT 20").bind(me.id, new Date(t - 30 * 60_000).toISOString());
+  const n = (await q.all<{ id: number; type: string; donnees: string; le: string }>()).results.map((x) => ({ ...x, donnees: JSON.parse(x.donnees) }));
+  const dernier = (await env.DB.prepare("SELECT MAX(id) AS m FROM notifs WHERE personnage_id = ?").bind(me.id).first<{ m: number | null }>())?.m ?? 0;
+  return json({ notifs: n, dernier, ...extra, bloque_jusqu_a: me.bloque_jusqu_a && me.bloque_jusqu_a > new Date(t).toISOString() ? me.bloque_jusqu_a : null, suspendu: !!me.suspendu });
 }
 
 /** Preuve sociale (écran « Ta mission ») : joueurs lancés et record de cartes. Le MJ ne compte pas. */
@@ -259,6 +282,7 @@ export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Res
     if (p === "/api/collection" && req.method === "GET") return collection(req, env, t);
     if (p === "/api/classements" && req.method === "GET") return classements(req, env, t);
     if (p === "/api/direct" && req.method === "GET") return routeDirect(req, env, t, devActif(env) && req.headers.has("X-Dev-Maintenant"));
+    if (p === "/api/notifs" && req.method === "GET") return notifs(req, env, t, url);
     if (p === "/api/revelation" && req.method === "GET") return routeRevelation(req, env, t, devActif(env) && req.headers.has("X-Dev-Maintenant"));
     if (req.method !== "POST") return erreur("methode", 405);
     // Les appels d'écriture viennent de notre page (protection CSRF)
@@ -308,29 +332,41 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
   const h = await heuresIso(env.DB);
   const me = await personnageDe(req, env, t);
 
+  const etiquetteMJ = e.role === "personnelle_mj" || e.role === "speciale_mj";
   const enregistrer = async (resultat: string, reponse: object, cible: string | null = null, quete = 0) => {
     await env.DB.prepare(
       "INSERT OR IGNORE INTO scans (id_client, scanneur_id, code, cible_id, source, resultat, horodatage_client, horodatage_serveur, reponse, quete) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     ).bind(idClient, me?.id ?? null, e.code, cible, source, resultat, typeof c.horodatage === "string" ? c.horodatage : null, iso, JSON.stringify(reponse), quete).run();
+    // Missions personnelles (ADM-19) : vérifiées après chaque scan, et les « Livraison express » après un scan d'étiquette du MJ
+    if (me) await verifierMissions(env, t, me.id, etiquetteMJ);
     return json(reponse);
   };
 
   if (e.etat === "desactivee") return json({ type: "retiree", code: e.code });
   if (iso < h.debut) return json({ type: "bientot", code: e.code, debut: h.debut });
   if (iso >= h.fin) return json({ type: "ferme", code: e.code });
+  // ADM-18 niveau 5 « Interdit de magasin » : le personnage ne scanne plus
+  if (me?.suspendu) return enregistrer("suspendu", { type: "suspendu", code: e.code });
   if (me?.bloque_jusqu_a && me.bloque_jusqu_a > iso) {
-    return enregistrer("bloque", { type: "bloque", code: e.code, jusqu_a: me.bloque_jusqu_a });
+    const pause = me.bloque_cause === "pause" ? await pauseEnCours(env.DB) : null;
+    return enregistrer("bloque", { type: "bloque", code: e.code, jusqu_a: me.bloque_jusqu_a, cause: me.bloque_cause, reouverture: reouvertureVue(pause, t) });
   }
-  if (e.role === "speciale_mj") {
-    // Légendaires et pièges : effets au LOT-3 (FEAT-022)
-    return enregistrer("special", { type: "special", code: e.code });
+  if (etiquetteMJ && me) {
+    // FEAT-022 : légendaire ou piège selon le mélange ; pause « Fermé pour inventaire » (ADM-17)
+    const r = await scanMJ(env, t, me, e);
+    if (r) return enregistrer(r.resultat, r.reponse);
   }
+  if (e.role === "speciale_mj") return enregistrer("special", { type: "special", code: e.code }); // spectateur
   if (e.etat === "vierge") {
     // Pas d'effet tant que le joueur n'a pas répondu ou créé son personnage
     return json(me ? { type: "a_toi", code: e.code } : { type: "creation", code: e.code, mj: e.role === "personnelle_mj" });
   }
   // Étiquette réclamée
   const cible = e.personnage_id!;
+  // Personnage suspendu (ADM-18 niveau 5) : ses étiquettes ne répondent plus
+  if ((await env.DB.prepare("SELECT suspendu FROM personnages WHERE id = ?").bind(cible).first<{ suspendu: number }>())?.suspendu) {
+    return json({ type: "retiree", code: e.code });
+  }
   const carte = await cartePublique(env, cible);
   if (!me) return enregistrer("spectateur", { type: "spectateur", code: e.code, carte }, cible);
   if (cible === me.id) return enregistrer("soi_meme", { type: "soi_meme", code: e.code, carte }, cible);
@@ -367,7 +403,8 @@ async function dejaVu(
 ): Promise<Response> {
   const iso = new Date(t).toISOString(), cible = carte.id;
   const params = await lireParametres(env.DB), m = params.memoire;
-  const fenetreMin = Math.max(0, Number(params.rescan?.fenetre_min) || 0);
+  // L-6 « Boucle temporelle » : pendant 10 min, chaque rescan compte, sans délai
+  const fenetreMin = (await effetActif(env.DB, me.id, "L-6", t)) ? 0 : Math.max(0, Number(params.rescan?.fenetre_min) || 0);
   const dejaRescanne = await env.DB.prepare("SELECT 1 AS x FROM scans WHERE scanneur_id = ? AND resultat IN ('deja_vu', 'deja_vu_repete') LIMIT 1").bind(me.id).first();
   const fenetre = new Date(t - fenetreMin * 60_000).toISOString();
   const maj = await env.DB.prepare(
@@ -505,7 +542,7 @@ async function ajouterEtiquette(req: Request, env: EnvJeu, t: number, c: Record<
   if (surconso) {
     // RG-003-10 : les autres malus (points, quête, corruption) s'appliquent aux LOT-3 et LOT-4 via ce drapeau
     jusqu_a = new Date(t + BLOCAGE_SURCONSO_MIN * 60_000).toISOString();
-    await env.DB.prepare("UPDATE personnages SET surconsommation = 1, bloque_jusqu_a = ? WHERE id = ?").bind(jusqu_a, me.id).run();
+    await env.DB.prepare("UPDATE personnages SET surconsommation = 1, bloque_jusqu_a = ?, bloque_cause = 'surconsommation' WHERE id = ?").bind(jusqu_a, me.id).run();
     if (await donnerBadge(env, me.id, "surconsommation", t)) badges.push("surconsommation");
   }
   await env.DB.prepare("INSERT INTO scans (scanneur_id, code, cible_id, source, resultat, horodatage_serveur) VALUES (?, ?, ?, 'app', 'ajout_etiquette', ?)").bind(me.id, e.code, me.id, iso).run();
@@ -583,6 +620,7 @@ async function collection(req: Request, env: EnvJeu, t: number): Promise<Respons
   const reac = (await env.DB.prepare("SELECT cible_id AS c, emoji FROM reactions WHERE auteur_id = ? ORDER BY pose_le").bind(me.id).all<{ c: string; emoji: string }>()).results;
   return json({
     souvenirs: me.souvenirs,
+    legendes: await legendesDe(env.DB, versSouvenir(me), t),
     cartes: r.results.map((x) => {
       const attributs = JSON.parse(String(x.attributs));
       const id = String(x.id);

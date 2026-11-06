@@ -2,6 +2,7 @@
 // Coquille de l'application du joueur et panneau du MJ.
 import type { etatDirect } from "./direct";
 import type { ImageCachee } from "./revelation";
+import type { etatMJ } from "./mj";
 
 export type Langue = "fr" | "en";
 
@@ -55,7 +56,7 @@ function page(l: Langue, titre: string, corps: string, robots = true): Response 
 }
 
 /** Coquille de l'application du joueur (LOT-1) : tout l'affichage est fait par public/app.js. */
-export const VERSION_APP = "l3-3";
+export const VERSION_APP = "l3-4";
 export function pageApp(l: Langue, status = 200): Response {
   const html = `<!doctype html><html lang="${l}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -89,6 +90,7 @@ export function pageAdmin(p: {
   banc?: boolean;
   direct?: EtatDirect;
   image?: ImageCachee;
+  mj?: Awaited<ReturnType<typeof etatMJ>>;
 }) {
   const lecture = p.role === "lecteur";
   const total = p.comptes.reduce((a, c) => a + c.n, 0);
@@ -115,7 +117,8 @@ ${lecture ? `<p class="mono">rôle : ${e.role} · état : ${e.etat}</p>` : `<div
 ${e.personnage_id ? `<div class="carte"><p style="margin:0"><b>${esc(e.pseudo)}</b> · faction ${esc(e.faction_id)} · ${e.nb_etiquettes} étiquette(s)</p>
 ${lecture ? "" : `<form method="post" action="/admin/pin" class="rangee" style="margin-top:12px"><input type="hidden" name="code" value="${e.code}">
 <div><label>Nouveau PIN (RG-019-7)</label><input name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></div><div style="flex:0 0 auto"><button>Réinitialiser le PIN</button></div></form>
-<form method="post" action="/admin/detacher" onsubmit="return confirm('Détacher ${e.code} de ce personnage ? L\'étiquette redevient vierge.')"><input type="hidden" name="code" value="${e.code}"><p style="margin:12px 0 0"><button class="bouton sec">Détacher l'étiquette</button></p></form>`}</div>` : ""}`
+<form method="post" action="/admin/detacher" onsubmit="return confirm('Détacher ${e.code} de ce personnage ? L\'étiquette redevient vierge.')"><input type="hidden" name="code" value="${e.code}"><p style="margin:12px 0 0"><button class="bouton sec">Détacher l'étiquette</button></p></form>
+<p style="margin:12px 0 4px" class="muted">Sanction ou mission (RG-020-11)</p>${actionsJoueur(e.personnage_id, e.pseudo ?? "")}${SCRIPT_MAINTENIR}`}</div>` : ""}`
     : p.recherche ? `<p class="err">Aucune étiquette ${esc(p.recherche)}.</p>` : "";
 
   return page("fr", "Admin · Déjà vu !", `<span class="chip">Maître du jeu</span>
@@ -123,6 +126,7 @@ ${lecture ? "" : `<form method="post" action="/admin/pin" class="rangee" style="
 ${p.banc ? `<p><a class="bouton sec" href="/banc">🧪 Banc d'essai</a></p>` : ""}
 ${p.message ? `<p class="ok">${esc(p.message)}</p>` : ""}${p.erreur ? `<p class="err">${esc(p.erreur)}</p>` : ""}
 ${p.direct ? blocDirect(p.direct, lecture) : ""}
+${p.mj ? blocMJ(p.mj, lecture) : ""}
 ${p.image ? blocRevelation(p.image, lecture) : ""}
 <h2>Étiquettes</h2><div class="grille">${stats}</div>
 <h2>Partie</h2><div class="grille"><div class="stat"><b>${p.joueurs.personnages}</b><span>personnages</span></div><div class="stat"><b>${p.joueurs.cartes}</b><span>cartes collectées</span></div><div class="stat"><b>${p.joueurs.scans}</b><span>scans</span></div></div>
@@ -262,4 +266,72 @@ function blocRevelation(img: ImageCachee, lecture: boolean) {
 <div class="carte"><p class="muted" style="font-size:13px;margin-top:0">La constellation se réorganise en ce dessin, d'autant plus nettement que la salle a franchi de paliers. Elle est figée à l'heure de la révélation.</p>
 ${apercu}
 <p><a class="bouton sec" href="/revelation?apercu=1">Aperçu de la révélation (état actuel)</a></p>${outil}</div>`;
+}
+
+// ---------- Costume du MJ : légendaires, pièges, pause, derniers clients, sanctions, missions (FEAT-022, ADM-17 à ADM-19) ----------
+type EtatMJ = Awaited<ReturnType<typeof etatMJ>>;
+export const NOMS_EFFETS: Record<string, string> = {
+  "L-1": "Cape de Déjà-vu +2", "L-2": "Retour sans reçu", "L-3": "La Pilule rouge", "L-4": "Miroir de la cabine d'essayage",
+  "L-5": "Bon de réduction −100 %", "L-6": "Boucle temporelle", "L-7": "Dernier exemplaire", "L-8": "Dé à 20 faces doré",
+  "L-9": "Ticket de caisse infini", "L-10": "Mannequin de vitrine",
+  "T-1": "File d'attente du Black Friday", "T-2": "Paiement refusé", "T-3": "Mise à jour obligatoire", "T-4": "Abonnement premium", "T-5": "CAPTCHA infini",
+  pause: "Fermé pour inventaire",
+};
+const NOMS_MISSIONS: Record<string, string> = {
+  "M-1": "Ramène-moi des clients (10 min)", "M-2": "Tournée des factions (20 min)", "M-3": "Service après-vente (10 min)",
+  "M-4": "Contrôle qualité (15 min)", "M-5": "Livraison express (10 min)", "M-6": "Solde privée (cadeau)", "M-7": "Mission libre",
+};
+const SANCTIONS = ["Avertissement", "Retour en caisse (5 min)", "Article défectueux", "Rappel de produit", "Interdit de magasin"];
+const EMOJI_TYPE: Record<string, string> = { mort_vivant: "🧟", nuit: "🧛", magie: "🧙", robot: "🤖", animal: "🦄", sexy: "💋", pop: "🦸", inclassable: "🤡" };
+const heureCourte = (iso: string) => new Date(iso).toLocaleTimeString("fr-CA", { timeZone: "America/Toronto", hour: "2-digit", minute: "2-digit" });
+
+/** Niveau 5 : le bouton doit être maintenu 2 s (confirmation renforcée, RG-020-8). */
+const SCRIPT_MAINTENIR = `<script>(() => { if (window.maintenirPret) return; window.maintenirPret = 1;
+document.addEventListener("pointerdown", (ev) => { const b = ev.target.closest("[data-maintenir]"); if (!b) return; ev.preventDefault();
+  if (!confirm("Interdit de magasin : le personnage sera suspendu. Confirmer, puis maintenir le bouton 2 s.")) return;
+  const debut = Date.now(); b.textContent = "Maintiens… 2 s";
+  const fin = () => { clearTimeout(minuteur); b.textContent = "5 · Interdit de magasin"; removeEventListener("pointerup", fin); };
+  const minuteur = setTimeout(() => { removeEventListener("pointerup", fin); const f = b.form; f.querySelector("[name=confirme]").value = "oui"; const n = document.createElement("input"); n.type = "hidden"; n.name = "niveau"; n.value = "5"; f.appendChild(n); f.submit(); }, 2000);
+  addEventListener("pointerup", fin); }); })();</script>`;
+
+/** Sanctions et mission pour un joueur (depuis « Derniers clients » ou sa fiche). */
+function actionsJoueur(id: string, pseudo: string) {
+  const conf = (n: number) => n >= 3 && n <= 4 ? ` onclick="return confirm('Niveau ${n} : ${SANCTIONS[n - 1]} pour ${esc(pseudo).replace(/'/g, "\\'")} ?')"` : "";
+  return `<form method="post" action="/admin/mj/sanction" class="rangee" style="gap:6px;flex-wrap:wrap"><input type="hidden" name="personnage" value="${esc(id)}">
+<input type="hidden" name="confirme" value="">
+${[1, 2, 3, 4].map((n) => `<button name="niveau" value="${n}" class="bouton sec" style="font-size:13px"${conf(n)}>${n} · ${SANCTIONS[n - 1]}</button>`).join("")}
+<button type="button" data-maintenir class="bouton" style="font-size:13px;background:#d7263d">5 · Interdit de magasin</button></form>
+<form method="post" action="/admin/mj/mission" class="rangee" style="margin-top:8px"><input type="hidden" name="personnage" value="${esc(id)}">
+<div><select name="code">${Object.entries(NOMS_MISSIONS).map(([k, v]) => `<option value="${k}">${k} · ${v}</option>`).join("")}</select></div>
+<div style="flex:0 0 90px"><input name="duree" inputmode="numeric" placeholder="min (M-7)"></div><div style="flex:0 0 auto"><button>Confier</button></div></form>`;
+}
+
+function blocMJ(m: EtatMJ, lecture: boolean) {
+  const pause = m.pause
+    ? `<p class="err mono">⛔ Fermé pour inventaire ${m.pause.fin ? `jusqu'à ${heureCourte(m.pause.fin)}` : "jusqu'à réouverture"}</p>
+${lecture ? "" : `<form method="post" action="/admin/mj/rouvrir"><button>Rouvrir le magasin</button></form>`}`
+    : `<p class="ok mono">Magasin ouvert</p>${lecture ? "" : `<form method="post" action="/admin/mj/pause" class="rangee" style="gap:6px">${[5, 10, 15].map((x) => `<button name="minutes" value="${x}" class="bouton sec">⛔ ${x} min</button>`).join("")}<button name="minutes" value="0" class="bouton sec">⛔ Jusqu'à réouverture</button></form>
+<p class="muted" style="font-size:13px">Pendant la pause, toutes tes étiquettes bloquent 2 min le scanner de qui les scanne (RG-020-5).</p>`}`;
+  const de = m.dernierExemplaire;
+  const codes = m.codes.map((x) => `<tr><td class="mono">${esc(x.code)}</td><td>${x.effet.startsWith("T") ? "🪤" : "✦"} ${esc(x.effet)} · ${esc(NOMS_EFFETS[x.effet])}</td><td>${m.obtenus[x.effet] ?? 0}</td></tr>`).join("");
+  const clients = m.clients.map((c) => `<details class="carte" style="padding:10px 12px;margin:6px 0"><summary style="cursor:pointer">
+<span class="mono">${heureCourte(c.le)}</span> · ${EMOJI_TYPE[c.type] ?? "❔"} <b>${esc(c.pseudo)}</b>${c.suspendu ? ' <span class="err">suspendu</span>' : ""} · <span class="mono">${esc(c.code)}</span>
+<span class="muted">${c.role === "personnelle_mj" ? "ta carte" : esc(c.effet ? `${c.effet} ${NOMS_EFFETS[c.effet] ?? ""}` : c.resultat)}</span></summary>
+${lecture ? "" : `<div style="margin-top:10px">${actionsJoueur(c.id, c.pseudo)}</div>`}</details>`).join("");
+  const missions = m.missions.map((x) => `<tr><td>${esc(x.pseudo)}</td><td>${esc(x.code)}</td><td class="mono">${x.fin ? heureCourte(x.fin) : "—"}</td>
+<td>${lecture ? "" : `<form method="post" action="/admin/mj/mission/reussie" class="rangee" style="gap:4px"><input type="hidden" name="id" value="${x.id}">
+${x.code === "M-7" ? `<select name="recompense"><option value="points">+20 points</option><option value="souvenirs">+3 souvenirs</option><option value="solde">5 cartes ×2</option></select>` : ""}
+<button class="bouton sec" style="font-size:13px">Réussie</button><button formaction="/admin/mj/mission/annuler" class="bouton sec" style="font-size:13px">Annuler</button></form>`}</td></tr>`).join("");
+  const sanctions = m.sanctions.map((x) => `<tr><td class="mono">${heureCourte(x.le)}</td><td>${esc(x.pseudo)}</td><td>${x.niveau} · ${SANCTIONS[x.niveau - 1]}</td>
+<td>${lecture ? "" : `<form method="post" action="/admin/mj/sanction/annuler" onsubmit="return confirm('Annuler cette sanction ? Ce qui a été retiré est rendu.')"><input type="hidden" name="id" value="${x.id}"><button class="bouton sec" style="font-size:13px">Annuler</button></form>`}</td></tr>`).join("");
+  return `<h2>Costume du MJ</h2>
+<div class="carte">${pause}</div>
+<h3>Légendaires et pièges</h3>
+<p class="muted" style="font-size:13px">Prochain mélange à ${heureCourte(m.prochainMelange)}. Dernier exemplaire (L-7) : ${de.disponible ? '<span class="ok">en rayon</span>' : '<span class="err">rupture de stock</span>'}${de.prochaine ? ` · prochaine remise à ${heureCourte(de.prochaine)}` : ""}.</p>
+${codes ? `<table><tr><th>Étiquette</th><th>Effet en ce moment</th><th>Obtenu</th></tr>${codes}</table>` : '<p class="muted">Aucune étiquette spéciale (rôle « speciale_mj »).</p>'}
+<h3>Derniers clients (30 min)</h3>
+${clients || '<p class="muted">Personne n\'a scanné tes étiquettes récemment.</p>'}
+${missions ? `<h3>Missions en cours</h3><table><tr><th>Joueur</th><th>Mission</th><th>Fin</th><th></th></tr>${missions}</table>` : ""}
+${sanctions ? `<h3>Sanctions</h3><table><tr><th>Heure</th><th>Joueur</th><th>Niveau</th><th></th></tr>${sanctions}</table>` : ""}
+${lecture ? "" : SCRIPT_MAINTENIR}`;
 }

@@ -209,6 +209,20 @@ async function scanneEntre(a, b) {
   aller("/" + code, a);
 }
 
+// F1, F2 : ouvre l'étiquette du banc qui porte l'effet en ce moment (heure du banc)
+async function scannerEffet(effet) {
+  const { code } = await api("/__dev/effet", { effet, maintenant: horlogeCourante() ? Date.parse(horlogeCourante()) : Date.now() });
+  aller("/" + code); log("banc", `${effet} est porté par ${code}`);
+}
+// D4, D5 : action sur le personnage de chaque téléphone sélectionné
+async function surTelephones(fn, quoi) {
+  for (const id of cibles()) {
+    const j = await identite(id);
+    if (!j) { log("banc", `${id} n'a pas de personnage`, "err"); continue; }
+    await fn(j); log("banc", `${id} : ${quoi}`);
+  }
+}
+
 // H1 : révélation à 5 h dans l'heure du banc (les données du banc sont datées de l'heure simulée)
 async function reveler(paliers) {
   await api("/__dev/revelation", paliers === undefined ? {} : { paliers });
@@ -277,16 +291,19 @@ const TESTS = [
       ["Bannière (injection)", () => diffuser({ type: "injecter", quoi: "banniere", titre: "MESSAGE DU MJ", texte: prompt("Texte de la bannière", "Solde éclair au bar : scannez quelqu'un que vous ne connaissez pas !") || "" })],
       ["Push", null, "LOT-3"]]],
     ["D3", "Comptes à rebours, « Et maintenant ? »", "LOT-1", [["Accueil (situations)", () => aller("/")], ["Révélation dans 10 min", () => regler("2026-11-08T04:50", "4:50")]]],
-    ["D4", "Mission éclair ; missions M-1 à M-7", "LOT-3", [["Mission globale", null, "LOT-6"], ["M-1…M-7", null, "LOT-3"], ["Réussie", null, "LOT-3"], ["Échouée", null, "LOT-3"]]],
-    ["D5", "Sanctions 1 à 5, pause, suggestion de préréglage", "LOT-3", [["Sanction 1…5", null, "LOT-3"], ["Pause", null, "LOT-3"], ["Suggestion", null, "LOT-3"]]],
+    ["D4", "Mission éclair ; missions M-1 à M-7", "LOT-3", [["Mission globale", null, "LOT-6"],
+      ...["M-1", "M-2", "M-3", "M-4", "M-5", "M-6", "M-7"].map((c) => [c, () => surTelephones((j) => api("/__dev/mission", { jeton: j, code: c, duree: 2 }), `mission ${c}`)])]],
+    ["D5", "Sanctions 1 à 5, pause, suggestion de préréglage", "LOT-3", [...[1, 2, 3, 4, 5].map((n) => [`Sanction ${n}`, () => surTelephones((j) => api("/__dev/sanction", { jeton: j, niveau: n }), `sanction ${n}`)]),
+      ["Pause 5 min", async () => { await api("/__dev/pause", { minutes: 5 }); log("banc", "fermé pour inventaire 5 min"); }],
+      ["Rouvrir", async () => { await api("/__dev/pause", { minutes: -1 }); log("banc", "magasin rouvert"); }], ["Suggestion", null, "LOT-3"]]],
   ]],
   ["E. Jumeaux et chats noirs", [
     ["E1", "Jumeau, indice, retrouvailles < 90 s, triplés, déjà scanné", "LOT-4", [["Attribuer", null, "LOT-4"], ["Indice", null, "LOT-4"], ["Retrouvailles", null, "LOT-4"], ["Triplés 2/3", null, "LOT-4"]]],
     ["E2", "Chat noir, contamination, immunité, guérison, vague > 50 %", "LOT-4", [["Devenir chat noir", null, "LOT-4"], ["Contaminer", null, "LOT-4"], ["Immunité", null, "LOT-4"], ["Vague", null, "LOT-4"]]],
   ]],
   ["F. Costume du MJ", [
-    ["F1", "Légendaires L-1 à L-10 ; rupture de stock ; déjà obtenue", "LOT-3", [["L-1…L-10", null, "LOT-3"], ["Rupture L-7", null, "LOT-3"], ["Déjà obtenue", null, "LOT-3"]]],
-    ["F2", "Pièges T-1 à T-5 ; déjà subi ; mélange", "LOT-3", [["T-1…T-5", null, "LOT-3"], ["Déjà subi", null, "LOT-3"], ["Mélanger", null, "LOT-3"]]],
+    ["F1", "Légendaires L-1 à L-10 ; rupture de stock ; déjà obtenue", "LOT-3", ["L-1", "L-2", "L-3", "L-4", "L-5", "L-6", "L-7", "L-8", "L-9", "L-10"].map((e) => [e, () => scannerEffet(e)])],
+    ["F2", "Pièges T-1 à T-5 ; déjà subi ; mélange", "LOT-3", ["T-1", "T-2", "T-3", "T-4", "T-5"].map((e) => [e, () => scannerEffet(e)])],
   ]],
   ["G. Scanner intégré et mur", [
     ["G1", "Scanner intégré, lampe, photo, mur", "LOT-5", [["Scanner", null, "LOT-5"], ["Lampe", null, "LOT-5"], ["Photo", null, "LOT-5"], ["Mur", null, "LOT-5"]]],

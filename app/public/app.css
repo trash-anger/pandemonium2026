@@ -242,3 +242,26 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .rev-revoir{background:var(--bg3);color:var(--gold);border:1.5px solid var(--gold);margin-bottom:12px}
 @media (prefers-reduced-motion:no-preference){.rev-charge{animation:clignote 1.6s ease-in-out infinite}.rev-bas{animation:ap .8s ease-out}}
 .rev [hidden]{display:none!important}
+
+/* Costume du MJ (FEAT-022) : légendaires, pièges, effets en cours, vitrine (REQ-003 : animations lentes, pas de flash) */
+.legendaire{border:1.5px solid var(--gold);border-radius:18px;padding:18px;margin-top:8px;background:linear-gradient(160deg,#2a2210,#15131c 60%)}
+.legendaire h1{color:var(--gold)}.legendaire .effet{font-size:18px;line-height:1.4}
+.ticket-infini{max-height:320px;overflow:auto;font-size:15px;line-height:1.5}
+.piege{text-align:center}.piege .compte{margin:0 auto}
+.file-num{font-family:var(--mono);font-size:22px;font-weight:700;margin:6px 0}
+.carte-refusee{font-size:56px;filter:grayscale(1);opacity:.7}
+.jauge-maj{height:12px;background:var(--bg3);border-radius:6px;overflow:hidden;margin:10px 0}.jauge-maj i{display:block;height:100%;width:0;background:var(--green);transition:width .8s ease}
+.rangee-premium{display:flex;gap:10px;align-items:center;justify-content:center}.rangee-premium .bouton{flex:0 0 auto;width:auto;margin:0;padding:12px 20px}
+#g-non{transition:transform .25s ease;transform-origin:center}
+.captcha{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0}
+.captcha .case{aspect-ratio:1;font-size:30px;background:var(--bg3);border:2px solid var(--line);border-radius:10px;color:inherit}
+.captcha .case.choisie{border-color:var(--green)}
+.puces-effets{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.puce-effet{font-size:13px;padding:6px 10px;border-radius:999px;background:#2a2210;border:1px solid var(--gold);color:var(--gold)}
+.vitrine{display:flex;flex-direction:column;gap:2px;border:1.5px dashed var(--gold);border-radius:14px;padding:10px 14px;margin:12px 0}
+.vitrine small{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}.vitrine b{font-size:18px}
+.legendes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:16px}
+.legende{text-align:left;padding:10px 12px;border-radius:12px;background:#1d1910;border:1px solid #5a4a20;color:var(--fg)}
+.legende b{display:block;color:var(--gold);font-size:14px}.legende small{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.legende.active{border-color:var(--gold)}
+.annonce.alerte{background:var(--pink)}

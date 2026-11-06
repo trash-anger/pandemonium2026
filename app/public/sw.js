@@ -2,7 +2,9 @@
 // - Pages du joueur : réseau d'abord (pour recevoir les correctifs), coquille en cache si le réseau manque (RG-021-4).
 // - app.js et app.css sont versionnés (?v=) : cache d'abord. Icônes, manifeste et D3 : cache, rafraîchi en arrière-plan.
 // - L'API, l'admin, la connexion et le banc ne passent jamais par le cache.
-const CACHE = "deja-vu-l3-1";
+// - LOT-3 D (FEAT-016) : les pushs arrivent sans contenu ; le texte se lit sur /api/push/contenu avec l'adresse
+//   de l'abonnement comme clé. Toucher la notification ouvre ou ramène l'app.
+const CACHE = "deja-vu-l3-2";
 const STATIQUES = ["/manifest.webmanifest", "/favicon.svg", "/icone-192.png", "/icone-512.png", "/apple-touch-icon.png",
   "/vendor/d3-7.9.0.min.js"]; // RG-009-13 : D3 en cache bien avant la révélation
 const DELAI_RESEAU_MS = 4000;
@@ -82,3 +84,50 @@ async function naviguer(req) {
     return fetch(req);
   }
 }
+
+// ---------- Notifications push (FEAT-016) ----------
+const ICONE = "/icone-192.png";
+const posterJSON = (url, corps) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corps), cache: "no-store" });
+
+self.addEventListener("push", (e) => {
+  e.waitUntil((async () => {
+    let liste = [];
+    try {
+      const abo = await self.registration.pushManager.getSubscription();
+      if (abo) {
+        const r = await posterJSON("/api/push/contenu", { endpoint: abo.endpoint });
+        if (r.ok) liste = (await r.json()).notifications || [];
+      }
+    } catch { /* réseau absent : notification générique */ }
+    // Safari exige une notification visible à chaque push
+    if (!liste.length) liste = [{ titre: "Déjà vu !", texte: "Du nouveau dans le jeu.", tag: "generique" }];
+    await Promise.all(liste.map((n) => self.registration.showNotification(n.titre, {
+      body: n.texte, tag: n.tag, renotify: true, icon: ICONE, badge: ICONE, data: { url: "/" },
+    })));
+  })());
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  e.waitUntil((async () => {
+    const fenetres = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const f = fenetres.find((c) => new URL(c.url).origin === location.origin);
+    if (f) { await f.focus(); return; }
+    await self.clients.openWindow((e.notification.data && e.notification.data.url) || "/");
+  })());
+});
+
+// Le navigateur a renouvelé l'abonnement : on prévient le serveur avec l'ancienne adresse comme clé
+self.addEventListener("pushsubscriptionchange", (e) => {
+  e.waitUntil((async () => {
+    const ancien = e.oldSubscription && e.oldSubscription.endpoint;
+    let nouveau = e.newSubscription;
+    if (!nouveau) {
+      const { cle } = await (await fetch("/api/push/cle", { cache: "no-store" })).json();
+      if (!cle) return;
+      const brut = atob(cle.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((cle.length + 3) % 4));
+      nouveau = await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: Uint8Array.from(brut, (c) => c.charCodeAt(0)) });
+    }
+    if (ancien && nouveau) await posterJSON("/api/push/renouveler", { ancien, endpoint: nouveau.endpoint });
+  })());
+});

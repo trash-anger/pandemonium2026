@@ -12,12 +12,16 @@ import { definirPin, routeApi } from "./jeu";
 import { localVersIso } from "./temps";
 import { avecAgent, devActif, routeDev, TABLES_PARTIE } from "./dev";
 import { bancEnvironnement, bancProd, peutOuvrirBanc } from "./mode";
+import { etatPush, pushTest, routeLotInterne, tickPush } from "./push";
 
 export interface Env extends EnvAuth {
   DB: D1Database;
   BANC?: string;
   /** Posé par requête quand la personne connectée a droit au banc (voir mode.ts). */
   BANC_SESSION?: boolean;
+  /** LOT-3 D : clé privée VAPID (secret) et liaison vers ce même Worker pour répartir les envois. */
+  VAPID_JWK?: string;
+  SOI?: Fetcher;
 }
 
 const FORMATS = ["petit", "grand"];
@@ -25,8 +29,13 @@ const ROLES = ["normale", "personnelle_mj", "speciale_mj"];
 const ETATS = ["vierge", "reclamee", "desactivee"];
 
 export default {
+  /** Cron Trigger, chaque minute : annonces et notifications push (LOT-3 D). */
+  async scheduled(_c: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(tickPush(env, Date.now()).then(() => undefined));
+  },
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
+    if (url.pathname === "/__push/lot" && req.method === "POST") return routeLotInterne(req, env);
     // Banc derrière Google partout : MJ et lecteur en local et sur l'aperçu, MJ seulement en production
     env = { ...env, BANC_SESSION: false };
     const bancDemande = url.pathname === "/banc" || url.pathname.startsWith("/__dev/");
@@ -264,6 +273,12 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       await journal(env, email, "contagion", { transmission: tr, corruption_min: d });
       return retour({ message: `Contagion : transmission ${tr} %, corruption ${d} min. Les prochains scans appliquent ces valeurs.` });
     }
+    if (url.pathname === "/admin/push/test") {
+      const r = (await env.DB.prepare("SELECT a.endpoint FROM abonnements_push a JOIN personnages p ON p.id = a.personnage_id WHERE p.est_mj = 1").all<{ endpoint: string }>()).results;
+      if (!r.length) return retour({ erreur: "Aucun appareil du MJ abonné : active les notifications dans l'app avec ton personnage de MJ." });
+      const x = await pushTest(env, r.map((a) => a.endpoint));
+      return retour({ message: `Push de test : ${x.ok} envoyé(s), ${x.rates} échec(s), ${x.morts} abonnement(s) expiré(s).` });
+    }
     if (url.pathname === "/admin/contagion/foyer") {
       const n = await relancerFoyer(env, (id) => heureDuJoueur(env.DB, id), 3);
       await journal(env, email, "foyer", { n });
@@ -346,6 +361,7 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     image: await lireImage(env.DB),
     mj: await etatMJ(env),
     roles: await etatRoles(env, await heureGlobale(env)),
+    push: await etatPush(env),
     message: url.searchParams.get("message") || undefined,
     erreur: url.searchParams.get("erreur") || undefined,
   });

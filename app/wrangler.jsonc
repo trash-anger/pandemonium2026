@@ -19,6 +19,9 @@
   "vars": {
     "PUBLIC_ORIGIN": "https://p.uyt.re"
   },
+  // LOT-3 D : tick des notifications push chaque minute ; SOI répartit les gros envois en lots (50 sous-requêtes par appel)
+  "triggers": { "crons": ["* * * * *"] },
+  "services": [{ "binding": "SOI", "service": "deja-vu" }],
   "dev": { "host": "localhost:8787" },
   // Aperçu des PR (GitHub Actions) : Worker et base séparés, banc d'essai actif, jamais les données de production.
   "env": {
@@ -37,10 +40,13 @@
       "vars": {
         "PUBLIC_ORIGIN": "https://deja-vu-apercu.uyt-re.workers.dev",
         "BANC": "actif"
-      }
+      },
+      "triggers": { "crons": ["* * * * *"] },
+      "services": [{ "binding": "SOI", "service": "deja-vu-apercu" }]
     }
   },
   "observability": { "enabled": true }
   // Secrets (wrangler secret put [--env apercu]) : GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
-  // SESSION_SECRET, ADMIN_EMAILS, LECTEURS_EMAILS (adresses séparées par des virgules).
+  // SESSION_SECRET, ADMIN_EMAILS, LECTEURS_EMAILS (adresses séparées par des virgules),
+  // VAPID_JWK (clé privée P-256 au format JWK, notifications push ; voir README).
 }

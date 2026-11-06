@@ -108,3 +108,17 @@ Les seuils de la jauge de souvenirs (départ, rescans par heure, seuil du flou) 
 - **Révélation** : les jumeaux retrouvés sont reliés en pointillés dorés. Le bouton « 🦠 Contagion » montre qui a corrompu qui et dévoile les chats noirs. Le « Dernier survivant » (jamais corrompu, le plus de nouvelles cartes) reçoit son badge quand l'instantané est figé.
 - Admin → « Jumeaux et chats noirs » : groupes, chats, part de corrompus, réglage de la transmission et de la durée, « Relancer un foyer ».
 - Banc : E1 (Attribuer aux téléphones sélectionnés, Minuit, Indice +1, Retrouvailles T1↔T2, Trop lent, Triplés 2/3) et E2 (Devenir chat noir, Contaminer, Immunité, Vague > 50 %, Transmission 100 % / 60 %).
+
+## Notifications push (LOT-3 D)
+- **Clé VAPID** : secret `VAPID_JWK` (clé privée P-256 au format JWK), sur chaque Worker. À générer une seule fois, sans l'afficher (depuis `app/`) :
+  ```sh
+  export CLOUDFLARE_ACCOUNT_ID=…   # compte qui héberge les Workers
+  K=$(node -e 'const {generateKeyPairSync}=require("crypto");process.stdout.write(JSON.stringify(generateKeyPairSync("ec",{namedCurve:"prime256v1"}).privateKey.export({format:"jwk"})))') \
+  && printf %s "$K" | npx wrangler secret put VAPID_JWK [--env apercu]; unset K
+  ```
+  Changer la clé invalide tous les abonnements. La clé publique se déduit de la privée (`GET /api/push/cle`).
+- **Envoi** : un Cron Trigger chaque minute (et `/api/notifs` en secours) prépare le contenu de chaque appareil, puis le réveille par un push sans contenu. Le service worker lit le texte sur `/api/push/contenu` avec l'adresse de son abonnement. Au-delà de 40 appareils, les lots passent par la liaison `SOI` (le Worker lui-même), car un appel a droit à 50 sous-requêtes.
+- **Quoi** : annonces H−30 et révélation, messages du MJ, paliers, et pour chaque joueur : jumeau, chat noir, sanctions, missions. Au plus un push toutes les 10 min par appareil, sauf annonces, jumeau et chat noir (RG-016-3).
+- **Côté joueur** : une carte « 🔔 Ne rate rien » sur l'accueil après la première carte (RG-016-1). Sur iPhone, seulement dans l'app installée. Le premier abonnement d'un appareil reçoit un push de bienvenue, qui vérifie toute la chaîne.
+- **Admin** : bloc « Notifications » (appareils abonnés) et bouton « Push de test sur les appareils du MJ ». **Banc** : `POST /__dev/push` force un tick à l'heure du banc.
+

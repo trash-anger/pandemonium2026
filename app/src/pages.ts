@@ -261,5 +261,5 @@ function blocRevelation(img: ImageCachee, lecture: boolean) {
   return `<h2>Révélation : image cachée</h2>
 <div class="carte"><p class="muted" style="font-size:13px;margin-top:0">La constellation se réorganise en ce dessin, d'autant plus nettement que la salle a franchi de paliers. Elle est figée à l'heure de la révélation.</p>
 ${apercu}
-<p><a class="bouton sec" href="/revelation?apercu=1" target="_blank">Aperçu de la révélation (état actuel)</a></p>${outil}</div>`;
+<p><a class="bouton sec" href="/revelation?apercu=1">Aperçu de la révélation (état actuel)</a></p>${outil}</div>`;
 }

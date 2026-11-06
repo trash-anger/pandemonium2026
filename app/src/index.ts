@@ -4,7 +4,7 @@ import { genererCodes, normaliserCode } from "./codes";
 import { ecrireConfig, HEURES_PAR_DEFAUT, lireConfig, lireParametres, PREREGLAGES, type CleConfig } from "./config";
 import { etatDirect, evenement, isoVersLocal } from "./direct";
 import { csvNiimbot } from "./csv";
-import { construireInstantane, ecrireImage, lireImage, validerImage } from "./revelation";
+import { construireInstantane, ecrireImage, lireImage, SANS_BORNE, validerImage } from "./revelation";
 import { langue, pageAdmin, pageApp, pageConnexion, type Compte, type EtiquetteVue, type Lot } from "./pages";
 import { definirPin, routeApi } from "./jeu";
 import { localVersIso } from "./temps";
@@ -250,8 +250,7 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
 
   // Aperçu de la révélation pour le MJ : instantané à l'instant présent, jamais enregistré
   if (url.pathname === "/admin/revelation/apercu.json") {
-    const simule = devActif(env) ? Number(req.headers.get("X-Dev-Maintenant")) : NaN; // banc : heure simulée
-    return new Response(JSON.stringify(await construireInstantane(env, new Date(Number.isFinite(simule) && simule > 0 ? simule : Date.now()).toISOString())), {
+    return new Response(JSON.stringify(await construireInstantane(env, new Date().toISOString(), SANS_BORNE)), {
       headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
     });
   }

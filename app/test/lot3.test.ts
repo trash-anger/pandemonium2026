@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { routeApi } from "../src/jeu";
 import { isoVersLocal } from "../src/direct";
-import { imageParDefaut, validerImage } from "../src/revelation";
+import { construireInstantane, imageParDefaut, SANS_BORNE, validerImage } from "../src/revelation";
 import { d1Memoire } from "./d1-memoire";
 import { ALPHABET } from "../src/codes";
 
@@ -163,6 +163,15 @@ describe("révélation de 5 h (FEAT-009, LOT-3 étape B)", () => {
     const d = await revelation();
     expect(d.franchis).toBe(2);
     expect(d.part).toBe(0.5);
+  });
+
+  it("l'aperçu du MJ montre tout l'état présent, même daté plus tard (heure simulée du banc)", async () => {
+    const a = await joueur("ordre"), b = await joueur("chaos");
+    await scan(a, b.code); // pendant le jeu, mais après l'heure passée ci-dessous
+    const tot = await construireInstantane(env as never, new Date(T0 - 60 * MIN).toISOString());
+    expect(tot.noeuds).toHaveLength(0);
+    const ap = await construireInstantane(env as never, new Date(T0 - 60 * MIN).toISOString(), SANS_BORNE);
+    expect([ap.noeuds.length, ap.liens.length]).toEqual([2, 1]);
   });
 
   it("image cachée : repli « DÉJÀ VU ! » et validation des points envoyés par l'admin", () => {

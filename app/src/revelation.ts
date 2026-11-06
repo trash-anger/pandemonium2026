@@ -78,16 +78,22 @@ export async function ecrireImage(db: D1Database, img: ImageCachee | null) {
     .bind(JSON.stringify(img)).run();
 }
 
-/** Construit l'instantané de la révélation à l'heure `rev` (ISO), sans l'enregistrer. */
-export async function construireInstantane(env: EnvRev, rev: string) {
+/** Aperçu du MJ : tout l'état présent, quelle que soit la date des données (le banc les date à l'heure simulée). */
+export const SANS_BORNE = "9999-12-31T23:59:59.999Z";
+
+/**
+ * Construit l'instantané de la révélation à l'heure `rev` (ISO), sans l'enregistrer.
+ * Seules comptent les données d'avant `borne` (par défaut l'heure de révélation).
+ */
+export async function construireInstantane(env: EnvRev, rev: string, borne = rev) {
   const db = env.DB;
-  const persos = (await db.prepare("SELECT id, pseudo, type, couleur, est_mj FROM personnages WHERE cree_le < ? ORDER BY cree_le, id").bind(rev)
+  const persos = (await db.prepare("SELECT id, pseudo, type, couleur, est_mj FROM personnages WHERE cree_le < ? ORDER BY cree_le, id").bind(borne)
     .all<{ id: string; pseudo: string; type: string; couleur: string; est_mj: number }>()).results;
   const index = new Map(persos.map((p, i) => [p.id, i]));
   // Connexions : paires uniques, quel que soit le sens du premier scan (RG-009-5)
   const paires = (await db.prepare(
     "SELECT DISTINCT MIN(possesseur_id, personnage_id) AS a, MAX(possesseur_id, personnage_id) AS b FROM collection WHERE possesseur_id <> personnage_id AND premier_scan_le < ?",
-  ).bind(rev).all<{ a: string; b: string }>()).results;
+  ).bind(borne).all<{ a: string; b: string }>()).results;
   const liens: [number, number][] = [];
   for (const x of paires) {
     const a = index.get(x.a), b = index.get(x.b);
@@ -96,7 +102,7 @@ export async function construireInstantane(env: EnvRev, rev: string) {
   // Faction de rattachement (RG-011-6) : parmi les siennes, celle où le joueur a marqué le moins de points
   const fac = (await db.prepare("SELECT DISTINCT personnage_id AS id, faction_id AS f FROM etiquettes WHERE personnage_id IS NOT NULL AND faction_id IS NOT NULL")
     .all<{ id: string; f: string }>()).results;
-  const pts = (await db.prepare("SELECT personnage_id AS id, faction AS f, SUM(points) AS n FROM points_faction WHERE le < ? GROUP BY personnage_id, faction").bind(rev)
+  const pts = (await db.prepare("SELECT personnage_id AS id, faction AS f, SUM(points) AS n FROM points_faction WHERE le < ? GROUP BY personnage_id, faction").bind(borne)
     .all<{ id: string; f: string; n: number }>()).results;
   const points = new Map(pts.map((x) => [x.id + "|" + x.f, x.n]));
   const factions = new Map<string, string[]>();
@@ -109,7 +115,7 @@ export async function construireInstantane(env: EnvRev, rev: string) {
   };
   // Paliers franchis à l'heure de la révélation : somme des contributions des scans d'avant
   const b = baremeDe(await lireParametres(db));
-  const q = (await db.prepare("SELECT COALESCE(SUM(quete), 0) AS n FROM scans WHERE horodatage_serveur < ?").bind(rev).first<{ n: number }>())?.n ?? 0;
+  const q = (await db.prepare("SELECT COALESCE(SUM(quete), 0) AS n FROM scans WHERE horodatage_serveur < ?").bind(borne).first<{ n: number }>())?.n ?? 0;
   const franchis = b.paliers.filter((s) => q >= s).length;
   return {
     v: 1, revelation: rev, quete: Math.floor(q * 100) / 100, franchis, part: PART_AIMANTEE[franchis],

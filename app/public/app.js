@@ -933,7 +933,7 @@
 
   async function donneesRevelation(apercu) {
     if (apercu) {
-      const r = await fetch("/admin/revelation/apercu.json", { cache: "no-store", credentials: "same-origin", headers: { "X-Dev-Maintenant": String(Date.now()) } }).catch(() => null);
+      const r = await fetch("/admin/revelation/apercu.json", { cache: "no-store", credentials: "same-origin" }).catch(() => null);
       if (!r || !r.ok) throw { erreur: "apercu" };
       return r.json();
     }
@@ -1015,7 +1015,7 @@
   async function revelation() {
     const apercu = new URLSearchParams(location.search).has("apercu");
     rendre(`<div class="rev"><canvas id="rev-canvas"></canvas>
-      <div class="rev-haut"><a class="rev-fermer" href="/" data-nav aria-label="${t.fermer}">✕</a>
+      <div class="rev-haut"><a class="rev-fermer" href="${apercu ? "/admin" : "/"}"${apercu ? "" : " data-nav"} aria-label="${t.fermer}">✕</a>
         <div><span class="chip">✦ ${t.revTitre}</span><div class="mono petit" id="rev-stats"></div>${apercu ? `<div class="petit or">${t.revApercu}</div>` : ""}</div></div>
       <p class="rev-charge" id="rev-charge">${t.revCharge}</p>
       <div class="rev-carte" id="rev-carte" hidden></div>

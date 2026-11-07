@@ -80,9 +80,9 @@ describe("jetons signés", () => {
 
 import { bancEnvironnement, bancProd, devActif, peutOuvrirBanc } from "../src/mode";
 describe("banc d'essai", () => {
-  it("en production, ne s'ouvre que pour une requête du MJ connecté", () => {
+  it("fermé en production, même pour le MJ ; ouvert sur l'aperçu à toute personne connectée", () => {
     const prod = { PUBLIC_ORIGIN: "https://p.uyt.re", BANC: "actif" }, apercu = { PUBLIC_ORIGIN: "https://deja-vu-apercu.uyt-re.workers.dev", BANC: "actif" };
-    expect(peutOuvrirBanc(prod, "mj")).toBe(true);
+    expect(peutOuvrirBanc(prod, "mj")).toBe(false);
     expect(peutOuvrirBanc(prod, "lecteur")).toBe(false);
     expect(peutOuvrirBanc(apercu, "lecteur")).toBe(true);
     for (const e of [prod, apercu, { PUBLIC_ORIGIN: "http://localhost:8787" }]) expect(peutOuvrirBanc(e, null)).toBe(false); // jamais sans connexion

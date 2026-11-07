@@ -181,84 +181,138 @@ ${lecture ? "" : `<h2>Zone dangereuse</h2>
 <footer>LOT-1 · panneau provisoire</footer>`, false);
 }
 
-/** Galerie des photos de scan côté MJ (RG-017-6) : une photo par écran, on swipe ; un appui long de 2 s écarte la photo
- *  (cadre rouge) du mur et de la révélation, un nouvel appui long la rétablit. Photos brutes, pour la modération. */
+/** Photos de scan côté MJ (RG-017-6) : grille de toutes les photos ; toucher une vignette ouvre le plein écran, où l'on swipe.
+ *  Appui long de 2 s (grille ou plein écran) : la photo est écartée du mur et de la révélation (cadre rouge) ; encore 2 s : rétablie.
+ *  « Vue joueurs » applique l'effet déformant du mur ; sinon photos brutes, pour la modération. */
 export function pageGalerie(m: Awaited<ReturnType<typeof murAdmin>>, lecture: boolean) {
   const donnees = JSON.stringify({ ...m, photos: m.photos.map((f) => ({ ...f, heure: heureMtl(f.le) })) }).replace(/</g, "\\u003c");
   return page("fr", "Photos · Déjà vu !", `<style>
-main{max-width:none;padding:0}body{overflow:hidden}
-.g-haut{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:linear-gradient(var(--bg) 60%,transparent)}
-.g-haut a{color:var(--green);text-decoration:none;font-weight:700}.g-compte{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right}
-.galerie{position:fixed;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior:contain}
+main{max-width:none;padding:0}
+.g-haut{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--bg);border-bottom:1px solid var(--line)}
+.g-haut a{color:var(--green);text-decoration:none;font-weight:700}.g-compte{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:center;flex:1}
+.bascule{background:var(--bg3);color:var(--fg);border:1.5px solid var(--line);padding:8px 12px;font-size:14px;border-radius:999px}
+.bascule[aria-pressed=true]{background:var(--pink);color:var(--ink);border-color:var(--pink)}
+.aide{color:var(--muted);font-size:14px;margin:12px 16px}
+.grille-ph{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 16px 40px}
+@media (min-width:700px){.grille-ph{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
+.ph{position:relative;aspect-ratio:3/4;border-radius:10px;overflow:hidden;outline:4px solid transparent;outline-offset:-4px;background:var(--bg3);-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.ph img,.plein-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.ph .fantome,.plein-img .fantome{display:none}
+.ph::after{content:"";position:absolute;inset:0;border-radius:10px;border:4px solid transparent;z-index:3;pointer-events:none}.ph.ecartee::after{border-color:#ff2a2a}.ph.ecartee img{opacity:.45}
+.ph .jauge,.plein-img .jauge{position:absolute;left:0;bottom:0;height:5px;width:0;background:#ff2a2a;z-index:2}
+.appui .jauge{width:100%;transition:width 2s linear}
+.plein{position:fixed;inset:0;z-index:10;background:var(--bg)}.plein[hidden]{display:none}
+.plein .g-haut{position:absolute;left:0;right:0}
+.galerie{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior:contain}
 .galerie::-webkit-scrollbar{display:none}
-.diapo{flex:0 0 100%;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:70px 16px 90px}
-.cadre{position:relative;border-radius:14px;outline:5px solid transparent;outline-offset:4px;transition:outline-color .2s;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:pan-x}
-.cadre img{display:block;max-width:100%;max-height:62dvh;width:auto;height:auto;min-width:min(78vw,420px);object-fit:contain;border-radius:14px;pointer-events:none;image-rendering:auto}
-.diapo.ecartee .cadre{outline-color:#ff2a2a}.diapo.ecartee img{opacity:.55}
-.etiq{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:center}.diapo.ecartee .etiq b{color:#ff2a2a}
-.jauge{position:absolute;left:0;bottom:-14px;height:4px;width:0;background:#ff2a2a;border-radius:2px}
-.cadre.appui .jauge{width:100%;transition:width 2s linear}
-.g-bas{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(14px + env(safe-area-inset-bottom));text-align:center;font-size:14px;color:var(--muted);background:linear-gradient(transparent,var(--bg) 40%)}
-.vide{position:fixed;inset:0;display:grid;place-items:center;color:var(--muted);padding:24px;text-align:center}
+.diapo{flex:0 0 100%;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:80px 16px 90px}
+.plein-img{position:relative;width:min(86vw,440px);aspect-ratio:3/4;max-height:64dvh;border-radius:14px;overflow:hidden;outline:5px solid transparent;outline-offset:4px;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.plein-img img{object-fit:contain;background:#000}
+.diapo.ecartee .plein-img{outline-color:#ff2a2a}.diapo.ecartee .plein-img img{opacity:.55}
+.etiq{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:center}.etiq b{color:#ff2a2a}
+.fermer{font-size:20px;background:var(--bg3);color:var(--fg);border:1.5px solid var(--line);width:44px;height:44px;padding:0;border-radius:50%}
+.g-bas{position:absolute;left:0;right:0;bottom:0;padding:12px 16px calc(14px + env(safe-area-inset-bottom));text-align:center;font-size:14px;color:var(--muted);background:linear-gradient(transparent,var(--bg) 40%)}
+/* Vue joueurs : même effet que le mur de l'app (dédoublement, décalage des couleurs) */
+.effet .ph img,.effet .plein-img img{filter:blur(1.5px) saturate(1.3) contrast(1.1)}
+.effet .ph .fantome,.effet .plein-img .fantome{display:block;mix-blend-mode:screen;opacity:.6}
+.effet .f1{transform:translate(8%,-3%) scale(1.04);filter:blur(1.5px) grayscale(1) sepia(1) hue-rotate(290deg) saturate(5)!important}
+.effet .f2{transform:translate(-7%,4%) scale(1.04);filter:blur(1.5px) grayscale(1) sepia(1) hue-rotate(80deg) saturate(5)!important;opacity:.45!important}
+.vide{color:var(--muted);padding:40px 24px;text-align:center}
 </style>
-<div class="g-haut"><a href="/admin">← Admin</a><div class="g-compte" id="compte"></div></div>
-<div class="galerie" id="galerie"></div>
-<div class="g-bas">${lecture ? "Lecture seule : seul le MJ peut écarter une photo." : "Swipe pour parcourir. <b>Appui long 2 s</b> : écarter la photo du mur et de la révélation (cadre rouge). Encore 2 s : la rétablir."}</div>
+<div class="g-haut"><a href="/admin">← Admin</a><div class="g-compte" id="compte"></div><button class="bascule" id="bascule" aria-pressed="false">Vue joueurs</button></div>
+<p class="aide">${lecture ? "Lecture seule : touche une photo pour l'agrandir." : "Touche une photo pour l'agrandir et swiper. <b>Appui long 2 s</b> : écarter la photo du mur et de la révélation (cadre rouge). Encore 2 s : la rétablir."}</p>
+<div class="grille-ph" id="grille"></div>
+<div class="plein" id="plein" hidden><div class="g-haut"><button class="fermer" id="fermer" aria-label="Fermer">✕</button><div class="g-compte" id="compte-plein"></div><span style="width:44px"></span></div>
+<div class="galerie" id="galerie"></div><div class="g-bas">${lecture ? "Swipe pour parcourir." : "Swipe pour parcourir. <b>Appui long 2 s</b> : écarter ou rétablir."}</div></div>
 <script>
 (() => {
   const D = ${donnees}, LECTURE = ${lecture ? "true" : "false"};
-  const g = document.getElementById("galerie"), compte = document.getElementById("compte");
+  const $ = (id) => document.getElementById(id);
+  const grille = $("grille"), galerie = $("galerie"), plein = $("plein");
   let photos = D.photos, suite = D.suite, total = D.total, ecartees = D.masquees, charge = false, courante = 0;
   const esc = (x) => String(x).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-  function maj() { compte.innerHTML = (photos.length ? (courante + 1) + " / " + total : "0 photo") + "<br>" + ecartees + " écartée" + (ecartees > 1 ? "s" : ""); }
-  function diapo(f) {
-    const d = document.createElement("div");
-    d.className = "diapo" + (f.masquee ? " ecartee" : ""); d.dataset.id = f.id;
-    d.innerHTML = '<div class="cadre"><img alt="" src="' + f.image + '"><i class="jauge"></i></div><div class="etiq">' + esc(f.pseudo || "?") + " · " + esc(f.heure)
-      + '<br><b>' + (f.masquee ? "Écartée du mur et de la révélation" : "") + "</b></div>";
-    if (!LECTURE) appuiLong(d, f);
-    return d;
+  const imgs = (src) => '<img alt="" src="' + src + '"><img alt="" class="fantome f1" src="' + src + '"><img alt="" class="fantome f2" src="' + src + '"><i class="jauge"></i>';
+  const ECARTEE = "Écartée du mur et de la révélation";
+  function maj() {
+    const e = ecartees + " écartée" + (ecartees > 1 ? "s" : "");
+    $("compte").textContent = total + " photo" + (total > 1 ? "s" : "") + " · " + e;
+    $("compte-plein").textContent = (courante + 1) + " / " + total + " · " + e;
   }
-  function ajouter(liste) { for (const f of liste) g.appendChild(diapo(f)); }
-  if (!photos.length) { g.outerHTML = '<div class="vide">Aucune photo pour l\\'instant. Elles arrivent avec les scans faits dans l\\'app.</div>'; }
+  function ajouter(liste) {
+    for (const f of liste) {
+      const i = photos.indexOf(f);
+      const v = document.createElement("div");
+      v.className = "ph" + (f.masquee ? " ecartee" : ""); v.dataset.id = f.id; v.innerHTML = imgs(f.image);
+      geste(v, f, () => ouvrir(i));
+      grille.appendChild(v);
+      const d = document.createElement("div");
+      d.className = "diapo" + (f.masquee ? " ecartee" : ""); d.dataset.id = f.id;
+      d.innerHTML = '<div class="plein-img">' + imgs(f.image) + '</div><div class="etiq">' + esc(f.pseudo || "?") + " · " + esc(f.heure) + "<br><b>" + (f.masquee ? ECARTEE : "") + "</b></div>";
+      geste(d.querySelector(".plein-img"), f, null);
+      galerie.appendChild(d);
+    }
+  }
+  if (!photos.length) grille.outerHTML = '<p class="vide">Aucune photo pour l\\'instant. Elles arrivent avec les scans faits dans l\\'app.</p>';
   else ajouter(photos);
   maj();
-  g.addEventListener("scroll", () => {
-    courante = Math.round(g.scrollLeft / g.clientWidth); maj();
-    if (suite && !charge && courante >= photos.length - 5) plus();
+
+  // Grille → plein écran, et retour à la même photo
+  function ouvrir(i) {
+    plein.hidden = false; document.body.style.overflow = "hidden";
+    galerie.scrollLeft = i * galerie.clientWidth; courante = i; maj();
+  }
+  $("fermer").onclick = () => {
+    plein.hidden = true; document.body.style.overflow = "";
+    const v = grille.children[courante]; if (v) v.scrollIntoView({ block: "center" });
+  };
+  galerie.addEventListener("scroll", () => {
+    courante = Math.round(galerie.scrollLeft / galerie.clientWidth); maj();
+    if (courante >= photos.length - 5) plus();
   }, { passive: true });
+  addEventListener("scroll", () => { if (innerHeight + scrollY > document.body.scrollHeight - 600) plus(); }, { passive: true });
   async function plus() {
+    if (!suite || charge || !photos.length) return;
     charge = true;
     try {
       const r = await (await fetch("/admin/photos.json?avant=" + photos[photos.length - 1].id, { credentials: "same-origin" })).json();
       photos = photos.concat(r.photos); suite = r.suite; ajouter(r.photos);
     } catch {} finally { charge = false; }
   }
-  function appuiLong(d, f) {
-    const c = d.querySelector(".cadre");
-    let minuterie = null, x0 = 0, y0 = 0;
-    const annuler = () => { clearTimeout(minuterie); minuterie = null; c.classList.remove("appui"); };
-    c.addEventListener("contextmenu", (e) => e.preventDefault());
-    c.addEventListener("pointerdown", (e) => {
-      x0 = e.clientX; y0 = e.clientY; c.classList.add("appui");
-      minuterie = setTimeout(() => { annuler(); basculer(d, f); }, 2000);
+
+  // Toucher court : ouvrir (grille) ; appui long de 2 s : écarter ou rétablir (partout, sauf en lecture seule)
+  function geste(el, f, toucher) {
+    let minuterie = null, x0 = 0, y0 = 0, actif = false, long = false;
+    const annuler = () => { clearTimeout(minuterie); minuterie = null; el.classList.remove("appui"); };
+    el.addEventListener("contextmenu", (e) => e.preventDefault());
+    el.addEventListener("pointerdown", (e) => {
+      x0 = e.clientX; y0 = e.clientY; actif = true; long = false;
+      if (LECTURE) return;
+      el.classList.add("appui");
+      minuterie = setTimeout(() => { annuler(); long = true; basculer(f); }, 2000);
     });
-    c.addEventListener("pointermove", (e) => { if (minuterie && Math.hypot(e.clientX - x0, e.clientY - y0) > 12) annuler(); });
-    for (const t of ["pointerup", "pointercancel", "pointerleave"]) c.addEventListener(t, annuler);
+    el.addEventListener("pointermove", (e) => { if (actif && Math.hypot(e.clientX - x0, e.clientY - y0) > 12) { actif = false; annuler(); } });
+    el.addEventListener("pointerup", () => { const court = actif && !long && minuterie; annuler(); if ((court || (LECTURE && actif)) && toucher) toucher(); actif = false; });
+    for (const t of ["pointercancel", "pointerleave"]) el.addEventListener(t, () => { actif = false; annuler(); });
   }
-  async function basculer(d, f) {
+  async function basculer(f) {
     const voulu = !f.masquee;
     const corps = new FormData(); corps.set("id", f.id); corps.set("masquee", voulu ? "1" : "0");
     try {
       const r = await fetch("/admin/mur/masquer", { method: "POST", body: corps, credentials: "same-origin", headers: { "X-Galerie": "1" } });
       if (!r.ok) throw 0;
       f.masquee = voulu ? 1 : 0; ecartees += voulu ? 1 : -1;
-      d.classList.toggle("ecartee", voulu);
-      d.querySelector(".etiq b").textContent = voulu ? "Écartée du mur et de la révélation" : "";
+      document.querySelectorAll('[data-id="' + f.id + '"]').forEach((x) => x.classList.toggle("ecartee", voulu));
+      const b = galerie.querySelector('[data-id="' + f.id + '"] .etiq b'); if (b) b.textContent = voulu ? ECARTEE : "";
       if (navigator.vibrate) navigator.vibrate(voulu ? [40, 60, 40] : 30);
       maj();
     } catch { alert("Échec : réseau ou session expirée. Recharge la page."); }
   }
+
+  // Vue joueurs : l'effet du mur, mémorisé sur ce téléphone
+  const bascule = $("bascule");
+  const appliquer = (on) => { document.body.classList.toggle("effet", on); bascule.setAttribute("aria-pressed", on); try { localStorage.setItem("dv-admin-effet", on ? "1" : ""); } catch {} };
+  try { appliquer(localStorage.getItem("dv-admin-effet") === "1"); } catch {}
+  bascule.onclick = () => appliquer(!document.body.classList.contains("effet"));
 })();
 </script>`, false);
 }

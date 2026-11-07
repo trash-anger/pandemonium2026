@@ -6,6 +6,7 @@
 import { HEURES_PAR_DEFAUT, lireConfig, lireParametres, type Heures } from "./config";
 import { ajouterPoints, evenement, heuresIso } from "./direct";
 import { bancEnvironnement, type EnvMode } from "./mode";
+import { EFFETS_FIXES } from "./banc-fixe";
 import { fauxSouvenir, type PersoSouvenir } from "./souvenirs";
 import { localVersIso } from "./temps";
 import { corrompre, guerirParL2, indiceBonus } from "./jumeaux";
@@ -60,9 +61,12 @@ export async function attribution(env: EnvMJ, t: number) {
   const tags = (await env.DB.prepare("SELECT code, banc FROM etiquettes WHERE role = 'speciale_mj' AND etat <> 'desactivee' ORDER BY code")
     .all<{ code: string; banc: number }>()).results;
   const effets = new Map<string, string>();
+  // Codes fixes du banc (0011 à 0025, hors production) : toujours le même effet, imprimé sous le QR
+  const fixes = bancEnvironnement(env) ? tags.filter((x) => x.banc && EFFETS_FIXES.has(x.code)) : [];
+  for (const x of fixes) effets.set(x.code, EFFETS_FIXES.get(x.code)!);
   // Les étiquettes du banc ont leur propre mélange, pour ne jamais toucher aux vraies
   for (const banc of [0, 1]) {
-    const groupe = tags.filter((x) => (x.banc ? 1 : 0) === banc);
+    const groupe = tags.filter((x) => (x.banc ? 1 : 0) === banc && !fixes.includes(x));
     if (!groupe.length) continue;
     const alea = mulberry32(await graine(env.SESSION_SECRET || "dev-seulement", `melange:${periode}:${banc}`));
     const perm = [...EFFETS_SPECIAUX];

@@ -30,6 +30,30 @@ Chaque téléphone du banc a son propre stockage local (clés suffixées par `T1
 
 Le navigateur s'identifie par un jeton anonyme (en-tête `X-Appareil`, stocké localement) ; le serveur n'en garde que l'empreinte.
 
+### Codes fixes du banc (planche imprimée)
+
+Pour tester avec de vrais téléphones, sans retaper de codes au hasard : 34 étiquettes numérotées (`src/banc-fixe.ts`), installées par le bouton « Codes fixes 0001… » du banc (A4), en local et sur l'aperçu seulement (refusé en production). Elles commencent toutes par 0, chiffre absent des vrais codes : aucune collision possible, et elles répondent « code inconnu » sur p.uyt.re.
+
+| Codes | Rôle |
+|---|---|
+| 0001 à 0004 | 4 joueurs fixes (personnages créés d'avance, PIN 1234) |
+| 0005 | étiquette personnelle du MJ, avec son personnage (PIN 1234) |
+| 0011 à 0020 | légendaires L-1 à L-10, toujours le même effet (pas de mélange) |
+| 0021 à 0025 | pièges T-1 à T-5, toujours le même effet |
+| 0031 à 0042 | vierges |
+| 0051 / 0099 | retirée / inconnue |
+
+Le bouton est rejouable : il remet les PIN à 1234 et recrée les personnages fixes effacés par « Partie à zéro ». Planche à imprimer (papier Lettre, noir et blanc, 3 pages : récapitulatif puis QR) :
+
+```sh
+npm run planche                  # QR vers l'aperçu
+npm run planche -- <origine>     # ou vers une autre adresse
+```
+
+Le banc affiche aussi, sous chaque téléphone (jusqu'à 6), les QR de ses étiquettes : un vrai téléphone peut les scanner à l'écran. En C1, une matrice fait scanner n'importe quel téléphone du banc par n'importe quel autre. L'horloge simulée (A3) ne vaut que pour les téléphones du banc : pour tester avec un vrai téléphone, A3b « Soirée en heure réelle » décale toute la soirée sur l'heure réelle (« 23:58 » : minuit dans 2 min), local et aperçu seulement. Plan de tests imprimable : `npm run plan-tests` (`sorties/plan-tests.pdf`).
+
+Elle s'écrit dans `sorties/codes-banc.pdf` (Chrome requis pour le PDF ; sinon, imprimer `sorties/codes-banc.html`). Avant de scanner pour de vrai, mettre le début de la soirée dans le passé dans l'admin de l'aperçu.
+
 ## Déployer (première fois)
 
 ```sh
@@ -122,3 +146,10 @@ Les seuils de la jauge de souvenirs (départ, rescans par heure, seuil du flou) 
 - **Côté joueur** : une carte « 🔔 Ne rate rien » sur l'accueil après la première carte (RG-016-1). Sur iPhone, seulement dans l'app installée. Le premier abonnement d'un appareil reçoit un push de bienvenue, qui vérifie toute la chaîne.
 - **Admin** : bloc « Notifications » (appareils abonnés) et bouton « Push de test sur les appareils du MJ ». **Banc** : `POST /__dev/push` force un tick à l'heure du banc.
 
+
+## Frise d'activité et suggestions au MJ (LOT-3 E)
+- **Frise** (ADM-14), dans l'admin : scans par tranche de 5 min (nouvelles cartes et rescans), nouvelles cartes cumulées face à la courbe attendue du préréglage, part de corrompus, nouveaux joueurs. Repères : minuit, 2 h, révélation, mélanges des légendaires, paliers, messages, pauses, sanctions, missions et suggestions. Calculée à la demande depuis les tables du jeu ; un tableau est aussi disponible.
+- **Courbe attendue** : joueurs actifs × cartes par joueur du préréglage (Lent 8, Normal 15, Rapide 25, Très rapide 40) × part de la soirée écoulée jusqu'à la révélation.
+- **Signaux** (barème §6), évalués toutes les 10 min par le Cron Trigger (et `/api/notifs` en secours), de 30 min après l'ouverture jusqu'à la révélation : connexions au-dessus de 2 fois ou sous la moitié de la courbe, palier atteint plus de 45 min en avance, plus de 50 % de corrompus pendant 20 min, moins de 10 % une heure après le premier chat noir, plus de rescans que de nouvelles cartes depuis 30 min.
+- **Suggestions** : au plus une toutes les 15 min, le même signal pas avant 45 min. Le MJ reçoit un push « 🎛️ Suggestion de réglage » sur son personnage de MJ, qui ouvre l'admin ; il applique ou ignore en un toucher. Le serveur n'applique jamais rien tout seul.
+- **Banc** : `POST /__dev/suggestions` (`{ maintenant, effacer }`) évalue les signaux à l'heure du banc.

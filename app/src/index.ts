@@ -13,6 +13,7 @@ import { localVersIso } from "./temps";
 import { avecAgent, devActif, routeDev, TABLES_PARTIE } from "./dev";
 import { bancEnvironnement, bancProd, peutOuvrirBanc } from "./mode";
 import { etatPush, pushTest, routeLotInterne, tickPush } from "./push";
+import { frise, suggestionsEnCours, tickSuggestions, traiterSuggestion } from "./suivi";
 
 export interface Env extends EnvAuth {
   DB: D1Database;
@@ -31,7 +32,8 @@ const ETATS = ["vierge", "reclamee", "desactivee"];
 export default {
   /** Cron Trigger, chaque minute : annonces et notifications push (LOT-3 D). */
   async scheduled(_c: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(tickPush(env, Date.now()).then(() => undefined));
+    // Suggestions d'abord (toutes les 10 min) : leur notification au MJ part dans le même tick
+    ctx.waitUntil(tickSuggestions(env, Date.now()).then(() => tickPush(env, Date.now())).then(() => undefined));
   },
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
@@ -273,6 +275,11 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       await journal(env, email, "contagion", { transmission: tr, corruption_min: d });
       return retour({ message: `Contagion : transmission ${tr} %, corruption ${d} min. Les prochains scans appliquent ces valeurs.` });
     }
+    if (url.pathname === "/admin/suggestion") {
+      const r = await traiterSuggestion(env, Number(f.get("id")), f.get("action") === "appliquer", email, (id) => heureDuJoueur(env.DB, id));
+      await journal(env, email, "suggestion", { id: Number(f.get("id")), action: f.get("action") });
+      return retour(r.erreur ? { erreur: r.erreur } : { message: r.message! });
+    }
     if (url.pathname === "/admin/push/test") {
       const r = (await env.DB.prepare("SELECT a.endpoint FROM abonnements_push a JOIN personnages p ON p.id = a.personnage_id WHERE p.est_mj = 1").all<{ endpoint: string }>()).results;
       if (!r.length) return retour({ erreur: "Aucun appareil du MJ abonné : active les notifications dans l'app avec ton personnage de MJ." });
@@ -362,6 +369,8 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     mj: await etatMJ(env),
     roles: await etatRoles(env, await heureGlobale(env)),
     push: await etatPush(env),
+    frise: await frise(env, await heureGlobale(env)),
+    suggestions: await suggestionsEnCours(env.DB),
     message: url.searchParams.get("message") || undefined,
     erreur: url.searchParams.get("erreur") || undefined,
   });

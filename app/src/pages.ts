@@ -4,6 +4,7 @@ import type { etatDirect } from "./direct";
 import type { ImageCachee } from "./revelation";
 import type { etatMJ } from "./mj";
 import type { etatRoles } from "./jumeaux";
+import type { frise, suggestionsEnCours } from "./suivi";
 
 export type Langue = "fr" | "en";
 
@@ -19,7 +20,7 @@ export const esc = (s: unknown) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 const CSS = `
-:root{--bg:#0b0a0f;--bg2:#15131c;--bg3:#1e1a27;--fg:#efe9df;--muted:#aaa4b6;--pink:#ff4f8b;--green:#3dff8a;--paper:#f1ece2;--ink:#18161d;--line:#3a3445;
+:root{--gold:#e8b84a;--bg:#0b0a0f;--bg2:#15131c;--bg3:#1e1a27;--fg:#efe9df;--muted:#aaa4b6;--pink:#ff4f8b;--green:#3dff8a;--paper:#f1ece2;--ink:#18161d;--line:#3a3445;
 --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--display:"Arial Black","Helvetica Neue",Impact,system-ui,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-text-size-adjust:100%}
 body{min-height:100dvh;background:radial-gradient(ellipse at 20% 0%,#3a1426 0%,var(--bg) 60%) fixed}
@@ -30,6 +31,11 @@ h1{font-family:var(--display);font-size:clamp(56px,18vw,108px);line-height:.88;m
 h2{font-family:var(--display);font-size:22px;margin:30px 0 10px}
 p{font-size:17px;line-height:1.5}.muted{color:var(--muted)}.mono{font-family:var(--mono)}
 .code{font-family:var(--mono);font-weight:700;font-size:30px;letter-spacing:.3em;color:var(--green)}
+.fr-defile{overflow-x:auto;-webkit-overflow-scrolling:touch}.frise{display:block;width:100%;min-width:560px;height:auto;overflow:visible}.fr-titre{margin:14px 0 2px;font-size:13px;font-weight:700}
+.fr-axe{font:9px var(--mono);fill:var(--muted)}.fr-base{stroke:var(--line);stroke-width:1}.fr-rep{stroke:var(--muted);stroke-width:1;stroke-dasharray:2 3;opacity:.7}
+.fr-melange{stroke:var(--muted);stroke-width:1;opacity:.6}.fr-seuil{stroke:var(--line);stroke-dasharray:3 3}.fr-ligne{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.fr-evt{font-size:10px;fill:var(--fg)}.fr-leg{font-weight:400;color:var(--muted);margin-left:10px;white-space:nowrap}.fr-leg i{display:inline-block;width:12px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.fr-table{font:12px var(--mono);border-collapse:collapse;width:100%}.fr-table td,.fr-table th{padding:2px 6px;text-align:right;border-bottom:1px solid var(--line)}
 .carte{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:18px}
 .compte{font-family:var(--mono);font-size:28px;color:var(--pink);letter-spacing:.06em}
 input,select,textarea,button{font:inherit;color:inherit}
@@ -57,7 +63,7 @@ function page(l: Langue, titre: string, corps: string, robots = true): Response 
 }
 
 /** Coquille de l'application du joueur (LOT-1) : tout l'affichage est fait par public/app.js. */
-export const VERSION_APP = "l3d-1";
+export const VERSION_APP = "l3e-1";
 export function pageApp(l: Langue, status = 200): Response {
   const html = `<!doctype html><html lang="${l}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -94,6 +100,8 @@ export function pageAdmin(p: {
   mj?: Awaited<ReturnType<typeof etatMJ>>;
   roles?: Awaited<ReturnType<typeof etatRoles>>;
   push?: { cle: boolean; appareils: number; joueurs: number; en_echec: number };
+  frise?: Awaited<ReturnType<typeof frise>>;
+  suggestions?: Awaited<ReturnType<typeof suggestionsEnCours>>;
 }) {
   const lecture = p.role === "lecteur";
   const total = p.comptes.reduce((a, c) => a + c.n, 0);
@@ -128,7 +136,9 @@ ${lecture ? "" : `<form method="post" action="/admin/pin" class="rangee" style="
 <p class="muted mono" style="font-size:12px">${esc(p.email)} · ${lecture ? '<span class="err">lecture seule</span>' : "MJ"} · <a class="ok" href="/auth/deconnexion">déconnexion</a></p>
 ${p.banc ? `<p><a class="bouton sec" href="/banc">🧪 Banc d'essai</a></p>` : ""}
 ${p.message ? `<p class="ok">${esc(p.message)}</p>` : ""}${p.erreur ? `<p class="err">${esc(p.erreur)}</p>` : ""}
+${p.suggestions ? blocSuggestions(p.suggestions, lecture) : ""}
 ${p.direct ? blocDirect(p.direct, lecture) : ""}
+${p.frise ? blocFrise(p.frise) : ""}
 ${p.mj ? blocMJ(p.mj, lecture) : ""}
 ${p.roles ? blocRoles(p.roles, lecture) : ""}
 ${p.push ? blocPush(p.push, lecture) : ""}
@@ -339,6 +349,76 @@ ${clients || '<p class="muted">Personne n\'a scanné tes étiquettes récemment.
 ${missions ? `<h3>Missions en cours</h3><table><tr><th>Joueur</th><th>Mission</th><th>Fin</th><th></th></tr>${missions}</table>` : ""}
 ${sanctions ? `<h3>Sanctions</h3><table><tr><th>Heure</th><th>Joueur</th><th>Niveau</th><th></th></tr>${sanctions}</table>` : ""}
 ${lecture ? "" : SCRIPT_MAINTENIR}`;
+}
+
+type PageAdmin = Parameters<typeof pageAdmin>[0];
+
+// ---------- Suggestions de réglage (ADM-16) ----------
+const ETATS_SUGG: Record<string, string> = { proposee: "en attente", appliquee: "appliquée", ignoree: "ignorée", perimee: "remplacée" };
+function blocSuggestions(l: NonNullable<PageAdmin["suggestions"]>, lecture: boolean) {
+  const actuelle = l.find((x) => x.etat === "proposee");
+  const histo = l.filter((x) => x !== actuelle).slice(0, 5);
+  if (!actuelle && !histo.length) return "";
+  return `<h2 id="suggestions">Suggestions</h2>
+${actuelle ? `<div class="carte" style="border-color:var(--pink)"><p style="margin:0">🎛️ ${esc(actuelle.texte)}</p>
+<p class="muted" style="font-size:13px;margin:4px 0 0">Proposée à ${heureCourte(actuelle.cree_le)}. Rien ne s'applique sans toi.</p>
+${lecture ? "" : `<form method="post" action="/admin/suggestion" class="rangee" style="margin-top:12px"><input type="hidden" name="id" value="${actuelle.id}">
+<div style="flex:0 0 auto"><button name="action" value="appliquer">Appliquer</button></div><div style="flex:0 0 auto"><button name="action" value="ignorer" class="bouton sec">Ignorer</button></div></form>`}</div>` : ""}
+${histo.length ? `<ul class="muted" style="font-size:13px;padding-left:18px">${histo.map((x) => `<li>${heureCourte(x.cree_le)} · ${esc(x.texte)} <i>(${ETATS_SUGG[x.etat] ?? x.etat})</i></li>`).join("")}</ul>` : ""}`;
+}
+
+// ---------- Frise d'activité (ADM-14) : petits graphiques superposés, un seul axe chacun ----------
+const EMOJI_REPERE: Record<string, string> = { palier: "★", sanction: "⚠", mission: "🎯", message: "📣", pause: "⏸", suggestion: "🎛" };
+function blocFrise(f: NonNullable<PageAdmin["frise"]>) {
+  const T = f.tranches;
+  if (!T.length) return `<h2>Frise d'activité</h2><div class="carte"><p class="muted" style="margin:0">La frise démarre à l'ouverture du jeu (${heureCourte(f.debut)}).</p></div>`;
+  const W = 640, G = 34, D = 8, L = W - G - D; // marge gauche (graduations), droite
+  const t0 = Date.parse(f.debut), t1 = Date.parse(f.fin), x = (iso: string) => G + ((Date.parse(iso) - t0) / (t1 - t0)) * L;
+  const bw = L / f.nb, pct = (c: { corrompus: number; actifs: number }) => (c.actifs ? (100 * c.corrompus) / c.actifs : 0);
+  const fmt = (n: number) => Math.round(n).toLocaleString("fr-CA");
+  const heures: string[] = [];
+  for (let h = Math.ceil(t0 / 3600e3) * 3600e3; h <= t1; h += 3600e3) heures.push(new Date(h).toISOString());
+  const verticales = (hh: number) => f.reperes.filter((r) => r.type === "heure").map((r) => `<line x1="${x(r.le)}" x2="${x(r.le)}" y1="0" y2="${hh}" class="fr-rep"><title>${esc(r.libelle)}</title></line>`).join("");
+  const axeX = (hh: number) => heures.map((h) => `<text x="${x(h)}" y="${hh + 12}" class="fr-axe" text-anchor="middle">${new Date(h).toLocaleTimeString("fr-CA", { timeZone: "America/Toronto", hour: "numeric" }).replace(/\s/g, "")}</text>`).join("");
+  const infobulle = (c: (typeof T)[number]) => `${heureCourte(c.debut)} · ${c.nouvelles} nouvelles cartes, ${c.rescans} rescans · ${c.joueurs} nouveaux joueurs · ${Math.round(pct(c))} % corrompus (${c.corrompus}/${c.actifs}) · cumul ${fmt(c.cumul)} / attendu ${fmt(c.attendu)}`;
+  const zones = (hh: number) => T.map((c, i) => `<rect x="${G + i * bw}" y="0" width="${bw}" height="${hh}" fill="transparent"><title>${esc(infobulle(c))}</title></rect>`).join("");
+  const graduation = (hh: number, max: number, suffixe = "") => `<text x="${G - 4}" y="9" class="fr-axe" text-anchor="end">${fmt(max)}${suffixe}</text><text x="${G - 4}" y="${hh}" class="fr-axe" text-anchor="end">0</text><line x1="${G}" x2="${W - D}" y1="${hh}" y2="${hh}" class="fr-base"/>`;
+  const svg = (titre: string, hh: number, corps: string, legende = "") => `<p class="fr-titre">${titre}${legende}</p>
+<div class="fr-defile"><svg viewBox="0 0 ${W} ${hh + 16}" class="frise" role="img" aria-label="${esc(titre)}">${verticales(hh)}${corps}${axeX(hh)}${zones(hh)}</svg></div>`;
+  const puce = (c: string, l: string, tiret = false) => ` <span class="fr-leg"><i style="background:${tiret ? "none" : c};border-top:${tiret ? `2px dashed ${c}` : "0"}"></i>${l}</span>`;
+
+  // 1. Scans par tranche : nouvelles cartes et rescans empilés (1 px d'écart)
+  const h1 = 80, m1 = Math.max(4, ...T.map((c) => c.nouvelles + c.rescans));
+  const barres = T.map((c, i) => {
+    const xn = G + i * bw + 0.5, w = Math.max(1, bw - 1), hn = (c.nouvelles / m1) * h1, hr = (c.rescans / m1) * h1;
+    return `${hn ? `<rect x="${xn}" y="${h1 - hn}" width="${w}" height="${hn}" rx="1" fill="var(--green)"/>` : ""}${hr ? `<rect x="${xn}" y="${h1 - hn - hr - (hn ? 1 : 0)}" width="${w}" height="${hr}" rx="1" fill="#7d7690"/>` : ""}`;
+  }).join("");
+  const evts = f.reperes.filter((r) => EMOJI_REPERE[r.type] && Date.parse(r.le) >= t0).map((r) => `<text x="${x(r.le)}" y="10" class="fr-evt" text-anchor="middle">${EMOJI_REPERE[r.type]}<title>${esc(heureCourte(r.le) + " · " + r.libelle)}</title></text>`).join("");
+  const melanges = f.reperes.filter((r) => r.type === "melange").map((r) => `<line x1="${x(r.le)}" x2="${x(r.le)}" y1="${h1}" y2="${h1 + 3}" class="fr-melange"><title>${heureCourte(r.le)} · Mélange des légendaires</title></line>`).join("");
+
+  // 2. Cumul des nouvelles cartes et courbe attendue du préréglage
+  const h2 = 80, m2 = Math.max(10, ...T.map((c) => Math.max(c.cumul, c.attendu)));
+  const ligne = (k: "cumul" | "attendu") => T.map((c, i) => `${i ? "L" : "M"}${(G + (i + 1) * bw).toFixed(1)} ${(h2 - (c[k] / m2) * h2).toFixed(1)}`).join(" ");
+  const der = T[T.length - 1];
+
+  // 3. Part de corrompus (0–100 %), repères à 10 et 50 %
+  const h3 = 60, l3 = T.map((c, i) => `${i ? "L" : "M"}${(G + (i + 1) * bw).toFixed(1)} ${(h3 - (pct(c) / 100) * h3).toFixed(1)}`).join(" ");
+
+  // 4. Nouveaux joueurs par tranche
+  const h4 = 40, m4 = Math.max(2, ...T.map((c) => c.joueurs));
+  const b4 = T.map((c, i) => c.joueurs ? `<rect x="${G + i * bw + 0.5}" y="${h4 - (c.joueurs / m4) * h4}" width="${Math.max(1, bw - 1)}" height="${(c.joueurs / m4) * h4}" rx="1" fill="var(--gold)"/>` : "").join("");
+
+  const ratio = f.ratio === null ? "Courbe attendue : pas encore assez de joueurs." : `Connexions : <b>${f.ratio.toFixed(1).replace(".", ",")}×</b> la courbe attendue (préréglage ${NOMS_PREREGLAGES[f.prereglage]} : ${f.cartes_par_joueur} cartes par joueur d'ici la révélation).`;
+  return `<h2>Frise d'activité</h2>
+<div class="carte frise-carte"><p class="mono" style="margin:0 0 4px;font-size:13px">${ratio}</p>
+<p class="muted" style="font-size:12px;margin:0">Tranches de ${f.tranche_min} min. Survole ou touche la frise pour le détail (sur téléphone, elle défile de côté). Repères : ★ palier · ⚠ sanction · 🎯 mission · 📣 message · ⏸ pause · 🎛 suggestion ; traits verticaux : minuit, 2 h, révélation ; petits traits : mélanges des légendaires.</p>
+${svg("Scans par 5 min", h1, graduation(h1, m1) + barres + melanges + evts, puce("var(--green)", "nouvelles cartes") + puce("#7d7690", "rescans"))}
+${svg("Nouvelles cartes cumulées", h2, graduation(h2, m2) + `<path d="${ligne("attendu")}" class="fr-ligne" stroke="var(--gold)" stroke-dasharray="5 4"/><path d="${ligne("cumul")}" class="fr-ligne" stroke="var(--green)"/>`,
+    puce("var(--green)", `réel (${fmt(der.cumul)})`) + puce("var(--gold)", `attendu (${fmt(der.attendu)})`, true))}
+${svg("Part de corrompus", h3, graduation(h3, 100, " %") + [10, 50].map((v) => `<line x1="${G}" x2="${W - D}" y1="${h3 - (v / 100) * h3}" y2="${h3 - (v / 100) * h3}" class="fr-seuil"/><text x="${W - D}" y="${h3 - (v / 100) * h3 - 2}" class="fr-axe" text-anchor="end">${v} %</text>`).join("") + `<path d="${l3}" class="fr-ligne" stroke="var(--pink)"/>`)}
+${svg("Nouveaux joueurs par 5 min", h4, graduation(h4, m4) + b4)}
+<details style="margin-top:8px"><summary class="muted" style="font-size:13px">Tableau</summary><div style="overflow-x:auto"><table class="fr-table"><tr><th>Heure</th><th>Nouvelles</th><th>Rescans</th><th>Joueurs +</th><th>Corrompus</th><th>Cumul / attendu</th></tr>
+${T.map((c) => `<tr><td>${heureCourte(c.debut)}</td><td>${c.nouvelles}</td><td>${c.rescans}</td><td>${c.joueurs}</td><td>${Math.round(pct(c))} %</td><td>${fmt(c.cumul)} / ${fmt(c.attendu)}</td></tr>`).join("")}</table></div></details></div>`;
 }
 
 // ---------- Notifications push (FEAT-016) ----------

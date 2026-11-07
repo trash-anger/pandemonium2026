@@ -12,6 +12,7 @@ import { contact, contagionDe, corrompre, jumeauDe, tickRoles, verifierRetrouvai
 import { brouiller, estFlou, fauxSouvenir, grainePaire, type PersoSouvenir } from "./souvenirs";
 import { devActif } from "./mode";
 import { abonner, clePublique, contenuPour, endpointValide, pushTest, tickPush } from "./push";
+import { tickSuggestions } from "./suivi";
 
 export interface EnvJeu {
   DB: D1Database;
@@ -245,6 +246,7 @@ async function notifs(req: Request, env: EnvJeu, t: number, url: URL): Promise<R
   const me = await personnageDe(req, env, t);
   if (!me) return erreur("sans_personnage", 401);
   await tickRoles(env, t); // LOT-4 : groupes de jumeaux et chats noirs, au plus une fois par minute
+  await tickSuggestions(env, t); // LOT-3 E : signaux au MJ, toutes les 10 min
   await tickPush(env, t); // LOT-3 D : en secours du Cron Trigger, au plus une fois par minute
   const extra = await personnel(env, me.id, t);
   const apres = Number(url.searchParams.get("apres"));

@@ -5,6 +5,13 @@
 (() => {
   "use strict";
 
+  // Chrome « Version pour ordinateur » (aussi héritée par l'app installée) ignore la balise viewport : la page est
+  // mise en page sur 980 px puis réduite, illisible. On la ramène à la largeur réelle de l'écran avec zoom.
+  const largeurEcran = Math.min(screen.width, screen.height);
+  if (matchMedia("(pointer: coarse)").matches && largeurEcran < 600 && innerWidth > largeurEcran * 1.5) {
+    document.documentElement.style.zoom = String(innerWidth / largeurEcran);
+  }
+
   // ---------- Stockage local (un espace par téléphone du banc d'essai : window.name = T1…T4) ----------
   const SUFFIXE = /^T\d$/.test(window.name) ? "-" + window.name : "";
   const CLE = { jeton: "dv-appareil" + SUFFIXE, langue: "dv-langue" + SUFFIXE, moi: "dv-moi" + SUFFIXE, brouillon: "dv-brouillon" + SUFFIXE,

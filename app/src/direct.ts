@@ -6,7 +6,7 @@ import { baremeDe, HEURES_PAR_DEFAUT, lireConfig, lireParametres, type Heures } 
 import { FACTIONS } from "./catalogue";
 import { localVersIso } from "./temps";
 
-interface EnvDirect { DB: D1Database }
+export interface EnvDirect { DB: D1Database }
 
 const SOLDE_MIN = 5;
 const GLITCH_S = 5;

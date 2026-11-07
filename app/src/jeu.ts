@@ -7,6 +7,7 @@ import { normaliserCode } from "./codes";
 import { baremeDe, lireParametres, type Heures } from "./config";
 import { crediterScan, heuresIso, routeDirect, type Joueur } from "./direct";
 import { routeRevelation } from "./revelation";
+import { verifierEclair } from "./eclair";
 import { effetActif, effetsEnCours, expirerMissions, legendesDe, missionActive, pauseEnCours, reouvertureVue, scanMJ, verifierMissions } from "./mj";
 import { contact, contagionDe, corrompre, jumeauDe, tickRoles, verifierRetrouvailles } from "./jumeaux";
 import { brouiller, estFlou, fauxSouvenir, grainePaire, type PersoSouvenir } from "./souvenirs";
@@ -267,6 +268,33 @@ async function pouls(env: EnvJeu) {
   return { joueurs: j?.n ?? 0, record: r?.n ?? 0 };
 }
 
+/**
+ * Comparaison après un scan (FEAT-010, RG-010-1 à 3) : statistiques de jeu des deux joueurs et connaissances
+ * communes (personnages présents dans les deux collections). Données publiques seulement (REQ-009).
+ */
+const AVATARS_COMMUNS = 8;
+async function statsPubliques(env: EnvJeu, id: string) {
+  const r = await env.DB.prepare(
+    `SELECT (SELECT COUNT(*) FROM collection WHERE possesseur_id = ?1) AS cartes,
+            (SELECT COUNT(*) FROM scans WHERE scanneur_id = ?1 AND resultat = 'deja_vu') AS deja_vus,
+            (SELECT COUNT(*) FROM badges WHERE personnage_id = ?1) AS badges`,
+  ).bind(id).first<{ cartes: number; deja_vus: number; badges: number }>();
+  return { cartes: r?.cartes ?? 0, deja_vus: r?.deja_vus ?? 0, badges: r?.badges ?? 0 };
+}
+export async function comparaison(env: EnvJeu, moiId: string, autreId: string) {
+  const communs = await env.DB.prepare(
+    `SELECT p.id, p.pseudo, p.type, p.couleur FROM collection a
+       JOIN collection b ON b.personnage_id = a.personnage_id AND b.possesseur_id = ?2
+       JOIN personnages p ON p.id = a.personnage_id
+      WHERE a.possesseur_id = ?1 AND a.personnage_id NOT IN (?1, ?2) AND p.suspendu = 0
+      ORDER BY a.premier_scan_le`,
+  ).bind(moiId, autreId).all<{ id: string; pseudo: string; type: string; couleur: string }>();
+  return {
+    moi: await statsPubliques(env, moiId), autre: await statsPubliques(env, autreId),
+    communs: communs.results.length, avatars: communs.results.slice(0, AVATARS_COMMUNS),
+  };
+}
+
 async function donnerBadge(env: EnvJeu, id: string, badge: string, t: number) {
   const r = await env.DB.prepare("INSERT OR IGNORE INTO badges (personnage_id, badge, obtenu_le) VALUES (?, ?, ?)")
     .bind(id, badge, new Date(t).toISOString()).run();
@@ -380,6 +408,7 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
     ).bind(idClient, me?.id ?? null, e.code, cible, source, resultat, typeof c.horodatage === "string" ? c.horodatage : null, iso, JSON.stringify(reponse), quete).run();
     // Missions personnelles (ADM-19) : vérifiées après chaque scan, et les « Livraison express » après un scan d'étiquette du MJ
     if (me) await verifierMissions(env, t, me.id, etiquetteMJ);
+    if (me) await verifierEclair(env, t, me.id); // LOT-6 : mission éclair globale
     return json(reponse);
   };
 
@@ -436,6 +465,7 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
     return enregistrer("nouvelle_carte", {
       type: "nouvelle_carte", code: e.code, carte, nb_cartes: nb?.n ?? 1, badges,
       souvenir: souvenirVu(me, carte!, m.seuil_flou), mes_reactions: [], quete_total: credit.total, ...roles,
+      comparaison: await comparaison(env, me.id, cible),
     }, cible, credit.quete);
   }
   return dejaVu(env, t, h, me, carte!, e.code, enregistrer, roles);
@@ -496,6 +526,7 @@ async function dejaVu(
     premier_rescan: !dejaRescanne, // CA-005-4 : l'invitation ne s'affiche qu'une fois
     souvenir: souvenirVu(me, carte, m.seuil_flou), souvenirs: me.souvenirs, perte,
     mes_reactions: await mesReactions(env, me.id, cible), quete_total: credit.total, ...roles,
+    comparaison: await comparaison(env, me.id, cible),
   }, cible, credit.quete);
 }
 

@@ -1,5 +1,6 @@
 // Pages HTML rendues par le Worker. Charte du teaser (teaser/index.html).
 // Coquille de l'application du joueur et panneau du MJ.
+import { ECLAIRS, type bilanEclair } from "./eclair";
 import type { etatDirect } from "./direct";
 import type { ImageCachee } from "./revelation";
 import type { etatMJ } from "./mj";
@@ -63,7 +64,7 @@ function page(l: Langue, titre: string, corps: string, robots = true): Response 
 }
 
 /** Coquille de l'application du joueur (LOT-1) : tout l'affichage est fait par public/app.js. */
-export const VERSION_APP = "l3e-1";
+export const VERSION_APP = "l6-1";
 export function pageApp(l: Langue, status = 200): Response {
   const html = `<!doctype html><html lang="${l}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -96,6 +97,7 @@ export function pageAdmin(p: {
   /** Bouton du banc d'essai (selon l'environnement et le rôle) */
   banc?: boolean;
   direct?: EtatDirect;
+  eclair?: Awaited<ReturnType<typeof bilanEclair>>;
   image?: ImageCachee;
   mj?: Awaited<ReturnType<typeof etatMJ>>;
   roles?: Awaited<ReturnType<typeof etatRoles>>;
@@ -137,7 +139,7 @@ ${lecture ? "" : `<form method="post" action="/admin/pin" class="rangee" style="
 ${p.banc ? `<p><a class="bouton sec" href="/banc">🧪 Banc d'essai</a></p>` : ""}
 ${p.message ? `<p class="ok">${esc(p.message)}</p>` : ""}${p.erreur ? `<p class="err">${esc(p.erreur)}</p>` : ""}
 ${p.suggestions ? blocSuggestions(p.suggestions, lecture) : ""}
-${p.direct ? blocDirect(p.direct, lecture) : ""}
+${p.direct ? blocDirect(p.direct, lecture, p.eclair ?? null) : ""}
 ${p.frise ? blocFrise(p.frise) : ""}
 ${p.mj ? blocMJ(p.mj, lecture) : ""}
 ${p.roles ? blocRoles(p.roles, lecture) : ""}
@@ -183,14 +185,14 @@ const EFFETS_P = ["solde éclair 5 min", "glitch global", "indice bonus jumeaux"
 const heureMtl = (iso: string) => new Date(iso).toLocaleTimeString("fr-CA", { timeZone: "America/Toronto", hour: "2-digit", minute: "2-digit" });
 
 /** Tableau de bord en direct (ADM-4) et commandes du MJ (ADM-3, ADM-5, ADM-6, ADM-15). */
-function blocDirect(d: EtatDirect, lecture: boolean) {
+function blocDirect(d: EtatDirect, lecture: boolean, eclair: Awaited<ReturnType<typeof bilanEclair>> = null) {
   const q = d.quete;
   const pct = q.prochain ? Math.min(100, Math.round((q.total / q.prochain) * 100)) : 100;
   const factions = Object.entries(d.factions).sort((a, b) => b[1].points - a[1].points)
     .map(([f, x]) => `<tr><td>${esc(f)}</td><td>${Math.round(x.points)}</td><td>${x.membres}</td><td>${x.moyenne}</td></tr>`).join("");
   const paliers = q.seuils.map((s, i) => `${i < q.franchis ? "✅" : "⬜"} P-${i + 1} · ${s} <span class="muted">(${EFFETS_P[i]})</span>`).join("<br>");
   const derniers = d.evenements.slice(-6).reverse()
-    .map((e) => `<li class="mono" style="font-size:13px">${heureMtl(e.debut)} · ${esc(e.type)} ${esc(e.donnees.texte ?? (e.donnees.n ? "P-" + e.donnees.n : ""))}</li>`).join("");
+    .map((e) => `<li class="mono" style="font-size:13px">${heureMtl(e.debut)} · ${esc(e.type)} ${esc(e.donnees.texte ?? e.donnees.code ?? (e.donnees.n ? "P-" + e.donnees.n : ""))}</li>`).join("");
   return `<h2>En direct <a class="ok" style="font-size:14px" href="/admin">↻</a></h2>
 <div class="carte"><p style="margin:0" class="mono">Quête ${q.total} / ${q.prochain ?? "—"} · ${q.franchis}/5 paliers · préréglage ${NOMS_PREREGLAGES[q.prereglage]}</p>
 <div style="height:10px;background:#2a2433;border-radius:6px;margin:10px 0;overflow:hidden"><div style="height:100%;width:${pct}%;background:#3dff8a"></div></div>
@@ -198,7 +200,11 @@ ${d.solde ? `<p class="ok mono">🔥 Solde éclair jusqu'à ${heureMtl(d.solde.f
 <p class="mono" style="font-size:13px">Révélation ${heureMtl(d.heures.revelation)} · fin ${heureMtl(d.heures.fin)}</p></div>
 <table><tr><th>Faction</th><th>Points</th><th>Membres</th><th>Moyenne</th></tr>${factions}</table>
 ${derniers ? `<ul style="padding-left:18px">${derniers}</ul>` : ""}
+${eclair ? `<p class="ok mono">⚡ Mission éclair ${esc(eclair.donnees.code)} jusqu'à ${heureMtl(eclair.fin)} · ${eclair.reussites} réussite(s)${eclair.donnees.type ? ` · type ${esc(eclair.donnees.type)}` : ""}${eclair.donnees.attributs ? ` · ${esc(eclair.donnees.attributs.join(" + "))}` : ""}</p>` : ""}
 ${lecture ? "" : `<div class="carte">
+${eclair
+    ? `<form method="post" action="/admin/direct/eclair-stop" class="rangee"><div><label>Mission éclair (FEAT-013)</label><p class="muted" style="margin:0;font-size:13px">En cours : une seule à la fois.</p></div><div style="flex:0 0 auto"><button class="bouton sec">Arrêter</button></div></form>`
+    : `<form method="post" action="/admin/direct/eclair" class="rangee"><div><label>Mission éclair à tous (FEAT-013)</label><select name="code">${Object.entries(ECLAIRS).map(([k, v]) => `<option value="${k}">${k} · ${esc(v.nom)} · ${v.duree} min · +${v.points} pts</option>`).join("")}</select></div><div style="flex:0 0 auto"><button>⚡ Lancer</button></div></form>`}
 <form method="post" action="/admin/direct/message" class="rangee"><div><label>Message à tous (bannière 15 min)</label><input name="texte" maxlength="200" required></div><div style="flex:0 0 auto"><button>Envoyer</button></div></form>
 <form method="post" action="/admin/direct/glitch" class="rangee" style="margin-top:12px"><div><label>Glitch global (texte facultatif)</label><input name="texte" maxlength="120" placeholder="La Matrice a remarqué votre soirée."></div><div style="flex:0 0 auto"><button>⚡ Glitch</button></div></form>
 <form method="post" action="/admin/direct/revelation" style="margin-top:12px"><label>Révélation</label><div class="rangee">

@@ -166,3 +166,17 @@ Les seuils de la jauge de souvenirs (départ, rescans par heure, seuil du flou) 
 - **Signaux** (barème §6), évalués toutes les 10 min par le Cron Trigger (et `/api/notifs` en secours), de 30 min après l'ouverture jusqu'à la révélation : connexions au-dessus de 2 fois ou sous la moitié de la courbe, palier atteint plus de 45 min en avance, plus de 50 % de corrompus pendant 20 min, moins de 10 % une heure après le premier chat noir, plus de rescans que de nouvelles cartes depuis 30 min.
 - **Suggestions** : au plus une toutes les 15 min, le même signal pas avant 45 min. Le MJ reçoit un push « 🎛️ Suggestion de réglage » sur son personnage de MJ, qui ouvre l'admin ; il applique ou ignore en un toucher. Le serveur n'applique jamais rien tout seul.
 - **Banc** : `POST /__dev/suggestions` (`{ maintenant, effacer }`) évalue les signaux à l'heure du banc.
+
+## Comparaison et missions éclair (LOT-6)
+
+- **Comparaison (FEAT-010)** : après chaque scan d'un autre joueur (nouvelle carte ou déjà vu), le bloc « Face à face » montre les pièces, déjà vus et médailles des deux joueurs, et les connaissances communes (« Vous avez déjà vu les mêmes N personnes », 8 avatars au plus). Données publiques seulement (REQ-009).
+- **Missions éclair (FEAT-013)** : Admin → En direct → « Mission éclair à tous ». Une seule à la fois ; annoncée par bannière, rappel sur l'accueil avec compte à rebours, et push. Condition vérifiée après chaque scan, récompense (points de faction) versée une seule fois ; « Arrêter » la clôt.
+
+| Code | Mission | Durée | Récompense |
+|---|---|---|---|
+| E-1 | Scanner 3 nouvelles personnes | 5 min | +15 |
+| E-2 | Scanner quelqu'un d'un type (emoji) tiré parmi les joueurs | 5 min | +15 |
+| E-3 | Scanner quelqu'un qui porte deux attributs tirés sur un vrai joueur | 10 min | +20 |
+| E-4 | Rescanner sa toute première rencontre | 10 min | +20 |
+
+Hors périmètre de samedi : le duel D&D (DEC-017 ; le légendaire L-8 annonce « Pas de duel ce soir ») et les séries de rareté (fiche FEAT-012 à écrire).

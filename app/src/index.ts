@@ -1,6 +1,7 @@
 // Worker « Déjà vu ! » : application du joueur (/api/*), étiquettes et panneau du MJ.
 import { debutConnexion, deconnexion, retourConnexion, utilisateurConnecte, type EnvAuth } from "./auth";
 import { genererCodes, normaliserCode } from "./codes";
+import { arreterEclair, bilanEclair, ECLAIRS, lancerEclair } from "./eclair";
 import { chargerCodesJeu } from "./codes-jeu";
 import { ecrireConfig, HEURES_PAR_DEFAUT, lireConfig, lireParametres, PREREGLAGES, type CleConfig } from "./config";
 import { etatDirect, evenement, isoVersLocal } from "./direct";
@@ -193,6 +194,18 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       await journal(env, email, "message", { texte });
       return retour({ message: "Message envoyé à tous les joueurs (visible 15 min)." });
     }
+    if (url.pathname === "/admin/direct/eclair") {
+      const code = String(f.get("code"));
+      const err = await lancerEclair(env, code, email, t);
+      if (err) return retour({ erreur: err });
+      await journal(env, email, "mission_eclair", { code });
+      return retour({ message: `Mission éclair lancée : ${ECLAIRS[code].nom} (${ECLAIRS[code].duree} min).` });
+    }
+    if (url.pathname === "/admin/direct/eclair-stop") {
+      const ok = await arreterEclair(env.DB, t);
+      if (ok) await journal(env, email, "mission_eclair_stop", {});
+      return retour(ok ? { message: "Mission éclair arrêtée." } : { erreur: "Aucune mission éclair en cours." });
+    }
     if (url.pathname === "/admin/direct/glitch") {
       const texte = String(f.get("texte") || "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 120);
       await evenement(env.DB, { type: "glitch", donnees: texte ? { texte } : {}, debut: iso, fin: new Date(t + 5000).toISOString(), auteur: email });
@@ -374,6 +387,7 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     heures: await lireConfig(env.DB, "heures"),
     parametres: await lireParametres(env.DB),
     direct: await etatDirect(env, Date.now()),
+    eclair: await bilanEclair(env.DB, Date.now()),
     image: await lireImage(env.DB),
     mj: await etatMJ(env),
     roles: await etatRoles(env, await heureGlobale(env)),

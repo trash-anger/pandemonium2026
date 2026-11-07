@@ -185,6 +185,8 @@
       saisieAide: "Le scanner intégré arrive bientôt. En attendant, scanne le QR avec l'appareil photo de ton téléphone, ou entre le code imprimé dessous.",
       // Résultats
       nouvelle: "Nouvelle pièce ajoutée", collectionN: (n) => `Ta collection : ${n} pièce${n > 1 ? "s" : ""}.`,
+      cmpTitre: "Face à face", cmpToi: "Toi", cmpLignes: ["Pièces", "Déjà vus", "Médailles"],
+      communs: (n) => n ? `Vous avez déjà vu les mêmes ${n} personne${n > 1 ? "s" : ""}.` : "Aucune connaissance commune… pour l'instant.",
       souvenirTitre: "Votre faux souvenir commun",
       souvenirFlou: "Ta mémoire flanche : ce souvenir s'efface. Arrête de rescanner en boucle et ta jauge remontera.",
       invitation: "Va rescanner la personne qui a le plus marqué ta mémoire.",
@@ -210,6 +212,9 @@
       solde: "Solde éclair", soldeAide: "Chaque nouvelle carte compte double",
       glitchDefaut: "La Matrice a remarqué votre soirée.",
       messageMJ: "Message du MJ", fermer: "Fermer",
+      eclairTitre: "Mission éclair", eclairPts: (n) => `+${n} points pour ta faction`, eclairReussie: (n) => `Mission éclair réussie ! +${n} points pour ta faction.`,
+      eclair: { "E-1": () => "Scanne 3 nouvelles personnes.", "E-2": (e) => `Scanne quelqu'un dont l'emoji est ${e}.`,
+        "E-3": (a, b) => `Scanne quelqu'un qui porte ${a} ET ${b}.`, "E-4": () => "Rescanne ta toute première rencontre." },
       barreRevelation: "Révélation dans", barreFin: "Fermeture dans",
       annonce30: "Révélation dans 30 minutes. Dernière chance de faire grimper la quête !",
       revTitre: "Révélation", revCharge: "La Matrice rassemble vos souvenirs…", revPasEncore: "La révélation n'a pas encore eu lieu. Rendez-vous à 5 h.",
@@ -346,6 +351,8 @@
       saisieTitre: "Scan a tag",
       saisieAide: "The built-in scanner is coming soon. Meanwhile, scan the QR with your phone's camera, or enter the code printed under it.",
       nouvelle: "New item added", collectionN: (n) => `Your collection: ${n} item${n === 1 ? "" : "s"}.`,
+      cmpTitre: "Face to face", cmpToi: "You", cmpLignes: ["Items", "Déjà vus", "Medals"],
+      communs: (n) => n ? `You've both already seen the same ${n} ${n > 1 ? "people" : "person"}.` : "No mutual acquaintances… yet.",
       souvenirTitre: "Your shared fake memory",
       souvenirFlou: "Your memory is slipping: this one is fading. Stop rescanning in loops and your gauge will recover.",
       invitation: "Go rescan the person who left the biggest mark on your memory.",
@@ -370,6 +377,9 @@
       solde: "Flash sale", soldeAide: "Every new card counts double",
       glitchDefaut: "The Matrix has noticed your party.",
       messageMJ: "Message from the GM", fermer: "Close",
+      eclairTitre: "Flash mission", eclairPts: (n) => `+${n} points for your faction`, eclairReussie: (n) => `Flash mission accomplished! +${n} points for your faction.`,
+      eclair: { "E-1": () => "Scan 3 new people.", "E-2": (e) => `Scan someone whose emoji is ${e}.`,
+        "E-3": (a, b) => `Scan someone wearing ${a} AND ${b}.`, "E-4": () => "Rescan your very first encounter." },
       barreRevelation: "Reveal in", barreFin: "Closing in",
       annonce30: "Reveal in 30 minutes. Last chance to push the quest!",
       revTitre: "Reveal", revCharge: "The Matrix is gathering your memories…", revPasEncore: "The reveal hasn't happened yet. See you at 5 a.m.",
@@ -520,6 +530,27 @@
     const b = BADGES[id]; if (!b) return "";
     return `<a class="badge-gagne apparait" href="/medailles" data-nav style="color:inherit;text-decoration:none"><span class="e">${b[0]}</span><div><small>${t.badgeGagne}</small><b>${L === "en" ? b[2] : b[1]}</b><small>${L === "en" ? b[4] : b[3]}</small></div></a>`;
   };
+  // Mission éclair globale (FEAT-013) : texte de la condition, à partir des paramètres tirés par le serveur
+  function texteEclair(d) {
+    const f = t.eclair[d.code]; if (!f) return "";
+    if (d.code === "E-2") return f(typeDe(d.type).e);
+    if (d.code === "E-3") { const [a, b] = (d.attributs || []).map((x) => { const at = attrDe(x); return at ? `${at.e} ${lib(at)}` : x; }); return f(a, b); }
+    return f();
+  }
+  // Comparaison (FEAT-010) : stats des deux joueurs et connaissances communes, après chaque scan d'un autre joueur
+  function comparaisonBloc(r) {
+    const c = r.comparaison; if (!c) return "";
+    const cles = ["cartes", "deja_vus", "badges"];
+    const lignes = cles.map((k, i) => {
+      const a = c.moi[k], b = c.autre[k];
+      return `<tr><td class="${a > b ? "fort" : ""}">${a}</td><th>${t.cmpLignes[i]}</th><td class="${b > a ? "fort" : ""}">${b}</td></tr>`;
+    }).join("");
+    const avatars = c.avatars.map((p) => `<span class="avatar" style="--teinte:${couleurDe(p.couleur).hex}" title="${esc(p.pseudo)}">${typeDe(p.type).e}</span>`).join("")
+      + (c.communs > c.avatars.length ? `<span class="avatar plus">+${c.communs - c.avatars.length}</span>` : "");
+    return `<div class="boite comparaison apparait"><small>${t.cmpTitre}</small>
+      <table><tr><th>${t.cmpToi}</th><th></th><th>${esc(r.carte.pseudo)}</th></tr>${lignes}</table>
+      <p>${t.communs(c.communs)}</p>${avatars ? `<div class="avatars">${avatars}</div>` : ""}</div>`;
+  }
   // Faux souvenir (FEAT-006) : élément principal de l'écran de nouvelle carte (RG-006-9)
   const souvenirBloc = (s) => s ? `<blockquote class="souvenir${s.flou ? " flou" : ""} apparait"><small>${t.souvenirTitre}</small>
       <p>${esc(L === "en" ? s.en : s.fr)}</p>${s.flou ? `<small class="muted">${t.souvenirFlou}</small>` : ""}</blockquote>` : "";
@@ -806,7 +837,7 @@
         fixer(); vibrer(40); chargerMoi(); precharger(); setTimeout(rafraichirDirect, 300);
         rendre(`<span class="chip vert">${t.nouvelle}</span>${souvenirBloc(r.souvenir)}
           ${carte(r.carte)}<p class="muted">${t.collectionN(r.nb_cartes)}</p>${(r.badges || []).map(badgeGagne).join("")}
-          ${reactionsBloc(r.carte.id, r.mes_reactions)}
+          ${comparaisonBloc(r)}${reactionsBloc(r.carte.id, r.mes_reactions)}
           <a class="bouton" href="/saisie" data-nav>${t.encore}</a><a class="bouton sec" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
         brancherReactions(); return apresScanRoles(r);
       case "deja_vu":
@@ -829,7 +860,7 @@
       ${(r.badges || []).map(badgeGagne).join("")}${r.compte === false ? `<p class="trop-tot">⏳ ${t.fenetre(r.fenetre_min ?? 5)}</p>` : ""}
       ${r.perte ? `<p class="alerte-ligne">🫥 ${t.perte(r.souvenirs)}</p>` : ""}
       ${r.premier_rescan ? `<div class="boite mission apparait"><b>🔁</b> ${t.invitation}</div>` : ""}
-      ${souvenirBloc(r.souvenir)}${carte(r.carte, { grand: false })}${reactionsBloc(r.carte.id, r.mes_reactions)}
+      ${souvenirBloc(r.souvenir)}${carte(r.carte, { grand: false })}${comparaisonBloc(r)}${reactionsBloc(r.carte.id, r.mes_reactions)}
       <a class="bouton" href="/saisie" data-nav>${t.encore}</a>`;
   }
 
@@ -942,6 +973,10 @@
       if (e.type === "palier") { vibrer([30, 60, 30]); toast(`${t.palierAtteint(e.donnees.n)} ${t.paliers[e.donnees.n - 1] || ""}`); }
       else if (e.type === "glitch" && now - Date.parse(e.debut) < 60_000) glitchGlobal(e.donnees.texte);
       else if (e.type === "jumeaux_reunis") { vibrer(40); banniere("evt-" + e.id, `<small>👯</small><p>${esc(J().premiersTous((e.donnees.pseudos || []).join(" & ")))}</p><button class="lien" data-fermer>${t.fermer}</button>`); }
+      else if (e.type === "mission" && e.fin && Date.parse(e.fin) > now) {
+        vibrer([60, 40, 60]);
+        banniere("eclair-" + e.id, `<small>⚡ ${t.eclairTitre} · ${heureCourte(e.fin)}</small><p><b>${esc(texteEclair(e.donnees))}</b><br>${t.eclairPts(e.donnees.points)}</p><button class="lien" data-fermer>${t.fermer}</button>`);
+      }
       else if (e.type === "message" && (!e.fin || Date.parse(e.fin) > now)) {
         vibrer(60);
         banniere("message-" + e.id, `<small>📣 ${t.messageMJ}</small><p>${esc(e.donnees.texte)}</p><button class="lien" data-fermer>${t.fermer}</button>`);
@@ -1168,6 +1203,7 @@
         html = `<small>🎯 ${m.messageMJ}</small><p>${d.offerte ? "" : m.missionAnnonce(d.fin ? minutesJusqua(d.fin) : 15) + "<br>"}<b>${esc(mm.titre)}</b> : ${esc(mm.condition)}</p>`;
       }
       if (n.type === "mission_reussie") html = `<small>🏷️ ${m.messageMJ}</small><p>${m.missionReussie}<br>${m.recompenses[d.recompense] || ""}</p>`;
+      if (n.type === "eclair_reussie") html = `<small>⚡ ${t.eclairTitre}</small><p>${t.eclairReussie(d.points)}</p>`;
       if (n.type === "mission_echouee") html = `<small>⏳ ${m.messageMJ}</small><p>${m.missionEchouee}</p>`;
       if (n.type === "mission_annulee") html = `<small>${m.messageMJ}</small><p>${m.missionAnnulee}</p>`;
       if (n.type === "suggestion") html = `<small>🎛️ Suggestion de réglage</small><p>${esc(d.texte || "")}</p><p><a class="bouton sec" href="/admin#suggestions">Ouvrir l'admin</a></p>`; // MJ seulement
@@ -1188,7 +1224,9 @@
     }).join("");
     const v = ((etat.direct && etat.direct.evenements) || []).filter((e) => e.type === "vitrine" && e.fin && Date.parse(e.fin) > now).pop();
     const vitrine = v ? `<div class="vitrine apparait"><small>${m.vitrine}</small><b>${typeDe(v.donnees.type).e} ${esc(v.donnees.pseudo)}</b><span class="mono petit" data-fin="${v.fin}"></span></div>` : "";
-    return `<div id="zone-effets">${vitrine}${puces ? `<div class="puces-effets">${puces}</div>` : ""}${blocRoles(d)}</div>`;
+    const ec = ((etat.direct && etat.direct.evenements) || []).filter((e) => e.type === "mission" && e.fin && Date.parse(e.debut) <= now && Date.parse(e.fin) > now).pop();
+    const eclair = ec ? `<div class="vitrine eclair apparait"><small>⚡ ${t.eclairTitre} · ${t.eclairPts(ec.donnees.points)}</small><b>${esc(texteEclair(ec.donnees))}</b><span class="mono petit" data-fin="${ec.fin}"></span></div>` : "";
+    return `<div id="zone-effets">${eclair}${vitrine}${puces ? `<div class="puces-effets">${puces}</div>` : ""}${blocRoles(d)}</div>`;
   }
   /** Le direct (toutes les 10 s) met à jour la vitrine et les effets sans redessiner l'accueil. */
   function majEffets() {

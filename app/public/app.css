@@ -292,3 +292,16 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
   body.corrompu main{animation:glc 8s steps(1) infinite}
   @keyframes glc{0%,93%{transform:none;filter:none}94%{transform:translateX(-3px) skewX(4deg);filter:hue-rotate(90deg)}96%{transform:translateX(2px);filter:none}98%{transform:none}}
 }
+/* LOT-6 : comparaison après un scan (FEAT-010) */
+.comparaison>small{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.comparaison table{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:8px;font-variant-numeric:tabular-nums}
+.comparaison th,.comparaison td{padding:5px 4px;text-align:center}
+.comparaison tr:first-child th{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.comparaison tr:first-child th:nth-child(2){width:34%}
+.comparaison tr+tr th{font-family:var(--mono);font-size:11.5px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.comparaison td{font-size:22px;font-weight:800;color:var(--muted)}.comparaison td.fort{color:var(--fg)}
+.comparaison p{margin:12px 0 0}
+.avatars{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;font-size:20px;background:var(--bg3);box-shadow:0 0 0 2px var(--teinte,var(--line)) inset}
+.avatar.plus{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.vitrine.eclair{border-color:var(--green)}.vitrine.eclair small{color:var(--green)}

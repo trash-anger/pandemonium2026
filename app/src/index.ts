@@ -39,13 +39,13 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     if (url.pathname === "/__push/lot" && req.method === "POST") return routeLotInterne(req, env);
-    // Banc derrière Google partout : MJ et lecteur en local et sur l'aperçu, MJ seulement en production
+    // Banc derrière Google : MJ et lecteur en local et sur l'aperçu, fermé en production
     env = { ...env, BANC_SESSION: false };
     const bancDemande = url.pathname === "/banc" || url.pathname.startsWith("/__dev/");
     if (bancDemande || req.headers.has("Cookie") || bancEnvironnement(env)) {
       const u = await utilisateurConnecte(req, env).catch(() => null);
       if (peutOuvrirBanc(env, u?.role)) env = { ...env, BANC_SESSION: true };
-      else if (url.pathname === "/banc") return u ? new Response("Banc réservé au maître du jeu.", { status: 403 }) : Response.redirect(`${url.origin}/admin`, 302);
+      else if (url.pathname === "/banc") return u ? new Response(bancEnvironnement(env) ? "Banc réservé au panneau." : "Banc fermé en production.", { status: 403 }) : Response.redirect(`${url.origin}/admin`, 302);
     }
     if (devActif(env)) {
       if (req.method === "POST" && url.pathname.startsWith("/__dev/") && req.headers.get("Origin") !== url.origin) {

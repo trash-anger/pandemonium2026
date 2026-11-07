@@ -146,6 +146,9 @@ ${p.image ? blocRevelation(p.image, lecture) : ""}
 <h2>Étiquettes</h2><div class="grille">${stats}</div>
 <h2>Partie</h2><div class="grille"><div class="stat"><b>${p.joueurs.personnages}</b><span>personnages</span></div><div class="stat"><b>${p.joueurs.cartes}</b><span>cartes collectées</span></div><div class="stat"><b>${p.joueurs.scans}</b><span>scans</span></div></div>
 
+${lecture ? "" : `<h2>Codes du jeu</h2>
+<form method="post" action="/admin/charger-jeu" class="carte"><p class="muted" style="font-size:13px;margin-top:0">Les codes imprimés sur papier (<span class="mono">donnees/etiquettes-jeu.csv</span>, livré avec le déploiement) : 890 étiquettes au même format, dont le costume du MJ (1 personnelle, 15 spéciales). Rejouable : n'ajoute que les codes absents.</p>
+<p style="margin:0"><button>Charger les codes du jeu</button></p></form>`}
 ${lecture ? "" : `<h2>Générer (ADM-1)</h2>
 <form method="post" action="/admin/generer" class="carte"><div class="rangee">
 <div><label>Quantité</label><input type="number" name="n" min="1" max="2000" value="690" required></div>

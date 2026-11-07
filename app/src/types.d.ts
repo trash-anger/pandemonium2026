@@ -1,3 +1,7 @@
+declare module "*.csv" {
+  const texte: string;
+  export default texte;
+}
 declare module "*.html" {
   const contenu: string;
   export default contenu;

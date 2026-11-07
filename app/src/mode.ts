@@ -1,7 +1,7 @@
 // Banc d'essai (page /banc, API /__dev/*, horloge simulée) : toujours derrière la connexion Google.
 // index.ts pose BANC_SESSION sur la requête quand la personne connectée y a droit :
 //  - local et aperçu des PR (BANC=actif) : MJ et lecteur ;
-//  - production (p.uyt.re) : MJ seulement, et le banc n'y touche qu'à ses propres étiquettes.
+//  - production (p.uyt.re) : fermé à tout le monde, MJ compris (ni agent injecté, ni horloge du téléphone).
 export interface EnvMode {
   PUBLIC_ORIGIN: string;
   BANC?: string;
@@ -16,9 +16,9 @@ export const bancEnvironnement = (env: EnvMode) =>
 /** Le banc est-il ouvert pour cette requête ? */
 export const devActif = (env: EnvMode) => env.BANC_SESSION === true;
 
-/** Banc ouvert en production : restreint à ses étiquettes. */
+/** Banc ouvert hors environnement de dev : n'arrive plus (garde-fou de dev.ts, restreint à ses étiquettes). */
 export const bancProd = (env: EnvMode) => env.BANC_SESSION === true && !bancEnvironnement(env);
 
-/** Qui peut ouvrir le banc : en dev, toute personne connectée au panneau ; en production, le MJ. */
+/** Qui peut ouvrir le banc : en dev, toute personne connectée au panneau ; en production, personne. */
 export const peutOuvrirBanc = (env: EnvMode, role: "mj" | "lecteur" | null | undefined) =>
-  !!role && (bancEnvironnement(env) || role === "mj");
+  !!role && bancEnvironnement(env);

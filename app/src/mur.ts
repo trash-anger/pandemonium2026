@@ -63,3 +63,15 @@ export async function masquerPhoto(db: D1Database, id: number, masquee: boolean)
   const r = await db.prepare("UPDATE photos SET masquee = ? WHERE id = ?").bind(masquee ? 1 : 0, id).run();
   return (r.meta?.changes ?? 0) > 0;
 }
+
+/** Photos de la révélation (RG-009-9, RG-017-5) : seulement celles dont l'auteur a autorisé l'usage à la révélation,
+ *  et que le MJ n'a pas écartées. Tirées au hasard ; le client en fait défiler quelques-unes avant la constellation. */
+export async function photosRevelation(db: D1Database, nb = 30): Promise<string[]> {
+  return (await db.prepare(
+    "SELECT f.image FROM photos f JOIN personnages p ON p.id = f.personnage_id WHERE f.masquee = 0 AND p.photos_ok = 1 ORDER BY random() LIMIT ?",
+  ).bind(nb).all<{ image: string }>()).results.map((x) => x.image);
+}
+
+/** Ajoute les photos à un instantané déjà sérialisé (l'instantané figé en base ne les contient pas). */
+export const avecPhotos = (corps: string, photos: string[]) =>
+  corps.trimEnd().endsWith("}") ? corps.trimEnd().slice(0, -1) + `,"photos":${JSON.stringify(photos)}}` : corps;

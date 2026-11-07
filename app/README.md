@@ -170,8 +170,9 @@ Les seuils de la jauge de souvenirs (départ, rescans par heure, seuil du flou) 
 ## Scanner intégré et mur « Déjà vu ! » (LOT-5)
 
 - **Scanner (FEAT-002)** : onglet 📷. Au premier usage, l'app explique l'usage de la caméra et demande le choix « avec photos pour le mur » ou « sans photo » (modifiable dans Moi → Photos). Ensuite la caméra s'ouvre directement. Lecture par `BarcodeDetector` (Chrome Android) ou, à défaut, par jsQR 1.4.0 (`public/vendor/`, Apache-2.0, chargé à la demande et gardé en cache hors ligne). Seules les URL du jeu (`p.uyt.re` ou le site courant) sont suivies ; un autre QR affiche « Cet article ne vient pas de notre collection ». Bouton 🔦 Lampe quand le téléphone l'annonce (Chrome Android), sinon une consigne.
-- **Mur (FEAT-017)** : si le joueur y consent, chaque scan fait dans l'app envoie une photo de 256 px, floutée, en JPEG de moins de 40 000 caractères (une seule par scan, 300 par personne au plus). Elles sont gardées dans D1 (table `photos`, migration 0012) : pas de bucket R2 à créer. Le mur se voit dans l'app (`/mur`, joueurs seulement) avec un effet de dédoublement et de décalage de couleurs. Admin → Partie → « Mur » montre les photos brutes et permet de les masquer ou de les réafficher. « Partie à zéro » les efface.
-- Pas encore fait : les photos à la révélation (RG-009-9).
+- **Mur (FEAT-017)** : si le joueur y consent, chaque scan fait dans l'app envoie une photo de 256 px, floutée, en JPEG de moins de 40 000 caractères (une seule par scan, 300 par personne au plus). Elles sont gardées dans D1 (table `photos`, migration 0012) : pas de bucket R2 à créer. Le mur se voit dans l'app (`/mur`, joueurs seulement) avec un effet de dédoublement et de décalage de couleurs. « Partie à zéro » les efface.
+- **Galerie du MJ** : Admin → Partie → « 📷 Photos ». Une photo par écran, on swipe. **Appui long de 2 s** : la photo est encadrée de rouge et écartée du mur et de la révélation ; un nouvel appui long la rétablit. Photos brutes, pour la modération.
+- **Révélation (RG-009-9)** : pendant 3 s avant la constellation, une mosaïque de 6 photos au plus, tirées parmi celles dont l'auteur a autorisé l'usage à la révélation (case « photos » de la création) et non écartées. Chaque vignette change 3 fois par seconde, en décalé (REQ-003) ; fixe si le téléphone demande moins d'animations. Une photo écartée pendant la révélation peut encore apparaître 30 s (cache).
 
 ## Comparaison et missions éclair (LOT-6)
 
@@ -185,4 +186,6 @@ Les seuils de la jauge de souvenirs (départ, rescans par heure, seuil du flou) 
 | E-3 | Scanner quelqu'un qui porte deux attributs tirés sur un vrai joueur | 10 min | +20 |
 | E-4 | Rescanner sa toute première rencontre | 10 min | +20 |
 
-Hors périmètre de samedi : le duel D&D (DEC-017 ; le légendaire L-8 annonce « Pas de duel ce soir ») et les séries de rareté (fiche FEAT-012 à écrire).
+- **Duel D&D (FEAT-010 §10.3)** : après un scan d'un autre joueur, bouton « ⚔️ Défier en duel ». La personne défiée reçoit une bannière (et un push) et a 60 s pour accepter ou décliner ; sans réponse, rien ne se passe. À l'acceptation, le serveur tire une épreuve parmi les spécialités des huit classes et un d20 par joueur, plus +3 si l'épreuve est la spécialité de sa classe et un bonus de costume plafonné à +3 (paillettes +2 en charisme, armure +2 en constitution…). 20 naturel gagnant, égalité = match nul. Enjeu : +10 points de faction au gagnant, rien n'est retiré au perdant. Un duel accepté par heure entre deux mêmes personnes ; 5 min d'attente après un refus. Table `duels` (migration 0013).
+
+Hors périmètre de samedi : les séries de rareté (fiche FEAT-012 à écrire).

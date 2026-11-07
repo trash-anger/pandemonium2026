@@ -9,6 +9,7 @@ import { crediterScan, heuresIso, routeDirect, type Joueur } from "./direct";
 import { routeRevelation } from "./revelation";
 import { verifierEclair } from "./eclair";
 import { enregistrerPhoto, lireMur } from "./mur";
+import { defier, lireDuel, repondre } from "./duel";
 import { effetActif, effetsEnCours, expirerMissions, legendesDe, missionActive, pauseEnCours, reouvertureVue, scanMJ, verifierMissions } from "./mj";
 import { contact, contagionDe, corrompre, jumeauDe, tickRoles, verifierRetrouvailles } from "./jumeaux";
 import { brouiller, estFlou, fauxSouvenir, grainePaire, type PersoSouvenir } from "./souvenirs";
@@ -353,6 +354,12 @@ export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Res
     if (p === "/api/notifs" && req.method === "GET") return notifs(req, env, t, url);
     if (p === "/api/revelation" && req.method === "GET") return routeRevelation(req, env, t, devActif(env) && req.headers.has("X-Dev-Maintenant"));
     if (p === "/api/push/cle" && req.method === "GET") return json({ cle: clePublique(env) });
+    if (p === "/api/duel" && req.method === "GET") {
+      const me = await personnageDe(req, env, t);
+      if (!me) return erreur("sans_personnage", 401);
+      const d = await lireDuel(env, me.id, url.searchParams.get("id"), t);
+      return d ? json(d) : erreur("introuvable", 404);
+    }
     if (p === "/api/mur" && req.method === "GET") {
       // Mur « Déjà vu ! » (FEAT-017) : réservé aux joueurs, visible seulement dans l'app (RG-017-5)
       const me = await personnageDe(req, env, t);
@@ -367,6 +374,14 @@ export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Res
     const corps = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     if (p.startsWith("/api/push/")) return routePush(req, env, t, p, corps);
     if (p === "/api/scan") return scan(req, env, t, corps);
+    if (p === "/api/duel/defier" || p === "/api/duel/repondre") {
+      // Duel D&D (FEAT-010 §10.3) : jamais sans l'accord explicite des deux joueurs (CA-010-4)
+      const me = await personnageDe(req, env, t);
+      if (!me) return erreur("sans_personnage", 401);
+      const r = p === "/api/duel/defier" ? await defier(env, me.id, corps.cible, t) : await repondre(env, me.id, corps.id, corps.accepte === true, t);
+      const e = (r as { erreur?: string }).erreur;
+      return e ? erreur(e, e === "introuvable" ? 404 : 409) : json(r);
+    }
     if (p === "/api/photo") {
       // Photo d'un scan fait dans l'app, envoyée seulement si le scanneur y consent (RG-017-4, CA-017-2)
       const me = await personnageDe(req, env, t);

@@ -5,6 +5,7 @@
 // par requête sur le free tier). Elle est déterministe (positions initiales issues d'un hachage, générateur
 // pseudo-aléatoire fixe de d3, opérations IEEE seulement), donc tout le monde voit la même image.
 import { baremeDe, lireParametres } from "./config";
+import { avecPhotos, photosRevelation } from "./mur";
 import { FACTIONS } from "./catalogue";
 import { heuresIso } from "./direct";
 
@@ -190,7 +191,7 @@ export async function routeRevelation(req: Request, env: EnvRev, t: number, simu
     const r = await cache.match(cle);
     if (r) return new Response(r.body, { headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
   }
-  const corps = await instantane(env, h.revelation, t);
+  const corps = avecPhotos(await instantane(env, h.revelation, t), await photosRevelation(env.DB));
   if (cache) await cache.put(cle, new Response(corps, { headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=30" } }));
   return new Response(corps, { headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 }

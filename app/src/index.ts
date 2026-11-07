@@ -9,11 +9,11 @@ import { csvNiimbot } from "./csv";
 import { etatRoles, relancerFoyer } from "./jumeaux";
 import { annulerMission, annulerSanction, confierMission, etatMJ, fermerPause, heureDuJoueur, heureGlobale, MISSIONS, ouvrirPause, RECOMPENSES_M7, reussirMission, sanctionner } from "./mj";
 import { construireInstantane, ecrireImage, lireImage, SANS_BORNE, validerImage } from "./revelation";
-import { langue, pageAdmin, pageApp, pageConnexion, pageMurAdmin, type Compte, type EtiquetteVue, type Lot } from "./pages";
+import { langue, pageAdmin, pageApp, pageConnexion, pageGalerie, type Compte, type EtiquetteVue, type Lot } from "./pages";
 import { definirPin, routeApi } from "./jeu";
 import { localVersIso } from "./temps";
 import { avecAgent, devActif, routeDev, TABLES_PARTIE } from "./dev";
-import { masquerPhoto, murAdmin } from "./mur";
+import { avecPhotos, masquerPhoto, murAdmin, photosRevelation } from "./mur";
 import { bancEnvironnement, bancProd, peutOuvrirBanc } from "./mode";
 import { etatPush, pushTest, routeLotInterne, tickPush } from "./push";
 import { frise, suggestionsEnCours, tickSuggestions, traiterSuggestion } from "./suivi";
@@ -79,6 +79,7 @@ async function servir(req: Request, env: Env, url: URL): Promise<Response> {
       }
       if (chemin.startsWith("/api/")) return routeApi(req, env, url);
       if (["/collection", "/moi", "/saisie", "/mur", "/tuto", "/badges", "/medailles", "/revelation"].includes(chemin)) return pageApp(langue(req));
+      if (/^\/duel\/\d{1,9}$/.test(chemin)) return pageApp(langue(req));
       if (chemin === "/auth/connexion") return debutConnexion(env);
       if (chemin === "/auth/retour") return retourConnexion(req, env);
       if (chemin === "/auth/deconnexion") return deconnexion(env);
@@ -124,10 +125,12 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       Response.redirect(`${url.origin}/admin?${new URLSearchParams(q)}`, 303);
 
     if (url.pathname === "/admin/mur/masquer") {
+      // Galerie des photos (appui long) : réponse JSON ; sinon retour à la galerie
       const id = Number(f.get("id")), masquee = String(f.get("masquee")) === "1";
       const ok = await masquerPhoto(env.DB, id, masquee);
       if (ok) await journal(env, email, "photo", { id, masquee });
-      return Response.redirect(`${url.origin}/admin/mur?${new URLSearchParams({ message: ok ? (masquee ? "Photo masquée." : "Photo réaffichée.") : "Photo introuvable." })}`, 303);
+      if (req.headers.get("X-Galerie")) return new Response(JSON.stringify({ ok, masquee }), { status: ok ? 200 : 404, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
+      return Response.redirect(`${url.origin}/admin/photos`, 303);
     }
     if (url.pathname === "/admin/generer") {
       const n = Number(f.get("n")), format = String(f.get("format")), role = String(f.get("role"));
@@ -367,13 +370,19 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
 
   // Aperçu de la révélation pour le MJ : instantané à l'instant présent, jamais enregistré
   if (url.pathname === "/admin/revelation/apercu.json") {
-    return new Response(JSON.stringify(await construireInstantane(env, new Date().toISOString(), SANS_BORNE)), {
+    return new Response(avecPhotos(JSON.stringify(await construireInstantane(env, new Date().toISOString(), SANS_BORNE)), await photosRevelation(env.DB)), {
       headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
     });
   }
 
-  if (url.pathname === "/admin/mur") {
-    return pageMurAdmin(await murAdmin(env.DB, Number(url.searchParams.get("avant")) || undefined), u.role !== "mj", url.searchParams.get("message") || undefined);
+  // Galerie des photos de scan (RG-017-6) ; l'ancienne adresse du mur y mène aussi
+  if (url.pathname === "/admin/mur") return Response.redirect(`${url.origin}/admin/photos`, 302);
+  if (url.pathname === "/admin/photos") return pageGalerie(await murAdmin(env.DB, undefined, 40), u.role !== "mj");
+  if (url.pathname === "/admin/photos.json") {
+    const m = await murAdmin(env.DB, Number(url.searchParams.get("avant")) || undefined, 40);
+    return new Response(JSON.stringify({ ...m, photos: m.photos.map((x) => ({ ...x, heure: new Date(x.le).toLocaleTimeString("fr-CA", { timeZone: "America/Toronto", hour: "2-digit", minute: "2-digit" }) })) }), {
+      headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+    });
   }
 
   if (url.pathname !== "/admin") return new Response("Introuvable", { status: 404 });

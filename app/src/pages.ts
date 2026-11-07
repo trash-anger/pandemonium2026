@@ -65,7 +65,7 @@ function page(l: Langue, titre: string, corps: string, robots = true): Response 
 }
 
 /** Coquille de l'application du joueur (LOT-1) : tout l'affichage est fait par public/app.js. */
-export const VERSION_APP = "l5-1";
+export const VERSION_APP = "duel-2";
 export function pageApp(l: Langue, status = 200): Response {
   const html = `<!doctype html><html lang="${l}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -148,7 +148,7 @@ ${p.push ? blocPush(p.push, lecture) : ""}
 ${p.image ? blocRevelation(p.image, lecture) : ""}
 <h2>Étiquettes</h2><div class="grille">${stats}</div>
 <h2>Partie</h2><div class="grille"><div class="stat"><b>${p.joueurs.personnages}</b><span>personnages</span></div><div class="stat"><b>${p.joueurs.cartes}</b><span>cartes collectées</span></div><div class="stat"><b>${p.joueurs.scans}</b><span>scans</span></div></div>
-<p><a class="bouton sec" href="/admin/mur">🖼️ Mur « Déjà vu ! »</a></p>
+<p><a class="bouton sec" href="/admin/photos">📷 Photos</a></p>
 
 ${lecture ? "" : `<h2>Codes du jeu</h2>
 <form method="post" action="/admin/charger-jeu" class="carte"><p class="muted" style="font-size:13px;margin-top:0">Les codes imprimés sur papier (<span class="mono">donnees/etiquettes-jeu.csv</span>, livré avec le déploiement) : 890 étiquettes au même format, dont le costume du MJ (1 personnelle, 15 spéciales). Rejouable : n'ajoute que les codes absents.</p>
@@ -181,22 +181,86 @@ ${lecture ? "" : `<h2>Zone dangereuse</h2>
 <footer>LOT-1 · panneau provisoire</footer>`, false);
 }
 
-/** Mur « Déjà vu ! » côté MJ (RG-017-6) : photos brutes pour la modération, bouton pour masquer ou réafficher. */
-export function pageMurAdmin(m: Awaited<ReturnType<typeof murAdmin>>, lecture: boolean, message?: string) {
-  const tuiles = m.photos.map((f) => `<figure class="ph${f.masquee ? " masquee" : ""}"><img src="${esc(f.image)}" alt="" loading="lazy">
-<figcaption>${esc(f.pseudo ?? "?")} · ${heureMtl(f.le)}</figcaption>
-${lecture ? "" : `<form method="post" action="/admin/mur/masquer"><input type="hidden" name="id" value="${f.id}"><input type="hidden" name="masquee" value="${f.masquee ? 0 : 1}">
-<button class="${f.masquee ? "" : "bouton sec"}">${f.masquee ? "Réafficher" : "Masquer"}</button></form>`}</figure>`).join("");
-  const dernier = m.photos.length ? m.photos[m.photos.length - 1].id : 0;
-  return page("fr", "Mur · Déjà vu !", `<span class="chip">Maître du jeu</span><p><a class="ok" href="/admin">← Admin</a></p>
-<h1 style="font-size:40px">Mur</h1>
-<p class="muted">${m.total} photo${m.total > 1 ? "s" : ""}, dont ${m.masquees} masquée${m.masquees > 1 ? "s" : ""}. Les joueurs les voient déformées ; ici elles sont brutes, pour la modération.</p>
-${message ? `<p class="ok">${esc(message)}</p>` : ""}
-<style>.mur{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.ph{margin:0;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px}
-.ph img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;display:block}.ph figcaption{font-family:var(--mono);font-size:11px;color:var(--muted);margin:6px 0}
-.ph.masquee img{opacity:.25}.ph button{width:100%;padding:8px}</style>
-${m.photos.length ? `<div class="mur">${tuiles}</div>` : '<p class="muted">Aucune photo pour l\'instant.</p>'}
-${m.suite ? `<p><a class="bouton sec" href="/admin/mur?avant=${dernier}">Plus anciennes</a></p>` : ""}`, false);
+/** Galerie des photos de scan côté MJ (RG-017-6) : une photo par écran, on swipe ; un appui long de 2 s écarte la photo
+ *  (cadre rouge) du mur et de la révélation, un nouvel appui long la rétablit. Photos brutes, pour la modération. */
+export function pageGalerie(m: Awaited<ReturnType<typeof murAdmin>>, lecture: boolean) {
+  const donnees = JSON.stringify({ ...m, photos: m.photos.map((f) => ({ ...f, heure: heureMtl(f.le) })) }).replace(/</g, "\\u003c");
+  return page("fr", "Photos · Déjà vu !", `<style>
+main{max-width:none;padding:0}body{overflow:hidden}
+.g-haut{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:linear-gradient(var(--bg) 60%,transparent)}
+.g-haut a{color:var(--green);text-decoration:none;font-weight:700}.g-compte{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right}
+.galerie{position:fixed;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior:contain}
+.galerie::-webkit-scrollbar{display:none}
+.diapo{flex:0 0 100%;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:70px 16px 90px}
+.cadre{position:relative;border-radius:14px;outline:5px solid transparent;outline-offset:4px;transition:outline-color .2s;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:pan-x}
+.cadre img{display:block;max-width:100%;max-height:62dvh;width:auto;height:auto;min-width:min(78vw,420px);object-fit:contain;border-radius:14px;pointer-events:none;image-rendering:auto}
+.diapo.ecartee .cadre{outline-color:#ff2a2a}.diapo.ecartee img{opacity:.55}
+.etiq{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:center}.diapo.ecartee .etiq b{color:#ff2a2a}
+.jauge{position:absolute;left:0;bottom:-14px;height:4px;width:0;background:#ff2a2a;border-radius:2px}
+.cadre.appui .jauge{width:100%;transition:width 2s linear}
+.g-bas{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(14px + env(safe-area-inset-bottom));text-align:center;font-size:14px;color:var(--muted);background:linear-gradient(transparent,var(--bg) 40%)}
+.vide{position:fixed;inset:0;display:grid;place-items:center;color:var(--muted);padding:24px;text-align:center}
+</style>
+<div class="g-haut"><a href="/admin">← Admin</a><div class="g-compte" id="compte"></div></div>
+<div class="galerie" id="galerie"></div>
+<div class="g-bas">${lecture ? "Lecture seule : seul le MJ peut écarter une photo." : "Swipe pour parcourir. <b>Appui long 2 s</b> : écarter la photo du mur et de la révélation (cadre rouge). Encore 2 s : la rétablir."}</div>
+<script>
+(() => {
+  const D = ${donnees}, LECTURE = ${lecture ? "true" : "false"};
+  const g = document.getElementById("galerie"), compte = document.getElementById("compte");
+  let photos = D.photos, suite = D.suite, total = D.total, ecartees = D.masquees, charge = false, courante = 0;
+  const esc = (x) => String(x).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  function maj() { compte.innerHTML = (photos.length ? (courante + 1) + " / " + total : "0 photo") + "<br>" + ecartees + " écartée" + (ecartees > 1 ? "s" : ""); }
+  function diapo(f) {
+    const d = document.createElement("div");
+    d.className = "diapo" + (f.masquee ? " ecartee" : ""); d.dataset.id = f.id;
+    d.innerHTML = '<div class="cadre"><img alt="" src="' + f.image + '"><i class="jauge"></i></div><div class="etiq">' + esc(f.pseudo || "?") + " · " + esc(f.heure)
+      + '<br><b>' + (f.masquee ? "Écartée du mur et de la révélation" : "") + "</b></div>";
+    if (!LECTURE) appuiLong(d, f);
+    return d;
+  }
+  function ajouter(liste) { for (const f of liste) g.appendChild(diapo(f)); }
+  if (!photos.length) { g.outerHTML = '<div class="vide">Aucune photo pour l\\'instant. Elles arrivent avec les scans faits dans l\\'app.</div>'; }
+  else ajouter(photos);
+  maj();
+  g.addEventListener("scroll", () => {
+    courante = Math.round(g.scrollLeft / g.clientWidth); maj();
+    if (suite && !charge && courante >= photos.length - 5) plus();
+  }, { passive: true });
+  async function plus() {
+    charge = true;
+    try {
+      const r = await (await fetch("/admin/photos.json?avant=" + photos[photos.length - 1].id, { credentials: "same-origin" })).json();
+      photos = photos.concat(r.photos); suite = r.suite; ajouter(r.photos);
+    } catch {} finally { charge = false; }
+  }
+  function appuiLong(d, f) {
+    const c = d.querySelector(".cadre");
+    let minuterie = null, x0 = 0, y0 = 0;
+    const annuler = () => { clearTimeout(minuterie); minuterie = null; c.classList.remove("appui"); };
+    c.addEventListener("contextmenu", (e) => e.preventDefault());
+    c.addEventListener("pointerdown", (e) => {
+      x0 = e.clientX; y0 = e.clientY; c.classList.add("appui");
+      minuterie = setTimeout(() => { annuler(); basculer(d, f); }, 2000);
+    });
+    c.addEventListener("pointermove", (e) => { if (minuterie && Math.hypot(e.clientX - x0, e.clientY - y0) > 12) annuler(); });
+    for (const t of ["pointerup", "pointercancel", "pointerleave"]) c.addEventListener(t, annuler);
+  }
+  async function basculer(d, f) {
+    const voulu = !f.masquee;
+    const corps = new FormData(); corps.set("id", f.id); corps.set("masquee", voulu ? "1" : "0");
+    try {
+      const r = await fetch("/admin/mur/masquer", { method: "POST", body: corps, credentials: "same-origin", headers: { "X-Galerie": "1" } });
+      if (!r.ok) throw 0;
+      f.masquee = voulu ? 1 : 0; ecartees += voulu ? 1 : -1;
+      d.classList.toggle("ecartee", voulu);
+      d.querySelector(".etiq b").textContent = voulu ? "Écartée du mur et de la révélation" : "";
+      if (navigator.vibrate) navigator.vibrate(voulu ? [40, 60, 40] : 30);
+      maj();
+    } catch { alert("Échec : réseau ou session expirée. Recharge la page."); }
+  }
+})();
+</script>`, false);
 }
 
 type EtatDirect = Awaited<ReturnType<typeof etatDirect>>;

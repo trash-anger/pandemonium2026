@@ -195,9 +195,12 @@ ${Object.keys(NOMS_PREREGLAGES).map((k) => `<button name="nom" value="${k}" clas
 <p class="muted" style="font-size:13px">Choisir un préréglage efface les saisies manuelles (<span class="mono">parametres.bareme</span>).</p></form></div>`}`;
 }
 
-export function pageConnexion() {
+export function pageConnexion(interrompue = false) {
+  const note = interrompue
+    ? `<p>La connexion a été interrompue (délai dépassé ou autre fenêtre). Réessaie depuis cette page, sans changer d'application.</p>`
+    : "";
   return page("fr", "Admin · Déjà vu !", `<span class="chip">Maître du jeu</span><h1>ADMIN</h1>
-<p class="muted">Accès réservé au maître du jeu.</p><p><a class="bouton" href="/auth/connexion">Se connecter avec Google</a></p>`, false);
+<p class="muted">Accès réservé au maître du jeu.</p>${note}<p><a class="bouton" href="/auth/connexion">${interrompue ? "Réessayer avec Google" : "Se connecter avec Google"}</a></p>`, false);
 }
 
 /** Image cachée de la révélation (RG-009-6, RG-009-16) : stockée en base, jamais dans le dépôt (REQ-017).

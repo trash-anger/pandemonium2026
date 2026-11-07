@@ -95,7 +95,7 @@ async function etiquette(req: Request, env: Env, brut: string): Promise<Response
 
 async function admin(req: Request, env: Env, url: URL): Promise<Response> {
   const u = await utilisateurConnecte(req, env);
-  if (!u) return url.pathname === "/admin" ? pageConnexion() : new Response("Non autorisé", { status: 401 });
+  if (!u) return url.pathname === "/admin" ? pageConnexion(url.searchParams.has("connexion")) : new Response("Non autorisé", { status: 401 });
   const email = u.email;
   // Lecture seule : ni modification, ni export des codes (qui permettraient de réclamer des étiquettes)
   if (u.role !== "mj" && (req.method !== "GET" || url.pathname === "/admin/export.csv")) {

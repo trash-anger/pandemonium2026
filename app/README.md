@@ -167,6 +167,12 @@ Les seuils de la jauge de souvenirs (départ, rescans par heure, seuil du flou) 
 - **Suggestions** : au plus une toutes les 15 min, le même signal pas avant 45 min. Le MJ reçoit un push « 🎛️ Suggestion de réglage » sur son personnage de MJ, qui ouvre l'admin ; il applique ou ignore en un toucher. Le serveur n'applique jamais rien tout seul.
 - **Banc** : `POST /__dev/suggestions` (`{ maintenant, effacer }`) évalue les signaux à l'heure du banc.
 
+## Scanner intégré et mur « Déjà vu ! » (LOT-5)
+
+- **Scanner (FEAT-002)** : onglet 📷. Au premier usage, l'app explique l'usage de la caméra et demande le choix « avec photos pour le mur » ou « sans photo » (modifiable dans Moi → Photos). Ensuite la caméra s'ouvre directement. Lecture par `BarcodeDetector` (Chrome Android) ou, à défaut, par jsQR 1.4.0 (`public/vendor/`, Apache-2.0, chargé à la demande et gardé en cache hors ligne). Seules les URL du jeu (`p.uyt.re` ou le site courant) sont suivies ; un autre QR affiche « Cet article ne vient pas de notre collection ». Bouton 🔦 Lampe quand le téléphone l'annonce (Chrome Android), sinon une consigne.
+- **Mur (FEAT-017)** : si le joueur y consent, chaque scan fait dans l'app envoie une photo de 256 px, floutée, en JPEG de moins de 40 000 caractères (une seule par scan, 300 par personne au plus). Elles sont gardées dans D1 (table `photos`, migration 0012) : pas de bucket R2 à créer. Le mur se voit dans l'app (`/mur`, joueurs seulement) avec un effet de dédoublement et de décalage de couleurs. Admin → Partie → « Mur » montre les photos brutes et permet de les masquer ou de les réafficher. « Partie à zéro » les efface.
+- Pas encore fait : les photos à la révélation (RG-009-9).
+
 ## Comparaison et missions éclair (LOT-6)
 
 - **Comparaison (FEAT-010)** : après chaque scan d'un autre joueur (nouvelle carte ou déjà vu), le bloc « Face à face » montre les pièces, déjà vus et médailles des deux joueurs, et les connaissances communes (« Vous avez déjà vu les mêmes N personnes », 8 avatars au plus). Données publiques seulement (REQ-009).

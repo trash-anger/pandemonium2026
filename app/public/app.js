@@ -15,7 +15,8 @@
   // ---------- Stockage local (un espace par téléphone du banc d'essai : window.name = T1…T4) ----------
   const SUFFIXE = /^T\d$/.test(window.name) ? "-" + window.name : "";
   const CLE = { jeton: "dv-appareil" + SUFFIXE, langue: "dv-langue" + SUFFIXE, moi: "dv-moi" + SUFFIXE, brouillon: "dv-brouillon" + SUFFIXE,
-    collection: "dv-collection" + SUFFIXE, file: "dv-file" + SUFFIXE, ecran: "dv-ecran" + SUFFIXE, evts: "dv-evenements" + SUFFIXE };
+    collection: "dv-collection" + SUFFIXE, file: "dv-file" + SUFFIXE, ecran: "dv-ecran" + SUFFIXE, evts: "dv-evenements" + SUFFIXE,
+    camera: "dv-camera" + SUFFIXE }; // LOT-5 : « photos » ou « sans », choisi à l'activation de la caméra (RG-017-4)
   const lire = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
   const ecrire = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} };
   const lireJson = (k) => { try { return JSON.parse(lire(k) || "null"); } catch { return null; } };
@@ -189,7 +190,20 @@
       scanner: "Scanner", maCarte: "Ma carte", maCollection: "Ma collection", cartes: (n) => `${n} carte${n > 1 ? "s" : ""}`,
       cdBloque: "Scanner débloqué dans", cdRevelation: "Révélation dans", cdFin: "Fermeture dans",
       saisieTitre: "Scanner une étiquette",
-      saisieAide: "Le scanner intégré arrive bientôt. En attendant, scanne le QR avec l'appareil photo de ton téléphone, ou entre le code imprimé dessous.",
+      saisieAide: "Cadre le QR d'une étiquette, ou entre le code imprimé dessous.",
+      ouvrirScanner: "📷 Ouvrir le scanner", camTitre: "Le scanner a besoin de ta caméra",
+      camAide: "Elle sert à lire les QR. Cadre l'étiquette, pas la personne : on ne doit pas la reconnaître.",
+      camMurAide: "Chaque scan peut aussi envoyer une petite photo floue au mur « Déjà vu ! », la mosaïque de la soirée. Rien ne part sans ton accord.",
+      camAvec: "Activer, avec photos pour le mur", camSans: "Activer, sans photo",
+      consigne: "Cadre l'étiquette, pas le visage", lampe: "🔦 Lampe", fermer: "Fermer",
+      pasDeLampe: "Pas de lampe ici : demande à quelqu'un d'éclairer l'étiquette avec son téléphone.",
+      etranger: "Cet article ne vient pas de notre collection.",
+      camRefusee: "Caméra refusée. Pour la réactiver : touche le cadenas à côté de l'adresse (ou les réglages de l'app), puis Caméra → Autoriser. En attendant, entre le code imprimé sous le QR.",
+      camIndispo: "Pas de caméra disponible ici. Entre le code imprimé sous le QR.",
+      murLien: "🖼️ Le mur « Déjà vu ! »", murTitre: "Déjà vu !", murAide: "Les photos des scans faits dans l'app, floues et déformées. Un visage reconnaissable ? Dis-le au MJ.",
+      murVide: "Le mur est vide. Scanne avec le scanner de l'app pour le remplir.", murPlus: "Plus anciennes", murN: (n) => `${n} photo${n > 1 ? "s" : ""}`,
+      murSans: "Le mur est réservé aux joueurs. Va trouver le MJ pour avoir ton étiquette.",
+      photosMur: "Envoyer une photo floue au mur à chaque scan fait dans l'app.",
       // Résultats
       nouvelle: "Nouvelle pièce ajoutée", collectionN: (n) => `Ta collection : ${n} pièce${n > 1 ? "s" : ""}.`,
       cmpTitre: "Face à face", cmpToi: "Toi", cmpLignes: ["Pièces", "Déjà vus", "Médailles"],
@@ -356,7 +370,20 @@
       scanner: "Scan", maCarte: "My card", maCollection: "My collection", cartes: (n) => `${n} card${n === 1 ? "" : "s"}`,
       cdBloque: "Scanner unlocks in", cdRevelation: "Reveal in", cdFin: "Closing in",
       saisieTitre: "Scan a tag",
-      saisieAide: "The built-in scanner is coming soon. Meanwhile, scan the QR with your phone's camera, or enter the code printed under it.",
+      saisieAide: "Frame a tag's QR, or enter the code printed under it.",
+      ouvrirScanner: "📷 Open the scanner", camTitre: "The scanner needs your camera",
+      camAide: "It reads QR codes. Frame the tag, not the person: they must not be recognisable.",
+      camMurAide: "Each scan can also send a small blurry photo to the « Déjà vu ! » wall, the night's mosaic. Nothing leaves without your consent.",
+      camAvec: "Turn on, with photos for the wall", camSans: "Turn on, no photos",
+      consigne: "Frame the tag, not the face", lampe: "🔦 Torch", fermer: "Close",
+      pasDeLampe: "No torch here: ask someone to light the tag with their phone.",
+      etranger: "This item isn't from our collection.",
+      camRefusee: "Camera blocked. To allow it: tap the padlock next to the address (or the app settings), then Camera → Allow. Meanwhile, enter the code printed under the QR.",
+      camIndispo: "No camera available here. Enter the code printed under the QR.",
+      murLien: "🖼️ The « Déjà vu ! » wall", murTitre: "Déjà vu !", murAide: "Photos from scans made in the app, blurred and distorted. See a recognisable face? Tell the GM.",
+      murVide: "The wall is empty. Scan with the app's scanner to fill it.", murPlus: "Older", murN: (n) => `${n} photo${n === 1 ? "" : "s"}`,
+      murSans: "The wall is for players. Find the GM to get your tag.",
+      photosMur: "Send a blurry photo to the wall with each scan made in the app.",
       nouvelle: "New item added", collectionN: (n) => `Your collection: ${n} item${n === 1 ? "" : "s"}.`,
       cmpTitre: "Face to face", cmpToi: "You", cmpLignes: ["Items", "Déjà vus", "Medals"],
       communs: (n) => n ? `You've both already seen the same ${n} ${n > 1 ? "people" : "person"}.` : "No mutual acquaintances… yet.",
@@ -488,6 +515,7 @@
   const app = $("#app");
   let minuterie = null;
   function rendre(html, { onglet = null, classe = "" } = {}) {
+    arreterCamera();
     const integre = /Instagram|FBAN|FBAV|Snapchat|TikTok|Line\//i.test(navigator.userAgent);
     app.innerHTML = (integre ? `<div class="bandeau">${t.integre}</div>` : "")
       + `<main class="ecran ${onglet ? "" : "sans-tabs"} ${classe}">${onglet ? '<a class="barre-quete" id="barre-quete" href="/" data-nav></a>' : ""}${html}</main>` + (onglet ? onglets(onglet) : "");
@@ -627,6 +655,7 @@
       if (p === "/collection") return collection();
       if (p === "/moi") return fiche();
       if (p === "/saisie") return saisie();
+      if (p === "/mur") return mur();
       if (p === "/tuto") return tutoriel();
       if (p === "/badges" || p === "/medailles") return medailles();
       if (p === "/revelation") return revelation();
@@ -737,10 +766,166 @@
     pushVerifie = true; abonnerPush();
   }
 
+  // ---------- Scanner intégré, lampe et photo du mur (LOT-5 : FEAT-002, FEAT-017) ----------
+  // BarcodeDetector quand le navigateur le fournit (Chrome Android), sinon jsQR (Safari iOS), chargé à la demande.
+  let cam = null; // caméra ouverte : { fini, flux, video, piste, lecteur, minuterie }
+  let photoEnAttente = null; // { code, image } : envoyée par scanner() une fois le scan traité
+  function arreterCamera() {
+    if (!cam) return;
+    cam.fini = true; clearTimeout(cam.minuterie);
+    if (cam.flux) cam.flux.getTracks().forEach((p) => p.stop());
+    cam = null;
+  }
+  addEventListener("pagehide", arreterCamera);
+  document.addEventListener("visibilitychange", () => { if (document.hidden && cam) { arreterCamera(); if (location.pathname === "/saisie") boutonCamera(); } });
+  const cameraPossible = () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
   function saisie() {
-    rendre(`<h2>${t.saisieTitre}</h2><p class="muted">${t.saisieAide}</p>${formulaireCode()}`, { onglet: etat.moi ? "scan" : null });
+    const choix = lire(CLE.camera);
+    const zone = !cameraPossible() ? `<p class="muted">${t.camIndispo}</p>`
+      : choix ? ""
+      : `<div class="boite"><b>${t.camTitre}</b><p>${t.camAide}</p><p class="muted petit">${t.camMurAide}</p>
+          <button class="bouton" id="b-cam-avec">${t.camAvec}</button><button class="bouton sec" id="b-cam-sans">${t.camSans}</button></div>`;
+    rendre(`<h2>${t.saisieTitre}</h2><div id="viseur-zone">${zone}</div><p class="muted">${t.saisieAide}</p>${formulaireCode()}
+      ${etat.moi ? `<a class="bouton sec" href="/mur" data-nav>${t.murLien}</a>` : ""}`, { onglet: etat.moi ? "scan" : null });
     brancherCode();
-    setTimeout(() => { const i = $("#code"); i && i.focus(); }, 50);
+    if (!cameraPossible()) { setTimeout(() => { const i = $("#code"); i && i.focus(); }, 50); return; }
+    if (choix) return ouvrirCamera(); // CA-002-1 : caméra déjà autorisée, le scanner s'ouvre directement
+    $("#b-cam-avec").onclick = () => { ecrire(CLE.camera, "photos"); ouvrirCamera(); };
+    $("#b-cam-sans").onclick = () => { ecrire(CLE.camera, "sans"); ouvrirCamera(); };
+  }
+  function boutonCamera(note = "") {
+    const zone = $("#viseur-zone"); if (!zone) return;
+    zone.innerHTML = `${note ? `<div class="boite alerte"><p style="margin:0">${note}</p></div>` : ""}<button class="bouton" id="b-cam">${t.ouvrirScanner}</button>`;
+    $("#b-cam").onclick = () => ouvrirCamera();
+  }
+
+  async function ouvrirCamera() {
+    const zone = $("#viseur-zone"); if (!zone) return;
+    arreterCamera();
+    const c = (cam = { fini: false });
+    zone.innerHTML = `<div class="viseur"><video playsinline muted autoplay></video><div class="cadre"></div><p class="consigne">${t.consigne}</p>
+      <div class="outils"><button class="b-lampe" type="button" hidden>${t.lampe}</button><button class="b-fermer" type="button">${t.fermer}</button></div></div>
+      <p class="muted petit" id="cam-note"></p>`;
+    zone.querySelector(".b-fermer").onclick = () => { arreterCamera(); boutonCamera(); };
+    try {
+      c.flux = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } });
+    } catch (e) {
+      if (cam === c) { cam = null; boutonCamera(e && (e.name === "NotAllowedError" || e.name === "SecurityError") ? t.camRefusee : t.camIndispo); }
+      return;
+    }
+    if (c.fini) { c.flux.getTracks().forEach((p) => p.stop()); return; }
+    const video = zone.querySelector("video");
+    video.srcObject = c.flux;
+    await video.play().catch(() => {});
+    c.video = video; c.piste = c.flux.getVideoTracks()[0];
+    setTimeout(() => brancherLampe(c, zone), 300); // certaines caméras n'annoncent la lampe qu'une fois lancées
+    try { c.lecteur = await lecteurQR(); } catch { if (cam === c) { arreterCamera(); boutonCamera(t.camIndispo); } return; }
+    boucleQR(c);
+  }
+  function brancherLampe(c, zone) {
+    if (c.fini) return;
+    const caps = c.piste && c.piste.getCapabilities ? c.piste.getCapabilities() : {};
+    const b = zone.querySelector(".b-lampe");
+    if (!caps.torch) { const n = $("#cam-note"); if (n) n.textContent = t.pasDeLampe; return; }
+    let allumee = false;
+    b.hidden = false;
+    b.onclick = async () => {
+      try { await c.piste.applyConstraints({ advanced: [{ torch: !allumee }] }); allumee = !allumee; b.classList.toggle("actif", allumee); } catch {}
+    };
+  }
+
+  let jsqrCharge = null;
+  async function lecteurQR() {
+    if ("BarcodeDetector" in window) {
+      try {
+        if ((await BarcodeDetector.getSupportedFormats()).includes("qr_code")) {
+          const d = new BarcodeDetector({ formats: ["qr_code"] });
+          return async (v) => { const r = await d.detect(v); return r.length ? r[0].rawValue : null; };
+        }
+      } catch {}
+    }
+    jsqrCharge = jsqrCharge || new Promise((ok, non) => {
+      const s = document.createElement("script"); s.src = "/vendor/jsqr-1.4.0.min.js"; s.onload = ok;
+      s.onerror = () => { jsqrCharge = null; non(new Error("jsqr")); }; document.head.appendChild(s);
+    });
+    await jsqrCharge;
+    const cv = document.createElement("canvas"), cx = cv.getContext("2d", { willReadFrequently: true });
+    return (v) => {
+      const w = v.videoWidth, h = v.videoHeight; if (!w || !h) return null;
+      const k = Math.min(1, 640 / Math.max(w, h));
+      cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+      cx.drawImage(v, 0, 0, cv.width, cv.height);
+      const r = window.jsQR(cx.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height, { inversionAttempts: "dontInvert" });
+      return r ? r.data : null;
+    };
+  }
+  /** Code d'une URL du jeu (HTTPS://P.UYT.RE/53DZ, ou ce site), sinon null (CA-002-2 : aucune navigation). */
+  function codeDuQR(texte) {
+    let u; try { u = new URL(String(texte).trim()); } catch { return null; }
+    const hote = u.host.toLowerCase();
+    if (hote !== "p.uyt.re" && hote !== location.host.toLowerCase()) return null;
+    const m = u.pathname.match(/^\/([A-Za-z0-9]{4,6})\/?$/);
+    return m ? m[1].toUpperCase() : null;
+  }
+  let dernierEtranger = "";
+  async function boucleQR(c) {
+    if (c.fini) return;
+    let texte = null;
+    try { if (c.video.readyState >= 2) texte = await c.lecteur(c.video); } catch {}
+    if (c.fini) return;
+    if (texte) {
+      const code = codeDuQR(texte);
+      if (code) return qrDetecte(c, code);
+      if (texte !== dernierEtranger) {
+        dernierEtranger = texte; vibrer([20, 40, 20]); toast(t.etranger);
+        setTimeout(() => { if (dernierEtranger === texte) dernierEtranger = ""; }, 4000);
+      }
+    }
+    c.minuterie = setTimeout(() => boucleQR(c), 120);
+  }
+  function qrDetecte(c, code) {
+    photoEnAttente = null;
+    // RG-017-1 et 4 : photo seulement pour un joueur qui y a consenti ; sinon rien ne quitte le téléphone (CA-017-2)
+    if (lire(CLE.camera) === "photos" && etat.moi && etat.moi.personnage) {
+      try { const image = capturer(c.video); if (image) photoEnAttente = { code, image }; } catch {}
+    }
+    arreterCamera();
+    aller(`/${encodeURIComponent(code)}?s=a`);
+  }
+  /** Photo basse qualité (REQ-008) : 256 px de grand côté, floutée, JPEG de 40 000 caractères au plus. */
+  function capturer(v) {
+    const w = v.videoWidth, h = v.videoHeight; if (!w || !h) return null;
+    const k = 256 / Math.max(w, h), cv = document.createElement("canvas");
+    cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+    const cx = cv.getContext("2d");
+    cx.filter = "blur(1.2px)"; // ignoré par les navigateurs qui ne le gèrent pas : la basse résolution suffit
+    cx.drawImage(v, 0, 0, cv.width, cv.height);
+    let qualite = 0.55, image = cv.toDataURL("image/jpeg", qualite);
+    while (image.length > 38000 && qualite > 0.2) { qualite -= 0.1; image = cv.toDataURL("image/jpeg", qualite); }
+    return image.startsWith("data:image/jpeg;base64,") && image.length <= 40000 ? image : null;
+  }
+
+  // ---------- Mur « Déjà vu ! » (FEAT-017) : mosaïque des photos, effet déformant à l'affichage (RG-017-7) ----------
+  async function mur() {
+    if (!(await chargerMoi())) return rendre(`<span class="chip">${t.murTitre}</span><p>${t.murSans}</p>`, { onglet: null });
+    rendre(`<h1 class="moyen">${t.murTitre}</h1><p class="muted">${t.murAide}</p><p class="chargement">${t.lecture}</p>`, { onglet: "collection" });
+    let r;
+    try { r = await api("/api/mur"); } catch (e) { return ecranErreur(e, mur); }
+    if (location.pathname !== "/mur") return;
+    rendre(`<h1 class="moyen">${t.murTitre}</h1><p class="muted">${t.murAide}</p><p class="mono petit muted">${t.murN(r.total)}</p>
+      ${r.photos.length ? `<div class="mur" id="mur"></div><button class="bouton sec" id="b-mur-plus" style="display:none">${t.murPlus}</button>` : `<p class="maintenant">${t.murVide}</p>`}
+      <a class="bouton" href="/saisie" data-nav>📷 ${t.scanner}</a>`, { onglet: "collection" });
+    if (r.photos.length) ajouterTuiles(r);
+  }
+  function ajouterTuiles(r) {
+    const m = $("#mur"), b = $("#b-mur-plus"); if (!m) return;
+    m.insertAdjacentHTML("beforeend", r.photos.map((p, i) => `<figure class="tuile${p.moi ? " moi" : ""}" style="--d:${(p.id * 7919) % 11}"><img src="${p.image}" alt="" loading="lazy"><img src="${p.image}" alt="" class="fantome f1" loading="lazy"><img src="${p.image}" alt="" class="fantome f2" loading="lazy"></figure>`).join(""));
+    b.style.display = r.suite ? "" : "none"; // .bouton impose display:flex, l'attribut hidden ne suffit pas
+    b.onclick = async () => {
+      b.disabled = true;
+      try { ajouterTuiles(await api(`/api/mur?avant=${r.photos[r.photos.length - 1].id}`)); } catch { toast(t.reseau); } finally { b.disabled = false; }
+    };
   }
 
   function inconnue(code) {
@@ -807,7 +992,10 @@
 
   // ---------- Scan (FEAT-002, arbre de décision de FEAT-003) ----------
   async function scanner(code) {
-    const source = q.get("s") === "m" ? "code_manuel" : q.get("s") === "a" ? "app" : "qr_externe";
+    const s = new URLSearchParams(location.search).get("s"); // lu à chaque scan : la navigation interne change l'URL
+    const source = s === "m" ? "code_manuel" : s === "a" ? "app" : "qr_externe";
+    const photo = source === "app" && photoEnAttente && photoEnAttente.code === code ? photoEnAttente.image : null;
+    photoEnAttente = null;
     rendre(`<div class="centre"><p class="chargement">${t.lecture}</p></div>`);
     let r;
     const corps = { code, id_client: uuid(), source, horodatage: new Date().toISOString() };
@@ -820,6 +1008,8 @@
       return ecranErreur(e, () => scanner(code));
     }
     if (r.type === "inconnue") return inconnue(code);
+    // Mur « Déjà vu ! » (FEAT-017) : la photo part après le scan, sans le ralentir ; perdue si le réseau manque
+    if (photo && (r.type === "nouvelle_carte" || r.type === "deja_vu")) api("/api/photo", { id_client: corps.id_client, image: photo }).catch(() => {});
     // L'URL redevient l'accueil : recharger la page ne rejoue pas le scan
     const fixer = () => history.replaceState(null, "", "/");
     const o = etat.moi ? "accueil" : null;
@@ -2048,6 +2238,7 @@
       <h3>${t.classe}</h3>${dr.classe ? `<select id="classe">${Object.keys(CLASSES).map((k) => `<option value="${k}" ${k === pe.classe ? "selected" : ""}>${esc(classeLib(k))}</option>`).join("")}</select><p class="petit muted">${t.classeAlerte}</p>` : `<p class="muted">🔒 ${t.classeFigee}</p>`}
       <h3>${t.costumeTitre}</h3>${dr.costume ? `<button class="bouton sec" id="b-costume">${t.modifierCostume}</button>` : `<p class="muted">🔒 ${t.costumeFige}</p>`}
       <h3>${t.confidentialite}</h3><label class="case"><input type="checkbox" id="c-photos" ${pe.photos_ok ? "checked" : ""}><span>${t.photos}</span></label>
+      <label class="case"><input type="checkbox" id="c-mur" ${lire(CLE.camera) === "photos" ? "checked" : ""}><span>${t.photosMur}</span></label>
       <h3>${t.mesEtiquettes}</h3><ul class="liste">${d.etiquettes.map((e) => `<li><span class="mono">${esc(e.code)}</span> · ${esc(factionLib(e.faction))}</li>`).join("")}</ul>
       <h3>${t.ongMedailles}</h3><a class="bouton sec" href="/medailles" data-nav style="margin-top:0">🏅 ${t.voirMedailles(compteMedailles())}</a>
       <p class="petit muted">🔢 ${t.pinRappel}</p>
@@ -2065,6 +2256,7 @@
     const fp = $("#f-pseudo"); if (fp) fp.onsubmit = (e) => { e.preventDefault(); envoyer({ pseudo: $("#pseudo").value }); };
     const cl = $("#classe"); if (cl) cl.onchange = () => envoyer({ classe: cl.value });
     $("#c-photos").onchange = (e) => envoyer({ photos: e.target.checked });
+    $("#c-mur").onchange = (e) => ecrire(CLE.camera, e.target.checked ? "photos" : "sans");
     app.querySelectorAll("[data-l]").forEach((x) => (x.onclick = () => { L = x.dataset.l; t = T[L]; ecrire(CLE.langue, L); document.documentElement.lang = L; fiche(); }));
     const bc = $("#b-costume"); if (bc) bc.onclick = () => modifierCostume(pe, envoyer);
   }

@@ -8,6 +8,7 @@ import { baremeDe, lireParametres, type Heures } from "./config";
 import { crediterScan, heuresIso, routeDirect, type Joueur } from "./direct";
 import { routeRevelation } from "./revelation";
 import { verifierEclair } from "./eclair";
+import { enregistrerPhoto, lireMur } from "./mur";
 import { effetActif, effetsEnCours, expirerMissions, legendesDe, missionActive, pauseEnCours, reouvertureVue, scanMJ, verifierMissions } from "./mj";
 import { contact, contagionDe, corrompre, jumeauDe, tickRoles, verifierRetrouvailles } from "./jumeaux";
 import { brouiller, estFlou, fauxSouvenir, grainePaire, type PersoSouvenir } from "./souvenirs";
@@ -352,6 +353,13 @@ export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Res
     if (p === "/api/notifs" && req.method === "GET") return notifs(req, env, t, url);
     if (p === "/api/revelation" && req.method === "GET") return routeRevelation(req, env, t, devActif(env) && req.headers.has("X-Dev-Maintenant"));
     if (p === "/api/push/cle" && req.method === "GET") return json({ cle: clePublique(env) });
+    if (p === "/api/mur" && req.method === "GET") {
+      // Mur « Déjà vu ! » (FEAT-017) : réservé aux joueurs, visible seulement dans l'app (RG-017-5)
+      const me = await personnageDe(req, env, t);
+      if (!me) return erreur("sans_personnage", 401);
+      const avant = Number(url.searchParams.get("avant")) || undefined;
+      return json(await lireMur(env.DB, me.id, avant));
+    }
     if (req.method !== "POST") return erreur("methode", 405);
     // Les appels d'écriture viennent de notre page (protection CSRF)
     const origine = req.headers.get("Origin");
@@ -359,6 +367,13 @@ export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Res
     const corps = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     if (p.startsWith("/api/push/")) return routePush(req, env, t, p, corps);
     if (p === "/api/scan") return scan(req, env, t, corps);
+    if (p === "/api/photo") {
+      // Photo d'un scan fait dans l'app, envoyée seulement si le scanneur y consent (RG-017-4, CA-017-2)
+      const me = await personnageDe(req, env, t);
+      if (!me) return erreur("sans_personnage", 401);
+      const r = await enregistrerPhoto(env.DB, me.id, corps.id_client, corps.image, new Date(t).toISOString());
+      return r.ok ? json({ id: r.id }) : erreur(r.erreur, r.status);
+    }
     if (p === "/api/tirage") return tirage(req, env, t, corps);
     if (p === "/api/creer") return creer(req, env, t, corps);
     if (p === "/api/etiquette") return ajouterEtiquette(req, env, t, corps);

@@ -4,9 +4,9 @@
 // - L'API, l'admin, la connexion et le banc ne passent jamais par le cache.
 // - LOT-3 D (FEAT-016) : les pushs arrivent sans contenu ; le texte se lit sur /api/push/contenu avec l'adresse
 //   de l'abonnement comme clé. Toucher la notification ouvre ou ramène l'app.
-const CACHE = "deja-vu-l3-3";
+const CACHE = "deja-vu-l5-1";
 const STATIQUES = ["/manifest.webmanifest", "/favicon.svg", "/icone-192.png", "/icone-512.png", "/apple-touch-icon.png",
-  "/vendor/d3-7.9.0.min.js"]; // RG-009-13 : D3 en cache bien avant la révélation
+  "/vendor/d3-7.9.0.min.js", "/vendor/jsqr-1.4.0.min.js"]; // RG-009-13 : D3 en cache bien avant la révélation ; LOT-5 : jsQR (iPhone)
 const DELAI_RESEAU_MS = 4000;
 
 self.addEventListener("install", (e) => {

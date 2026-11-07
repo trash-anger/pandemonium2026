@@ -6,6 +6,7 @@ import type { ImageCachee } from "./revelation";
 import type { etatMJ } from "./mj";
 import type { etatRoles } from "./jumeaux";
 import type { frise, suggestionsEnCours } from "./suivi";
+import type { murAdmin } from "./mur";
 
 export type Langue = "fr" | "en";
 
@@ -64,7 +65,7 @@ function page(l: Langue, titre: string, corps: string, robots = true): Response 
 }
 
 /** Coquille de l'application du joueur (LOT-1) : tout l'affichage est fait par public/app.js. */
-export const VERSION_APP = "l6-2";
+export const VERSION_APP = "l5-1";
 export function pageApp(l: Langue, status = 200): Response {
   const html = `<!doctype html><html lang="${l}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -147,6 +148,7 @@ ${p.push ? blocPush(p.push, lecture) : ""}
 ${p.image ? blocRevelation(p.image, lecture) : ""}
 <h2>Étiquettes</h2><div class="grille">${stats}</div>
 <h2>Partie</h2><div class="grille"><div class="stat"><b>${p.joueurs.personnages}</b><span>personnages</span></div><div class="stat"><b>${p.joueurs.cartes}</b><span>cartes collectées</span></div><div class="stat"><b>${p.joueurs.scans}</b><span>scans</span></div></div>
+<p><a class="bouton sec" href="/admin/mur">🖼️ Mur « Déjà vu ! »</a></p>
 
 ${lecture ? "" : `<h2>Codes du jeu</h2>
 <form method="post" action="/admin/charger-jeu" class="carte"><p class="muted" style="font-size:13px;margin-top:0">Les codes imprimés sur papier (<span class="mono">donnees/etiquettes-jeu.csv</span>, livré avec le déploiement) : 890 étiquettes au même format, dont le costume du MJ (1 personnelle, 15 spéciales). Rejouable : n'ajoute que les codes absents.</p>
@@ -177,6 +179,24 @@ ${lecture ? "" : `<h2>Zone dangereuse</h2>
 <form method="post" action="/admin/partie-zero" class="carte"><p style="margin-top:0">Efface tous les personnages, scans, collections et badges ; les étiquettes réclamées redeviennent vierges. À utiliser après les tests, avant la fête.</p>
 <label>Tape ZERO pour confirmer</label><input name="confirmation" autocomplete="off" required><p style="margin:12px 0 0"><button>Remettre la partie à zéro</button></p></form>`}
 <footer>LOT-1 · panneau provisoire</footer>`, false);
+}
+
+/** Mur « Déjà vu ! » côté MJ (RG-017-6) : photos brutes pour la modération, bouton pour masquer ou réafficher. */
+export function pageMurAdmin(m: Awaited<ReturnType<typeof murAdmin>>, lecture: boolean, message?: string) {
+  const tuiles = m.photos.map((f) => `<figure class="ph${f.masquee ? " masquee" : ""}"><img src="${esc(f.image)}" alt="" loading="lazy">
+<figcaption>${esc(f.pseudo ?? "?")} · ${heureMtl(f.le)}</figcaption>
+${lecture ? "" : `<form method="post" action="/admin/mur/masquer"><input type="hidden" name="id" value="${f.id}"><input type="hidden" name="masquee" value="${f.masquee ? 0 : 1}">
+<button class="${f.masquee ? "" : "bouton sec"}">${f.masquee ? "Réafficher" : "Masquer"}</button></form>`}</figure>`).join("");
+  const dernier = m.photos.length ? m.photos[m.photos.length - 1].id : 0;
+  return page("fr", "Mur · Déjà vu !", `<span class="chip">Maître du jeu</span><p><a class="ok" href="/admin">← Admin</a></p>
+<h1 style="font-size:40px">Mur</h1>
+<p class="muted">${m.total} photo${m.total > 1 ? "s" : ""}, dont ${m.masquees} masquée${m.masquees > 1 ? "s" : ""}. Les joueurs les voient déformées ; ici elles sont brutes, pour la modération.</p>
+${message ? `<p class="ok">${esc(message)}</p>` : ""}
+<style>.mur{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.ph{margin:0;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px}
+.ph img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;display:block}.ph figcaption{font-family:var(--mono);font-size:11px;color:var(--muted);margin:6px 0}
+.ph.masquee img{opacity:.25}.ph button{width:100%;padding:8px}</style>
+${m.photos.length ? `<div class="mur">${tuiles}</div>` : '<p class="muted">Aucune photo pour l\'instant.</p>'}
+${m.suite ? `<p><a class="bouton sec" href="/admin/mur?avant=${dernier}">Plus anciennes</a></p>` : ""}`, false);
 }
 
 type EtatDirect = Awaited<ReturnType<typeof etatDirect>>;

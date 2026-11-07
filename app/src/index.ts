@@ -9,10 +9,11 @@ import { csvNiimbot } from "./csv";
 import { etatRoles, relancerFoyer } from "./jumeaux";
 import { annulerMission, annulerSanction, confierMission, etatMJ, fermerPause, heureDuJoueur, heureGlobale, MISSIONS, ouvrirPause, RECOMPENSES_M7, reussirMission, sanctionner } from "./mj";
 import { construireInstantane, ecrireImage, lireImage, SANS_BORNE, validerImage } from "./revelation";
-import { langue, pageAdmin, pageApp, pageConnexion, type Compte, type EtiquetteVue, type Lot } from "./pages";
+import { langue, pageAdmin, pageApp, pageConnexion, pageMurAdmin, type Compte, type EtiquetteVue, type Lot } from "./pages";
 import { definirPin, routeApi } from "./jeu";
 import { localVersIso } from "./temps";
 import { avecAgent, devActif, routeDev, TABLES_PARTIE } from "./dev";
+import { masquerPhoto, murAdmin } from "./mur";
 import { bancEnvironnement, bancProd, peutOuvrirBanc } from "./mode";
 import { etatPush, pushTest, routeLotInterne, tickPush } from "./push";
 import { frise, suggestionsEnCours, tickSuggestions, traiterSuggestion } from "./suivi";
@@ -77,7 +78,7 @@ async function servir(req: Request, env: Env, url: URL): Promise<Response> {
         return pageApp(langue(req));
       }
       if (chemin.startsWith("/api/")) return routeApi(req, env, url);
-      if (["/collection", "/moi", "/saisie", "/tuto", "/badges", "/medailles", "/revelation"].includes(chemin)) return pageApp(langue(req));
+      if (["/collection", "/moi", "/saisie", "/mur", "/tuto", "/badges", "/medailles", "/revelation"].includes(chemin)) return pageApp(langue(req));
       if (chemin === "/auth/connexion") return debutConnexion(env);
       if (chemin === "/auth/retour") return retourConnexion(req, env);
       if (chemin === "/auth/deconnexion") return deconnexion(env);
@@ -122,6 +123,12 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     const retour = (q: Record<string, string>) =>
       Response.redirect(`${url.origin}/admin?${new URLSearchParams(q)}`, 303);
 
+    if (url.pathname === "/admin/mur/masquer") {
+      const id = Number(f.get("id")), masquee = String(f.get("masquee")) === "1";
+      const ok = await masquerPhoto(env.DB, id, masquee);
+      if (ok) await journal(env, email, "photo", { id, masquee });
+      return Response.redirect(`${url.origin}/admin/mur?${new URLSearchParams({ message: ok ? (masquee ? "Photo masquée." : "Photo réaffichée.") : "Photo introuvable." })}`, 303);
+    }
     if (url.pathname === "/admin/generer") {
       const n = Number(f.get("n")), format = String(f.get("format")), role = String(f.get("role"));
       if (!Number.isInteger(n) || n < 1 || n > 2000 || !FORMATS.includes(format) || !ROLES.includes(role)) {
@@ -363,6 +370,10 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     return new Response(JSON.stringify(await construireInstantane(env, new Date().toISOString(), SANS_BORNE)), {
       headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
     });
+  }
+
+  if (url.pathname === "/admin/mur") {
+    return pageMurAdmin(await murAdmin(env.DB, Number(url.searchParams.get("avant")) || undefined), u.role !== "mj", url.searchParams.get("message") || undefined);
   }
 
   if (url.pathname !== "/admin") return new Response("Introuvable", { status: 404 });

@@ -26,7 +26,7 @@ export interface EnvDev {
 }
 
 export const TABLES_PARTIE = ["appareils", "scans", "collection", "badges", "pin_essais", "reactions", "compteurs", "points_faction", "evenements", "revelations",
-  "effets", "sanctions", "missions", "notifs", "groupes", "retrouvailles", "corruptions", "abonnements_push", "suggestions", "personnages"]; // appareils avant personnages (clé étrangère)
+  "effets", "sanctions", "missions", "eclair_reussites", "notifs", "groupes", "retrouvailles", "corruptions", "abonnements_push", "suggestions", "personnages"]; // appareils avant personnages (clé étrangère)
 
 async function persoDuJeton(env: EnvDev, jeton: unknown): Promise<string | null> {
   if (typeof jeton !== "string" || !jeton) return null;

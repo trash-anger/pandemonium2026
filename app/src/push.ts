@@ -26,10 +26,10 @@ const ABONNEMENTS_PAR_PERSO = 5;
 const iso = (t: number) => new Date(t).toISOString();
 
 /** Notifications personnelles poussées ; les autres (corrompu, retrouvailles…) se vivent face à face. */
-export const TYPES_PERSO = ["jumeau", "chat_noir", "sanction", "sanction_annulee", "mission", "mission_reussie", "mission_echouee", "mission_annulee", "suggestion"];
+export const TYPES_PERSO = ["jumeau", "chat_noir", "sanction", "sanction_annulee", "mission", "mission_reussie", "mission_echouee", "mission_annulee", "suggestion", "eclair_reussie"];
 // Suggestions au MJ : déjà espacées de 15 min par suivi.ts
 const PRIORITAIRES = ["jumeau", "chat_noir", "suggestion"];
-const TYPES_EVT = ["message", "palier"];
+const TYPES_EVT = ["message", "palier", "mission"];
 
 // Services de push connus : le serveur ne contacte jamais une autre adresse (pas de SSRF).
 const HOTES = [/^fcm\.googleapis\.com$/, /^android\.googleapis\.com$/, /(^|\.)push\.apple\.com$/,
@@ -166,6 +166,7 @@ export function texte(e: Element, l: string): Notification | null {
   const d = e.donnees;
   if (e.k === "evt") {
     if (e.type === "message") return { titre: en ? "📣 Message from the GM" : "📣 Message du MJ", texte: String(d.texte || ""), tag: "message" };
+    if (e.type === "mission") return { titre: en ? "⚡ Flash mission" : "⚡ Mission éclair", texte: en ? "Open the app: everyone has a few minutes." : "Ouvre l'app : tout le monde a quelques minutes.", tag: "eclair" };
     if (e.type === "palier") return { titre: en ? `Milestone ${d.n} reached!` : `Palier ${d.n} atteint !`, texte: (en ? EFFETS_EN : EFFETS_FR)[String(d.effet)] || "", tag: "palier" };
     return null;
   }
@@ -182,6 +183,7 @@ export function texte(e: Element, l: string): Notification | null {
     case "mission_reussie": return { titre: en ? "Mission accomplished" : "Mission accomplie", texte: en ? "Badge: Employee of the Month." : "Badge : Employé du mois.", tag: "mission" };
     case "mission_echouee": return { titre: en ? "Time's up" : "Temps écoulé", texte: en ? "The GM isn't mad. Not too mad." : "Le MJ ne t'en veut pas. Pas trop.", tag: "mission" };
     case "suggestion": return { titre: "🎛️ Suggestion de réglage", texte: String(d.texte || ""), tag: "suggestion", url: "/admin#suggestions" };
+    case "eclair_reussie": return { titre: en ? "⚡ Flash mission accomplished" : "⚡ Mission éclair réussie", texte: en ? `+${d.points} points for your faction.` : `+${d.points} points pour ta faction.`, tag: "eclair" };
     case "mission_annulee": return { titre: en ? "Mission cancelled" : "Mission annulée", texte: en ? "The GM called it off." : "Le MJ l'a annulée.", tag: "mission" };
   }
   return null;
@@ -230,7 +232,7 @@ export async function tickPush(env: EnvPush, t: number, o: { force?: boolean } =
     `SELECT n.id, n.personnage_id AS p, n.type, n.donnees FROM notifs n JOIN (SELECT personnage_id, MIN(vu_notif) AS v FROM abonnements_push GROUP BY personnage_id) a ON a.personnage_id = n.personnage_id WHERE n.id > a.v AND n.type IN (${ph}) ORDER BY n.id`,
   ).bind(...TYPES_PERSO).all<{ id: number; p: string; type: string; donnees: string }>()).results;
   const minEvt = Math.min(...abos.map((a) => a.vu_evt));
-  const evts = (await env.DB.prepare("SELECT id, type, donnees, fin FROM evenements WHERE id > ? AND type IN ('message', 'palier') ORDER BY id")
+  const evts = (await env.DB.prepare("SELECT id, type, donnees, fin FROM evenements WHERE id > ? AND type IN ('message', 'palier', 'mission') ORDER BY id")
     .bind(minEvt).all<{ id: number; type: string; donnees: string; fin: string | null }>()).results;
   const maxEvt = evts.length ? evts[evts.length - 1].id : minEvt;
 
@@ -240,7 +242,7 @@ export async function tickPush(env: EnvPush, t: number, o: { force?: boolean } =
     const siennes = notifs.filter((n) => n.p === a.p && n.id > a.vu_notif);
     const elements: Element[] = [
       ...siennes.map((n) => ({ k: "notif" as const, type: n.type, donnees: JSON.parse(n.donnees) })),
-      ...evts.filter((e) => e.id > a.vu_evt && TYPES_EVT.includes(e.type) && !(e.type === "message" && e.fin && Date.parse(e.fin) <= t))
+      ...evts.filter((e) => e.id > a.vu_evt && TYPES_EVT.includes(e.type) && !((e.type === "message" || e.type === "mission") && e.fin && Date.parse(e.fin) <= t))
         .map((e) => ({ k: "evt" as const, type: e.type, donnees: JSON.parse(e.donnees) })),
     ];
     if (!elements.length && !annonces.length) {

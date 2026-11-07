@@ -114,7 +114,12 @@ export async function retourConnexion(req: Request, env: EnvAuth): Promise<Respo
   const url = new URL(req.url);
   const etat = url.searchParams.get("state");
   const code = url.searchParams.get("code");
-  if (!etat || !code || etat !== lireCookie(req, COOKIE_ETAT)) return new Response("État OAuth invalide", { status: 400 });
+  if (!etat || !code || etat !== lireCookie(req, COOKIE_ETAT)) {
+    // Retour Google rejoué (Android rouvre parfois le lien dans l'app après une 1re ouverture réussie,
+    // qui a effacé le cookie d'état), expiré ou parti d'une autre fenêtre : jamais de page d'erreur brute.
+    const deja = await utilisateurConnecte(req, env);
+    return Response.redirect(new URL(deja ? "/admin" : "/admin?connexion=interrompue", url).toString(), 302);
+  }
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET || !env.SESSION_SECRET) {
     return new Response("OAuth non configuré", { status: 500 });
   }

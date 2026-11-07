@@ -1,6 +1,7 @@
 // Worker « Déjà vu ! » : application du joueur (/api/*), étiquettes et panneau du MJ.
 import { debutConnexion, deconnexion, retourConnexion, utilisateurConnecte, type EnvAuth } from "./auth";
 import { genererCodes, normaliserCode } from "./codes";
+import { chargerCodesJeu } from "./codes-jeu";
 import { ecrireConfig, HEURES_PAR_DEFAUT, lireConfig, lireParametres, PREREGLAGES, type CleConfig } from "./config";
 import { etatDirect, evenement, isoVersLocal } from "./direct";
 import { csvNiimbot } from "./csv";
@@ -12,12 +13,17 @@ import { definirPin, routeApi } from "./jeu";
 import { localVersIso } from "./temps";
 import { avecAgent, devActif, routeDev, TABLES_PARTIE } from "./dev";
 import { bancEnvironnement, bancProd, peutOuvrirBanc } from "./mode";
+import { etatPush, pushTest, routeLotInterne, tickPush } from "./push";
+import { frise, suggestionsEnCours, tickSuggestions, traiterSuggestion } from "./suivi";
 
 export interface Env extends EnvAuth {
   DB: D1Database;
   BANC?: string;
   /** Posé par requête quand la personne connectée a droit au banc (voir mode.ts). */
   BANC_SESSION?: boolean;
+  /** LOT-3 D : clé privée VAPID (secret) et liaison vers ce même Worker pour répartir les envois. */
+  VAPID_JWK?: string;
+  SOI?: Fetcher;
 }
 
 const FORMATS = ["petit", "grand"];
@@ -25,8 +31,14 @@ const ROLES = ["normale", "personnelle_mj", "speciale_mj"];
 const ETATS = ["vierge", "reclamee", "desactivee"];
 
 export default {
+  /** Cron Trigger, chaque minute : annonces et notifications push (LOT-3 D). */
+  async scheduled(_c: ScheduledController, env: Env, ctx: ExecutionContext) {
+    // Suggestions d'abord (toutes les 10 min) : leur notification au MJ part dans le même tick
+    ctx.waitUntil(tickSuggestions(env, Date.now()).then(() => tickPush(env, Date.now())).then(() => undefined));
+  },
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
+    if (url.pathname === "/__push/lot" && req.method === "POST") return routeLotInterne(req, env);
     // Banc derrière Google : MJ et lecteur en local et sur l'aperçu, fermé en production
     env = { ...env, BANC_SESSION: false };
     const bancDemande = url.pathname === "/banc" || url.pathname.startsWith("/__dev/");
@@ -95,7 +107,7 @@ async function etiquette(req: Request, env: Env, brut: string): Promise<Response
 
 async function admin(req: Request, env: Env, url: URL): Promise<Response> {
   const u = await utilisateurConnecte(req, env);
-  if (!u) return url.pathname === "/admin" ? pageConnexion() : new Response("Non autorisé", { status: 401 });
+  if (!u) return url.pathname === "/admin" ? pageConnexion(url.searchParams.has("connexion")) : new Response("Non autorisé", { status: 401 });
   const email = u.email;
   // Lecture seule : ni modification, ni export des codes (qui permettraient de réclamer des étiquettes)
   if (u.role !== "mj" && (req.method !== "GET" || url.pathname === "/admin/export.csv")) {
@@ -125,6 +137,14 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       }
       await journal(env, email, "generer", { lot, n, format, role });
       return retour({ message: `Lot #${lot} : ${n} étiquettes ${format} (${role}) générées.` });
+    }
+
+    if (url.pathname === "/admin/charger-jeu") {
+      const r = await chargerCodesJeu(env.DB);
+      await journal(env, email, "charger_jeu", r);
+      return retour({ message: r.ajoutes
+        ? `Codes du jeu chargés : ${r.ajoutes} étiquette(s) ajoutée(s) (lots ${r.lots.map((l) => `#${l}`).join(", ")}), ${r.deja} déjà en base.`
+        : `Codes du jeu déjà chargés : les ${r.deja} étiquettes sont en base.` });
     }
 
     if (url.pathname === "/admin/etiquette") {
@@ -264,6 +284,17 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       await journal(env, email, "contagion", { transmission: tr, corruption_min: d });
       return retour({ message: `Contagion : transmission ${tr} %, corruption ${d} min. Les prochains scans appliquent ces valeurs.` });
     }
+    if (url.pathname === "/admin/suggestion") {
+      const r = await traiterSuggestion(env, Number(f.get("id")), f.get("action") === "appliquer", email, (id) => heureDuJoueur(env.DB, id));
+      await journal(env, email, "suggestion", { id: Number(f.get("id")), action: f.get("action") });
+      return retour(r.erreur ? { erreur: r.erreur } : { message: r.message! });
+    }
+    if (url.pathname === "/admin/push/test") {
+      const r = (await env.DB.prepare("SELECT a.endpoint FROM abonnements_push a JOIN personnages p ON p.id = a.personnage_id WHERE p.est_mj = 1").all<{ endpoint: string }>()).results;
+      if (!r.length) return retour({ erreur: "Aucun appareil du MJ abonné : active les notifications dans l'app avec ton personnage de MJ." });
+      const x = await pushTest(env, r.map((a) => a.endpoint));
+      return retour({ message: `Push de test : ${x.ok} envoyé(s), ${x.rates} échec(s), ${x.morts} abonnement(s) expiré(s).` });
+    }
     if (url.pathname === "/admin/contagion/foyer") {
       const n = await relancerFoyer(env, (id) => heureDuJoueur(env.DB, id), 3);
       await journal(env, email, "foyer", { n });
@@ -346,6 +377,9 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     image: await lireImage(env.DB),
     mj: await etatMJ(env),
     roles: await etatRoles(env, await heureGlobale(env)),
+    push: await etatPush(env),
+    frise: await frise(env, await heureGlobale(env)),
+    suggestions: await suggestionsEnCours(env.DB),
     message: url.searchParams.get("message") || undefined,
     erreur: url.searchParams.get("erreur") || undefined,
   });

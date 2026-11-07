@@ -1,5 +1,7 @@
 // Codes courts des étiquettes (RG-001-3, RG-001-4, DEC-086).
 // 4 caractères, sans les caractères ambigus 0/O et 1/I/L : 31 symboles, 923 521 codes.
+// Exception : les codes fixes du banc (0001, 0002…, src/banc-fixe.ts) commencent par 0, jamais tiré ici.
+import { FORME_CODE_BANC } from "./banc-fixe";
 
 export const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 export const LONGUEUR = 4;
@@ -13,6 +15,7 @@ export function urlQr(code: string): string {
 export function normaliserCode(saisie: string): string | null {
   const c = saisie.replace(/[\s-]/g, "").toUpperCase();
   if (c.length !== LONGUEUR) return null;
+  if (FORME_CODE_BANC.test(c)) return c;
   for (const ch of c) if (!ALPHABET.includes(ch)) return null;
   return c;
 }

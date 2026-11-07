@@ -87,6 +87,19 @@ Secrets GitHub : `CLOUDFLARE_API_TOKEN` (modèle « Modifier les Workers Cloudfl
 
 ## Imprimer les étiquettes
 
+### Sur papier (soirée du 7 novembre : l'imprimante Niimbot n'est pas arrivée)
+
+Les codes sont tirés une fois pour toutes dans **`donnees/etiquettes-jeu.csv`** (commité, livré avec chaque déploiement) : 890 étiquettes au même format (29 × 38 mm), dont 1 `personnelle_mj` et 15 `speciale_mj`.
+
+1. Après le déploiement, dans `/admin` : **« Charger les codes du jeu »**. Rejouable : n'ajoute que les codes absents, ne touche jamais une étiquette déjà réclamée.
+2. `npm run etiquettes` écrit `sorties/etiquettes.pdf` : 19 pages Lettre, 49 étiquettes par page, QR et « DÉJÀ VU ! » aligné à gauche. Imprimer **à 100 %** (pas « ajuster à la page »).
+3. Massicoter sur les traits gris, prolongés jusqu'au bord de la feuille ; percer au point gris.
+4. Costume du MJ (1re page) : un petit losange à droite de « VU ! » marque les 15 spéciales ; deux losanges, la personnelle du MJ.
+
+`npm run codes-jeu -- --force` retire de nouveaux codes : à ne faire que si rien n'est encore imprimé.
+
+### Avec la Niimbot
+
 1. Dans `/admin`, générer : 690 `petit` `normale` ; 1 `grand` `personnelle_mj` ; 15 `grand` `speciale_mj` ; le reste du grand format en `normale`.
 2. Exporter les CSV (« tous les petits », « tous les grands »). **Ne jamais les committer** : `sorties/` est ignoré par git (REQ-017).
 3. Vérifier à l'échelle : `npm run apercu -- sorties/etiquettes-petit.csv petit`, puis ouvrir `sorties/apercu-petit.html` et imprimer à 100 %.

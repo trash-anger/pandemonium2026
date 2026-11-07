@@ -1,6 +1,7 @@
 // Worker « Déjà vu ! » : application du joueur (/api/*), étiquettes et panneau du MJ.
 import { debutConnexion, deconnexion, retourConnexion, utilisateurConnecte, type EnvAuth } from "./auth";
 import { genererCodes, normaliserCode } from "./codes";
+import { chargerCodesJeu } from "./codes-jeu";
 import { ecrireConfig, HEURES_PAR_DEFAUT, lireConfig, lireParametres, PREREGLAGES, type CleConfig } from "./config";
 import { etatDirect, evenement, isoVersLocal } from "./direct";
 import { csvNiimbot } from "./csv";
@@ -136,6 +137,14 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
       }
       await journal(env, email, "generer", { lot, n, format, role });
       return retour({ message: `Lot #${lot} : ${n} étiquettes ${format} (${role}) générées.` });
+    }
+
+    if (url.pathname === "/admin/charger-jeu") {
+      const r = await chargerCodesJeu(env.DB);
+      await journal(env, email, "charger_jeu", r);
+      return retour({ message: r.ajoutes
+        ? `Codes du jeu chargés : ${r.ajoutes} étiquette(s) ajoutée(s) (lots ${r.lots.map((l) => `#${l}`).join(", ")}), ${r.deja} déjà en base.`
+        : `Codes du jeu déjà chargés : les ${r.deja} étiquettes sont en base.` });
     }
 
     if (url.pathname === "/admin/etiquette") {

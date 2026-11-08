@@ -171,7 +171,7 @@ Les seuils de la jauge de souvenirs (départ, rescans par heure, seuil du flou) 
 
 - **Entrer dans l'admin depuis l'app** : appui long de 2 s sur sa carte (onglet Moi), seulement pour le personnage du MJ ; ou scanner son étiquette personnelle (53DZ) sur un téléphone déjà connecté à l'admin (« étiquette clé »). L'app installée couvre `/admin` ; la connexion Google est celle de Chrome.
 - **Le MJ avant l'ouverture** : son étiquette personnelle permet de créer son personnage et d'entrer dans l'app avant l'heure de début ; toutes les autres étiquettes restent fermées.
-- **Vues de l'admin** (barre d'onglets en bas) : 🔴 Direct (suggestions, direct, missions éclair, costume du MJ, partie, frise), 🔍 Joueurs (scanner, recherche, fiche complète du joueur avec ses secrets, actions, jumeaux et chats noirs), 📷 Photos, ⚙️ Préparation (notifications, image de la révélation, étiquettes, codes, heures, paramètres, zone dangereuse, banc). Après une action, on revient sur la vue (et la fiche) d'où elle est partie.
+- **Vues de l'admin** (barre d'onglets en bas) : 🔴 Direct (suggestions, direct, missions éclair, costume du MJ, partie, frise), 🔍 Joueurs (scanner, recherche, fiche complète du joueur avec ses secrets, actions, jumeaux et chats noirs), 📷 Photos, ⚙️ Prépa (notifications, image de la révélation, étiquettes, codes, heures, paramètres, zone dangereuse, banc), et 🎮 Jeu pour revenir à son personnage dans l'app. Après une action, on revient sur la vue (et la fiche) d'où elle est partie.
 
 ## Scanner intégré et mur « Déjà vu ! » (LOT-5)
 

@@ -16,7 +16,7 @@
   const SUFFIXE = /^T\d$/.test(window.name) ? "-" + window.name : "";
   const CLE = { jeton: "dv-appareil" + SUFFIXE, langue: "dv-langue" + SUFFIXE, moi: "dv-moi" + SUFFIXE, brouillon: "dv-brouillon" + SUFFIXE,
     collection: "dv-collection" + SUFFIXE, file: "dv-file" + SUFFIXE, ecran: "dv-ecran" + SUFFIXE, evts: "dv-evenements" + SUFFIXE,
-    camera: "dv-camera" + SUFFIXE }; // LOT-5 : « photos » ou « sans », choisi à l'activation de la caméra (RG-017-4)
+    camera: "dv-camera" + SUFFIXE }; // LOT-5 : explication de la caméra déjà vue (le consentement aux photos est photos_ok)
   const lire = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
   const ecrire = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} };
   const lireJson = (k) => { try { return JSON.parse(lire(k) || "null"); } catch { return null; } };
@@ -162,7 +162,7 @@
       suivant: "Suivant →", carteTitre: "Ta carte",
       pseudoModifiable: "Tu pourras le changer depuis ta fiche.",
       faction: "Faction", classe: "Classe",
-      photos: "J'accepte que mes photos de scan apparaissent à la révélation.",
+      photos: "Acceptes-tu qu'une photo de l'étiquette soit prise lors du scan ?",
       pinTitre: "Ton code PIN (4 chiffres)",
       pinAide: "Il te servira à retrouver ton personnage sur un autre navigateur. Note-le dans ta tête.",
       creer: "Créer mon personnage", tirage: "On fouille les bacs de soldes…",
@@ -191,19 +191,29 @@
       cdBloque: "Scanner débloqué dans", cdRevelation: "Révélation dans", cdFin: "Fermeture dans",
       saisieTitre: "Scanner une étiquette",
       saisieAide: "Cadre le QR d'une étiquette, ou entre le code imprimé dessous.",
+      duelDefier: "⚔️ Défier en duel", duelTitre: "Duel", duelEpreuve: "Épreuve",
+      duelAttente: (p) => `Défi lancé. ${p} a 60 s pour accepter : dis-lui d'ouvrir l'app.`,
+      duelRecu: (p) => `${p} te défie en duel !`, duelVoir: "⚔️ Voir le défi", duelAccepter: "⚔️ J'accepte", duelRefuser: "Je décline",
+      duelEnjeu: "d20 + bonus de classe + bonus de costume. Le gagnant rapporte 10 points à sa faction. Le perdant ne perd rien, sauf la face.",
+      duelFui: (p) => `${p} a fui comme un client un jour de retour d'achats.`, duelRefuse: (p) => `${p} a décliné. Avec courtoisie, sans doute.`,
+      duelTropTard: "Trop tard : le défi a expiré.", duelTuDeclines: "Tu as décliné. Le rayon s'en remettra.",
+      duelVictoire: "Victoire !", duelDefaite: "Défaite…", duelNul: "Match nul", duelCritique: "20 naturel !",
+      duelGain: (n) => `+${n} points pour ta faction.`, duelLigne: (j) => `d20 ${j.de} + classe ${j.classe} + costume ${j.costume}`,
+      duelErreurs: { pas_scanne: "Scanne d'abord cette personne.", deja_en_cours: "Un défi à la fois : attends la réponse.", occupe: "Cette personne est déjà en plein duel. Réessaie dans une minute.",
+        trop_tot: "Vous vous êtes déjà affrontés cette heure-ci. Laissez refroidir les dés.", refus_recent: "Ton défi vient d'être décliné. Attends 5 min.", cible: "Pas de duel possible avec cette carte." },
+      epreuves: { force: "Force (de bousculade)", charisme: "Charisme vestimentaire", sagesse: "Sagesse (lire les petits caractères)", constitution: "Constitution",
+        intelligence: "Intelligence", patience: "Patience (au téléphone)", perception: "Perception (des bonnes affaires)", dexterite: "Dextérité" },
       ouvrirScanner: "📷 Ouvrir le scanner", camTitre: "Le scanner a besoin de ta caméra",
       camAide: "Elle sert à lire les QR. Cadre l'étiquette, pas la personne : on ne doit pas la reconnaître.",
-      camMurAide: "Chaque scan peut aussi envoyer une petite photo floue au mur « Déjà vu ! », la mosaïque de la soirée. Rien ne part sans ton accord.",
-      camAvec: "Activer, avec photos pour le mur", camSans: "Activer, sans photo",
+      camActiver: "Activer la caméra",
       consigne: "Cadre l'étiquette, pas le visage", lampe: "🔦 Lampe", fermer: "Fermer",
       pasDeLampe: "Pas de lampe ici : demande à quelqu'un d'éclairer l'étiquette avec son téléphone.",
       etranger: "Cet article ne vient pas de notre collection.",
       camRefusee: "Caméra refusée. Pour la réactiver : touche le cadenas à côté de l'adresse (ou les réglages de l'app), puis Caméra → Autoriser. En attendant, entre le code imprimé sous le QR.",
       camIndispo: "Pas de caméra disponible ici. Entre le code imprimé sous le QR.",
-      murLien: "🖼️ Le mur « Déjà vu ! »", murTitre: "Déjà vu !", murAide: "Les photos des scans faits dans l'app, floues et déformées. Un visage reconnaissable ? Dis-le au MJ.",
-      murVide: "Le mur est vide. Scanne avec le scanner de l'app pour le remplir.", murPlus: "Plus anciennes", murN: (n) => `${n} photo${n > 1 ? "s" : ""}`,
+      murLien: "🖼️ Le mur « Déjà vu ! »", murTitre: "Déjà vu !", murAide: "Les photos de tes scans, et celles prises en scannant ton étiquette. Floues et déformées. Un visage reconnaissable ? Dis-le au MJ.",
+      murVide: "Rien pour l'instant. Les photos arrivent avec les scans faits dans l'app, les tiens et ceux de ton étiquette.", murPlus: "Plus anciennes", murN: (n) => `${n} photo${n > 1 ? "s" : ""}`,
       murSans: "Le mur est réservé aux joueurs. Va trouver le MJ pour avoir ton étiquette.",
-      photosMur: "Envoyer une photo floue au mur à chaque scan fait dans l'app.",
       // Résultats
       nouvelle: "Nouvelle pièce ajoutée", collectionN: (n) => `Ta collection : ${n} pièce${n > 1 ? "s" : ""}.`,
       cmpTitre: "Face à face", cmpToi: "Toi", cmpLignes: ["Pièces", "Déjà vus", "Médailles"],
@@ -344,7 +354,7 @@
       suivant: "Next →", carteTitre: "Your card",
       pseudoModifiable: "You can change it from your profile.",
       faction: "Faction", classe: "Class",
-      photos: "I agree that my scan photos may appear at the reveal.",
+      photos: "Do you agree that a photo of the tag may be taken when you scan?",
       pinTitre: "Your PIN (4 digits)",
       pinAide: "You'll use it to get your character back in another browser. Keep it in your head.",
       creer: "Create my character", tirage: "Digging through the bargain bins…",
@@ -371,19 +381,29 @@
       cdBloque: "Scanner unlocks in", cdRevelation: "Reveal in", cdFin: "Closing in",
       saisieTitre: "Scan a tag",
       saisieAide: "Frame a tag's QR, or enter the code printed under it.",
+      duelDefier: "⚔️ Challenge to a duel", duelTitre: "Duel", duelEpreuve: "Trial",
+      duelAttente: (p) => `Challenge sent. ${p} has 60 s to accept: tell them to open the app.`,
+      duelRecu: (p) => `${p} challenges you to a duel!`, duelVoir: "⚔️ See the challenge", duelAccepter: "⚔️ I accept", duelRefuser: "I decline",
+      duelEnjeu: "d20 + class bonus + costume bonus. The winner earns 10 points for their faction. The loser loses nothing but face.",
+      duelFui: (p) => `${p} fled like a customer on returns day.`, duelRefuse: (p) => `${p} declined. Politely, no doubt.`,
+      duelTropTard: "Too late: the challenge expired.", duelTuDeclines: "You declined. The aisle will recover.",
+      duelVictoire: "Victory!", duelDefaite: "Defeat…", duelNul: "Draw", duelCritique: "Natural 20!",
+      duelGain: (n) => `+${n} points for your faction.`, duelLigne: (j) => `d20 ${j.de} + class ${j.classe} + costume ${j.costume}`,
+      duelErreurs: { pas_scanne: "Scan this person first.", deja_en_cours: "One challenge at a time: wait for the answer.", occupe: "They're already in a duel. Try again in a minute.",
+        trop_tot: "You already fought this hour. Let the dice cool down.", refus_recent: "Your challenge was just declined. Wait 5 min.", cible: "No duel possible with this card." },
+      epreuves: { force: "Strength (shoving)", charisme: "Sartorial charisma", sagesse: "Wisdom (reading the fine print)", constitution: "Constitution",
+        intelligence: "Intelligence", patience: "Patience (on hold)", perception: "Perception (of bargains)", dexterite: "Dexterity" },
       ouvrirScanner: "📷 Open the scanner", camTitre: "The scanner needs your camera",
       camAide: "It reads QR codes. Frame the tag, not the person: they must not be recognisable.",
-      camMurAide: "Each scan can also send a small blurry photo to the « Déjà vu ! » wall, the night's mosaic. Nothing leaves without your consent.",
-      camAvec: "Turn on, with photos for the wall", camSans: "Turn on, no photos",
+      camActiver: "Turn on the camera",
       consigne: "Frame the tag, not the face", lampe: "🔦 Torch", fermer: "Close",
       pasDeLampe: "No torch here: ask someone to light the tag with their phone.",
       etranger: "This item isn't from our collection.",
       camRefusee: "Camera blocked. To allow it: tap the padlock next to the address (or the app settings), then Camera → Allow. Meanwhile, enter the code printed under the QR.",
       camIndispo: "No camera available here. Enter the code printed under the QR.",
-      murLien: "🖼️ The « Déjà vu ! » wall", murTitre: "Déjà vu !", murAide: "Photos from scans made in the app, blurred and distorted. See a recognisable face? Tell the GM.",
-      murVide: "The wall is empty. Scan with the app's scanner to fill it.", murPlus: "Older", murN: (n) => `${n} photo${n === 1 ? "" : "s"}`,
+      murLien: "🖼️ The « Déjà vu ! » wall", murTitre: "Déjà vu !", murAide: "Photos from your scans, and those taken when someone scanned your tag. Blurred and distorted. See a recognisable face? Tell the GM.",
+      murVide: "Nothing yet. Photos come with scans made in the app: yours, and those of your tag.", murPlus: "Older", murN: (n) => `${n} photo${n === 1 ? "" : "s"}`,
       murSans: "The wall is for players. Find the GM to get your tag.",
-      photosMur: "Send a blurry photo to the wall with each scan made in the app.",
       nouvelle: "New item added", collectionN: (n) => `Your collection: ${n} item${n === 1 ? "" : "s"}.`,
       cmpTitre: "Face to face", cmpToi: "You", cmpLignes: ["Items", "Déjà vus", "Medals"],
       communs: (n) => n ? `You've both already seen the same ${n} ${n > 1 ? "people" : "person"}.` : "No mutual acquaintances… yet.",
@@ -656,6 +676,8 @@
       if (p === "/moi") return fiche();
       if (p === "/saisie") return saisie();
       if (p === "/mur") return mur();
+      const md = p.match(/^\/duel\/(\d{1,9})$/);
+      if (md) return ecranDuel(md[1]);
       if (p === "/tuto") return tutoriel();
       if (p === "/badges" || p === "/medailles") return medailles();
       if (p === "/revelation") return revelation();
@@ -784,15 +806,13 @@
     const choix = lire(CLE.camera);
     const zone = !cameraPossible() ? `<p class="muted">${t.camIndispo}</p>`
       : choix ? ""
-      : `<div class="boite"><b>${t.camTitre}</b><p>${t.camAide}</p><p class="muted petit">${t.camMurAide}</p>
-          <button class="bouton" id="b-cam-avec">${t.camAvec}</button><button class="bouton sec" id="b-cam-sans">${t.camSans}</button></div>`;
+      : `<div class="boite"><b>${t.camTitre}</b><p>${t.camAide}</p><button class="bouton" id="b-cam-ok">${t.camActiver}</button></div>`;
     rendre(`<h2>${t.saisieTitre}</h2><div id="viseur-zone">${zone}</div><p class="muted">${t.saisieAide}</p>${formulaireCode()}
       ${etat.moi ? `<a class="bouton sec" href="/mur" data-nav>${t.murLien}</a>` : ""}`, { onglet: etat.moi ? "scan" : null });
     brancherCode();
     if (!cameraPossible()) { setTimeout(() => { const i = $("#code"); i && i.focus(); }, 50); return; }
     if (choix) return ouvrirCamera(); // CA-002-1 : caméra déjà autorisée, le scanner s'ouvre directement
-    $("#b-cam-avec").onclick = () => { ecrire(CLE.camera, "photos"); ouvrirCamera(); };
-    $("#b-cam-sans").onclick = () => { ecrire(CLE.camera, "sans"); ouvrirCamera(); };
+    $("#b-cam-ok").onclick = () => { ecrire(CLE.camera, "vu"); ouvrirCamera(); };
   }
   function boutonCamera(note = "") {
     const zone = $("#viseur-zone"); if (!zone) return;
@@ -886,8 +906,8 @@
   }
   function qrDetecte(c, code) {
     photoEnAttente = null;
-    // RG-017-1 et 4 : photo seulement pour un joueur qui y a consenti ; sinon rien ne quitte le téléphone (CA-017-2)
-    if (lire(CLE.camera) === "photos" && etat.moi && etat.moi.personnage) {
+    // RG-017-1 et 4 : photo seulement si le joueur a accepté (case de la création ou de Moi) ; sinon rien ne quitte le téléphone (CA-017-2)
+    if (etat.moi && etat.moi.personnage && etat.moi.personnage.photos_ok) {
       try { const image = capturer(c.video); if (image) photoEnAttente = { code, image }; } catch {}
     }
     arreterCamera();
@@ -904,6 +924,92 @@
     let qualite = 0.55, image = cv.toDataURL("image/jpeg", qualite);
     while (image.length > 38000 && qualite > 0.2) { qualite -= 0.1; image = cv.toDataURL("image/jpeg", qualite); }
     return image.startsWith("data:image/jpeg;base64,") && image.length <= 40000 ? image : null;
+  }
+
+  // ---------- Duel D&D (FEAT-010 §10.3) : défi après un scan, accord des deux joueurs, jets tirés par le serveur ----------
+  // La comparaison n'est envoyée qu'à un joueur qui scanne un autre joueur : elle suffit à savoir si le duel est possible
+  const boutonDuel = (r) => r.comparaison && r.carte && !r.carte.est_mj
+    ? `<button class="bouton sec" type="button" data-duel="${esc(r.carte.id)}">${t.duelDefier}</button>` : "";
+  document.addEventListener("click", async (ev) => {
+    const b = ev.target.closest && ev.target.closest("[data-duel]");
+    if (!b) return;
+    b.disabled = true;
+    try {
+      const r = await api("/api/duel/defier", { cible: b.dataset.duel });
+      vibrer(30); aller(`/duel/${r.id}`);
+    } catch (e) {
+      b.disabled = false;
+      toast(e.erreur === "reseau" ? t.reseau : (t.duelErreurs[e.erreur] || t.erreur));
+    }
+  });
+  let suiviDuel = null;
+  /** Compte à rebours en temps réel (performance.now) : le serveur compte les 60 s en vraies secondes, même au banc accéléré. */
+  function compteDuel(resteMs) {
+    const fin = performance.now() + Math.max(0, resteMs || 0);
+    const tic = () => {
+      const el = document.getElementById("duel-compte"); if (!el) return;
+      const s = Math.max(0, Math.ceil((fin - performance.now()) / 1000));
+      el.textContent = `00:${String(s).padStart(2, "0")}`;
+      if (s > 0) setTimeout(tic, 250);
+    };
+    tic();
+  }
+  async function ecranDuel(id) {
+    clearTimeout(suiviDuel);
+    if (!(await chargerMoi())) return aller("/", true);
+    let d;
+    try { d = await api(`/api/duel?id=${id}`); } catch (e) { return e.status === 404 ? aller("/", true) : ecranErreur(e, () => ecranDuel(id)); }
+    if (location.pathname !== `/duel/${id}`) return;
+    const moi = d[d.moi], autre = d[d.moi === "a" ? "b" : "a"];
+    const face = `<div class="duel-face"><span class="avatar" style="--teinte:${couleurDe(moi.couleur).hex}">${typeDe(moi.type).e}</span><b>VS</b><span class="avatar" style="--teinte:${couleurDe(autre.couleur).hex}">${typeDe(autre.type).e}</span></div>`;
+    const enTete = `<span class="chip">⚔️ ${t.duelTitre}</span><h1 class="moyen">${esc(autre.pseudo)}</h1>${face}`;
+    // Suivi sans redessiner l'écran tant que rien ne change (le compte à rebours continue)
+    const relancer = () => {
+      suiviDuel = setTimeout(async () => {
+        if (location.pathname !== `/duel/${id}`) return;
+        const x = await api(`/api/duel?id=${id}`).catch(() => null);
+        if (location.pathname !== `/duel/${id}`) return;
+        x && x.etat !== d.etat ? ecranDuel(id) : relancer();
+      }, 1500);
+    };
+    if (d.etat === "attente" && d.moi === "a") {
+      rendre(`${enTete}<div class="boite"><p style="margin-top:0">${esc(t.duelAttente(autre.pseudo))}</p><div class="compte" id="duel-compte"></div></div><p class="muted petit">${t.duelEnjeu}</p>`, { onglet: "accueil" });
+      compteDuel(d.reste_ms); return relancer();
+    }
+    if (d.etat === "attente") {
+      rendre(`${enTete}<div class="boite"><p style="margin-top:0"><b>${esc(t.duelRecu(autre.pseudo))}</b></p><div class="compte" id="duel-compte"></div>
+        <p class="muted petit">${t.duelEnjeu}</p><button class="bouton" id="b-oui">${t.duelAccepter}</button><button class="bouton sec" id="b-non">${t.duelRefuser}</button></div>`, { onglet: "accueil" });
+      const repondre = async (accepte) => {
+        $("#b-oui").disabled = $("#b-non").disabled = true;
+        try { await api("/api/duel/repondre", { id: Number(id), accepte }); } catch (e) { if (e.erreur === "reseau") toast(t.reseau); }
+        ecranDuel(id);
+      };
+      $("#b-oui").onclick = () => repondre(true); $("#b-non").onclick = () => repondre(false);
+      compteDuel(d.reste_ms); return relancer(); // l'écran bascule seul à l'expiration
+    }
+    if (d.etat === "expire") return rendre(`${enTete}<p>${esc(d.moi === "a" ? t.duelFui(autre.pseudo) : t.duelTropTard)}</p><a class="bouton" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
+    if (d.etat === "refuse") return rendre(`${enTete}<p>${esc(d.moi === "a" ? t.duelRefuse(autre.pseudo) : t.duelTuDeclines)}</p><a class="bouton" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
+    // Accepté : les dés roulent, puis le verdict
+    const res = d.resultat, jm = res[d.moi], ja = res[d.moi === "a" ? "b" : "a"];
+    const verdict = !res.gagnant ? t.duelNul : res.gagnant === moi.id ? t.duelVictoire : t.duelDefaite;
+    const colonne = (p, j, cle) => `<div class="duel-col${res.gagnant === p.id ? " gagne" : ""}"><small>${esc(p.id === moi.id ? t.cmpToi : p.pseudo)}</small>
+      <div class="d20" data-de="${j.de}" id="de-${cle}">?</div><div class="total">${j.total}</div><small class="mono">${esc(t.duelLigne(j))}</small>${j.de === 20 ? `<small class="or">${t.duelCritique}</small>` : ""}</div>`;
+    rendre(`${enTete}<p class="mono petit muted">${t.duelEpreuve} : <b>${esc(t.epreuves[res.epreuve] || res.epreuve)}</b></p>
+      <div class="duel-jets">${colonne(moi, jm, "m")}${colonne(autre, ja, "a")}</div>
+      <div class="duel-verdict" hidden><h2>${verdict}</h2>${res.gagnant === moi.id ? `<p class="ok">${t.duelGain(res.points)}</p>` : ""}</div>
+      <a class="bouton" href="/saisie" data-nav>${t.encore}</a><a class="bouton sec" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil", classe: "duel" });
+    const des = [...app.querySelectorAll(".d20")];
+    const reduit = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let n = reduit ? 0 : 14;
+    const rouler = () => {
+      if (n-- > 0) { des.forEach((x) => (x.textContent = 1 + Math.floor(Math.random() * 20))); return setTimeout(rouler, 70); }
+      des.forEach((x) => (x.textContent = x.dataset.de));
+      app.querySelectorAll(".duel-col .total").forEach((x) => (x.style.visibility = "visible"));
+      const v = app.querySelector(".duel-verdict"); if (v) { v.hidden = false; v.classList.add("apparait"); }
+      vibrer(res.gagnant === moi.id ? [40, 60, 90] : 30);
+      if (res.gagnant === moi.id) chargerMoi();
+    };
+    rouler();
   }
 
   // ---------- Mur « Déjà vu ! » (FEAT-017) : mosaïque des photos, effet déformant à l'affichage (RG-017-7) ----------
@@ -1025,6 +1131,7 @@
         return rendre(`${ecranLegendaire(r)}<a class="bouton" href="/saisie" data-nav>${t.encore}</a><a class="bouton sec" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
       case "suspendu": fixer(); return rendre(`<span class="chip">⛔</span><h1 class="moyen">${esc(M().sanctions[4].split(".")[0])}</h1><div class="boite alerte"><p>${M().suspendu}</p></div>`, { onglet: "accueil" });
       case "special": fixer(); vibrer(); return rendre(`<span class="chip or">${t.specialTitre}</span><h1 class="moyen">✦ ${esc(code)} ✦</h1><p>${t.special}</p>`, { onglet: o });
+      case "admin": history.replaceState(null, "", "/"); location.href = "/admin"; return; // étiquette clé du MJ
       case "creation": return creation(code, r.mj);
       case "a_toi": return aToi(code);
       case "spectateur": fixer(); return spectateur(r);
@@ -1034,7 +1141,7 @@
         fixer(); vibrer(40); chargerMoi(); precharger(); setTimeout(rafraichirDirect, 300);
         rendre(`<span class="chip vert">${t.nouvelle}</span>${souvenirBloc(r.souvenir)}
           ${carte(r.carte)}<p class="muted">${t.collectionN(r.nb_cartes)}</p>${(r.badges || []).map(badgeGagne).join("")}
-          ${comparaisonBloc(r)}${reactionsBloc(r.carte.id, r.mes_reactions)}
+          ${comparaisonBloc(r)}${boutonDuel(r)}${reactionsBloc(r.carte.id, r.mes_reactions)}
           <a class="bouton" href="/saisie" data-nav>${t.encore}</a><a class="bouton sec" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
         brancherReactions(); return apresScanRoles(r);
       case "deja_vu":
@@ -1057,7 +1164,7 @@
       ${(r.badges || []).map(badgeGagne).join("")}${r.compte === false ? `<p class="trop-tot">⏳ ${t.fenetre(r.fenetre_min ?? 5)}</p>` : ""}
       ${r.perte ? `<p class="alerte-ligne">🫥 ${t.perte(r.souvenirs)}</p>` : ""}
       ${r.premier_rescan ? `<div class="boite mission apparait"><b>🔁</b> ${t.invitation}</div>` : ""}
-      ${souvenirBloc(r.souvenir)}${carte(r.carte, { grand: false })}${comparaisonBloc(r)}${reactionsBloc(r.carte.id, r.mes_reactions)}
+      ${souvenirBloc(r.souvenir)}${carte(r.carte, { grand: false })}${comparaisonBloc(r)}${boutonDuel(r)}${reactionsBloc(r.carte.id, r.mes_reactions)}
       <a class="bouton" href="/saisie" data-nav>${t.encore}</a>`;
   }
 
@@ -1216,7 +1323,7 @@
         "L-5": ["Bon de réduction −100 %", "Tes 3 prochaines nouvelles cartes comptent double pour la quête."],
         "L-6": ["Boucle temporelle", "Pendant 10 min, chaque rescan compte, sans attendre."],
         "L-7": ["Dernier exemplaire", "Il n'en existe qu'un à la fois, et c'est toi qui l'as. Les suivants trouveront le rayon vide."],
-        "L-8": ["Dé à 20 faces doré", "Pas de duel ce soir : tu gagnes 3 souvenirs à la place."],
+        "L-8": ["Dé à 20 faces doré", "Le dé est jeté : tu gagnes 3 souvenirs."],
         "L-9": ["Ticket de caisse infini", "Un faux souvenir unique avec le MJ : toutes vos vies antérieures."],
         "L-10": ["Mannequin de vitrine", "Pendant 15 min, ta carte est en vitrine sur l'écran d'accueil de tout le monde."],
       },
@@ -1266,7 +1373,7 @@
         "L-5": ["−100% Coupon", "Your next 3 new cards count double for the quest."],
         "L-6": ["Time Loop", "For 10 min, every rescan counts, no waiting."],
         "L-7": ["Last One in Stock", "Only one exists at a time, and you've got it. The next ones will find an empty shelf."],
-        "L-8": ["Golden D20", "No duels tonight: you get 3 memories instead."],
+        "L-8": ["Golden D20", "The die is cast: you get 3 memories."],
         "L-9": ["Infinite Receipt", "A unique fake memory with the GM: all your past lives."],
         "L-10": ["Window Mannequin", "For 15 min, your card is in the window on everyone's home screen."],
       },
@@ -1400,6 +1507,10 @@
         html = `<small>🎯 ${m.messageMJ}</small><p>${d.offerte ? "" : m.missionAnnonce(d.fin ? minutesJusqua(d.fin) : 15) + "<br>"}<b>${esc(mm.titre)}</b> : ${esc(mm.condition)}</p>`;
       }
       if (n.type === "mission_reussie") html = `<small>🏷️ ${m.messageMJ}</small><p>${m.missionReussie}<br>${m.recompenses[d.recompense] || ""}</p>`;
+      // Défi : seulement s'il vient d'arriver (pas au premier relevé) ; l'écran du duel dit lui-même s'il a expiré
+      if (n.type === "duel" && apres !== null && location.pathname !== "/duel/" + d.id) {
+        html = `<small>⚔️ ${t.duelTitre}</small><p><b>${esc(t.duelRecu(d.de))}</b></p><a class="bouton" href="/duel/${Number(d.id)}" data-nav data-fermer>${t.duelVoir}</a>`;
+      }
       if (n.type === "eclair_reussie") html = `<small>⚡ ${t.eclairTitre}</small><p>${t.eclairReussie(d.points)}</p>`;
       if (n.type === "mission_echouee") html = `<small>⏳ ${m.messageMJ}</small><p>${m.missionEchouee}</p>`;
       if (n.type === "mission_annulee") html = `<small>${m.messageMJ}</small><p>${m.missionAnnulee}</p>`;
@@ -1746,6 +1857,30 @@
   const adoucir = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
   const DUREE_REV = { morphe: 4200, morpheFin: 7200, zoom: 7800, vue: 10600, fin: 12400 };
 
+  /** Mosaïque des photos de scan pendant 3 s. REQ-003 : chaque vignette change 3 fois par seconde au plus,
+   *  en décalé ; mouvement réduit : mosaïque fixe. */
+  function introPhotos(photos) {
+    return new Promise((fini) => {
+      const zone = $(".rev"); if (!zone) return fini();
+      const melange = photos.slice().sort(() => Math.random() - 0.5);
+      // Toujours plus de photos que de vignettes, pour que ça défile : 6 vignettes au plus
+      const n = Math.max(1, Math.min(6, Math.ceil(melange.length / 2))), calme = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const box = document.createElement("div");
+      box.className = "rev-photos" + (n === 1 ? " peu" : "");
+      box.innerHTML = Array.from({ length: n }, () => '<figure class="tuile"><img alt=""><img alt="" class="fantome f1"><img alt="" class="fantome f2"></figure>').join("");
+      zone.appendChild(box);
+      const tuiles = [...box.children];
+      let k = 0, j = 0;
+      const poser = (el) => { const src = melange[k++ % melange.length]; el.querySelectorAll("img").forEach((i) => (i.src = src)); };
+      tuiles.forEach(poser);
+      const it = calme || melange.length <= n ? null : setInterval(() => poser(tuiles[j++ % n]), Math.round(334 / n));
+      setTimeout(() => {
+        clearInterval(it); box.classList.add("fin");
+        setTimeout(() => { box.remove(); fini(); }, 350);
+      }, 3000);
+    });
+  }
+
   async function revelation() {
     const apercu = new URLSearchParams(location.search).has("apercu");
     rendre(`<div class="rev"><canvas id="rev-canvas"></canvas>
@@ -1765,6 +1900,9 @@
     }
     if (location.pathname !== "/revelation") return;
     $("#rev-charge").remove();
+    // RG-009-9 : quelques secondes de photos de scan autorisées avant la constellation
+    if (R.photos && R.photos.length) await introPhotos(R.photos);
+    if (location.pathname !== "/revelation") return;
     const L0 = disposer(R);
     const moiId = etat.moi && etat.moi.personnage && etat.moi.personnage.id;
     const moi = L0.N.find((p) => p.d.id === moiId) || null;
@@ -2238,7 +2376,6 @@
       <h3>${t.classe}</h3>${dr.classe ? `<select id="classe">${Object.keys(CLASSES).map((k) => `<option value="${k}" ${k === pe.classe ? "selected" : ""}>${esc(classeLib(k))}</option>`).join("")}</select><p class="petit muted">${t.classeAlerte}</p>` : `<p class="muted">🔒 ${t.classeFigee}</p>`}
       <h3>${t.costumeTitre}</h3>${dr.costume ? `<button class="bouton sec" id="b-costume">${t.modifierCostume}</button>` : `<p class="muted">🔒 ${t.costumeFige}</p>`}
       <h3>${t.confidentialite}</h3><label class="case"><input type="checkbox" id="c-photos" ${pe.photos_ok ? "checked" : ""}><span>${t.photos}</span></label>
-      <label class="case"><input type="checkbox" id="c-mur" ${lire(CLE.camera) === "photos" ? "checked" : ""}><span>${t.photosMur}</span></label>
       <h3>${t.mesEtiquettes}</h3><ul class="liste">${d.etiquettes.map((e) => `<li><span class="mono">${esc(e.code)}</span> · ${esc(factionLib(e.faction))}</li>`).join("")}</ul>
       <h3>${t.ongMedailles}</h3><a class="bouton sec" href="/medailles" data-nav style="margin-top:0">🏅 ${t.voirMedailles(compteMedailles())}</a>
       <p class="petit muted">🔢 ${t.pinRappel}</p>
@@ -2256,9 +2393,23 @@
     const fp = $("#f-pseudo"); if (fp) fp.onsubmit = (e) => { e.preventDefault(); envoyer({ pseudo: $("#pseudo").value }); };
     const cl = $("#classe"); if (cl) cl.onchange = () => envoyer({ classe: cl.value });
     $("#c-photos").onchange = (e) => envoyer({ photos: e.target.checked });
-    $("#c-mur").onchange = (e) => ecrire(CLE.camera, e.target.checked ? "photos" : "sans");
     app.querySelectorAll("[data-l]").forEach((x) => (x.onclick = () => { L = x.dataset.l; t = T[L]; ecrire(CLE.langue, L); document.documentElement.lang = L; fiche(); }));
     const bc = $("#b-costume"); if (bc) bc.onclick = () => modifierCostume(pe, envoyer);
+    if (pe.est_mj) entreeAdmin(app.querySelector("main > .carte"));
+  }
+  /** Entrée discrète de l'admin (personnage du MJ seulement) : appui long de 2 s sur sa carte. Rien de visible. */
+  function entreeAdmin(el) {
+    if (!el) return;
+    let minuterie = null, x0 = 0, y0 = 0;
+    const annuler = () => { clearTimeout(minuterie); minuterie = null; };
+    el.style.webkitTouchCallout = "none"; el.style.userSelect = "none";
+    el.addEventListener("contextmenu", (e) => e.preventDefault());
+    el.addEventListener("pointerdown", (e) => {
+      x0 = e.clientX; y0 = e.clientY;
+      minuterie = setTimeout(() => { vibrer([30, 40, 30]); location.href = "/admin"; }, 2000);
+    });
+    el.addEventListener("pointermove", (e) => { if (Math.hypot(e.clientX - x0, e.clientY - y0) > 12) annuler(); });
+    for (const t of ["pointerup", "pointercancel", "pointerleave"]) el.addEventListener(t, annuler);
   }
 
   // Grille des attributs : 12 d'office, 12 de plus derrière « Charger plus » (ouverte si l'un d'eux est coché)

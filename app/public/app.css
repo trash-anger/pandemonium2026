@@ -323,3 +323,21 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .tuile.moi{outline:2px solid var(--green);outline-offset:-2px}
 @media (prefers-reduced-motion:no-preference){.tuile .f1{animation:derive 6s calc(var(--d) * -.5s) infinite steps(1)}
 @keyframes derive{0%,90%{transform:translate(8%,-3%) scale(1.04)}92%{transform:translate(-4%,2%) scale(1.04)}95%{transform:translate(12%,-1%) scale(1.04)}}}
+
+/* Duel D&D (FEAT-010 §10.3) */
+.duel-face{display:flex;align-items:center;justify-content:center;gap:18px;margin:16px 0 4px;font-family:var(--mono);color:var(--muted)}
+.duel-face .avatar{width:56px;height:56px;font-size:30px}
+.duel-jets{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.duel-col{background:var(--bg2);border:1.5px solid var(--line);border-radius:16px;padding:14px 10px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;min-width:0}
+.duel-col small{overflow-wrap:anywhere}
+.duel-col.gagne{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
+.d20{width:76px;height:76px;display:grid;place-items:center;font-family:var(--display);font-size:32px;color:var(--ink);background:var(--gold);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.duel-col .total{font-family:var(--display);font-size:40px;visibility:hidden}
+.duel-verdict h2{font-size:34px;text-align:center;margin:20px 0 4px}.duel-verdict p{text-align:center;margin:0}
+
+/* Révélation : mosaïque des photos de scan avant la constellation (RG-009-9) */
+.rev-photos{position:absolute;inset:0;z-index:3;background:#07060a;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-content:center;padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));max-width:620px;margin:0 auto;transition:opacity .35s}
+.rev-photos.peu{grid-template-columns:minmax(0,1fr);max-width:360px}
+.rev-photos .tuile{border-radius:12px}
+.rev-photos.fin{opacity:0}
+@media (min-width:700px){.rev-photos{grid-template-columns:repeat(3,minmax(0,1fr));max-width:900px}}

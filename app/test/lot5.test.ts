@@ -4,7 +4,8 @@ import { routeApi } from "../src/jeu";
 import { d1Memoire } from "./d1-memoire";
 import { ALPHABET } from "../src/codes";
 import { masquerPhoto, murAdmin, MUR_PAGE } from "../src/mur";
-import { pageMurAdmin } from "../src/pages";
+import { pageGalerie } from "../src/pages";
+import { avecPhotos, photosRevelation } from "../src/mur";
 
 const ORIGINE = "http://localhost:8787";
 // Heures de Montréal (UTC−5) : 21 h = 02:00 UTC ; révélation 5 h = 10:00 UTC
@@ -32,10 +33,10 @@ function etiquette() {
   return code;
 }
 
-async function joueur(costume = { type: "nuit", couleur: "rouge", attributs: ["cape", "sang"] }, t = T0) {
+async function joueur(costume = { type: "nuit", couleur: "rouge", attributs: ["cape", "sang"] }, t = T0, photos = true) {
   const code = etiquette();
   const ti = await api("/api/tirage", { code, ...costume, langue: "fr" }, undefined, t);
-  const r = await api("/api/creer", { jeton: ti.jeton, ...costume, photos: false, pin: "1234", langue: "fr" }, undefined, t);
+  const r = await api("/api/creer", { jeton: ti.jeton, ...costume, photos, pin: "1234", langue: "fr" }, undefined, t);
   expect(r.status).toBe(200);
   return { jeton: r.jeton as string, code, id: r.personnage.id as string };
 }
@@ -59,6 +60,20 @@ describe("mur « Déjà vu ! » (FEAT-017)", () => {
     expect(m.total).toBe(1);
     expect(m.photos[0]).toMatchObject({ id: r.id, image: IMAGE, moi: false });
     expect((await api("/api/mur", undefined, a.jeton)).photos[0].moi).toBe(true);
+    const c = await joueur();
+    expect((await api("/api/mur", undefined, c.jeton)).total).toBe(0); // ni prise par c, ni de son étiquette
+  });
+
+  it("consentement unique : sans accord, aucune photo gardée ; accord retiré, ses photos quittent le mur", async () => {
+    const sans = await joueur(undefined, T0, false), a = await joueur(), b = await joueur();
+    const s0 = await scan(sans, b.code);
+    expect((await api("/api/photo", { id_client: s0.id_client, image: IMAGE }, sans.jeton)).erreur).toBe("sans_accord");
+    const s1 = await scan(a, b.code);
+    await api("/api/photo", { id_client: s1.id_client, image: IMAGE }, a.jeton);
+    expect((await api("/api/mur", undefined, b.jeton)).total).toBe(1);
+    await api("/api/modifier", { photos: false }, a.jeton);
+    expect((await api("/api/mur", undefined, b.jeton)).total).toBe(0);
+    expect((await api("/api/mur", undefined, a.jeton)).total).toBe(0);
   });
 
   it("une seule photo par scan, même renvoyée", async () => {
@@ -111,16 +126,30 @@ describe("mur « Déjà vu ! » (FEAT-017)", () => {
   });
 });
 
-describe("mur côté MJ", () => {
-  it("la page liste les photos avec le pseudo, et le bouton qui masque ou réaffiche", async () => {
+describe("galerie du MJ et photos de la révélation", () => {
+  it("la galerie embarque les photos, l'état écarté et l'appui long (pas en lecture seule)", async () => {
     const a = await joueur(), b = await joueur();
     const s = await scan(a, b.code);
     const { id } = await api("/api/photo", { id_client: s.id_client, image: IMAGE }, a.jeton);
     await masquerPhoto(env.DB as never, id, true);
-    const html = await pageMurAdmin(await murAdmin(env.DB as never), false).text();
+    const html = await pageGalerie(await murAdmin(env.DB as never), false).text();
     expect(html).toContain(IMAGE);
-    expect(html).toContain("Réafficher");
-    expect(html).toContain("1 photo, dont 1 masquée");
-    expect(await pageMurAdmin(await murAdmin(env.DB as never), true).text()).not.toContain("/admin/mur/masquer");
+    expect(html).toContain('"masquee":1');
+    expect(html).toContain("LECTURE = false");
+    expect(await pageGalerie(await murAdmin(env.DB as never), true).text()).toContain("LECTURE = true");
+  });
+
+  it("RG-009-9 : seulement les photos autorisées par leur auteur et non écartées", async () => {
+    const a = await joueur(), b = await joueur(), c = await joueur();
+    const img = (n: number) => "data:image/jpeg;base64," + String(n).repeat(8);
+    const s1 = await scan(a, b.code), s2 = await scan(a, c.code), s3 = await scan(b, c.code);
+    const p1 = await api("/api/photo", { id_client: s1.id_client, image: img(1) }, a.jeton);
+    await api("/api/photo", { id_client: s2.id_client, image: img(2) }, a.jeton);
+    await api("/api/photo", { id_client: s3.id_client, image: img(3) }, b.jeton);
+    env.DB.sqlite.prepare("UPDATE personnages SET photos_ok = 0 WHERE id = ?").run(b.id); // b retire son accord
+    expect((await photosRevelation(env.DB as never)).sort()).toEqual([img(1), img(2)]);
+    await masquerPhoto(env.DB as never, p1.id, true);
+    expect(await photosRevelation(env.DB as never)).toEqual([img(2)]);
+    expect(JSON.parse(avecPhotos('{"noeuds":[]}', [img(2)]))).toEqual({ noeuds: [], photos: [img(2)] });
   });
 });

@@ -7,6 +7,7 @@ import type { etatMJ } from "./mj";
 import type { etatRoles } from "./jumeaux";
 import type { frise, suggestionsEnCours } from "./suivi";
 import type { murAdmin } from "./mur";
+import type { FicheJoueur } from "./fiche";
 
 export type Langue = "fr" | "en";
 
@@ -28,6 +29,10 @@ const CSS = `
 body{min-height:100dvh;background:radial-gradient(ellipse at 20% 0%,#3a1426 0%,var(--bg) 60%) fixed}
 body::after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px)}
 main{max-width:560px;margin:0 auto;padding:28px 18px 48px}
+.barre-adm{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(21,19,28,.97);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.barre-adm a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 8px;min-height:58px;color:var(--muted);text-decoration:none;font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+.barre-adm a span{font-size:21px}.barre-adm a[aria-current=page]{color:var(--fg);box-shadow:inset 0 3px 0 var(--pink)}
+body.avec-barre main{padding-bottom:110px}
 .chip{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--pink);border:1.5px solid var(--pink);padding:5px 9px}
 h1{font-family:var(--display);font-size:clamp(56px,18vw,108px);line-height:.88;margin:18px 0 0;letter-spacing:-.02em;text-shadow:-.035em 0 var(--pink),.035em 0 var(--green)}
 h2{font-family:var(--display);font-size:22px;margin:30px 0 10px}
@@ -65,7 +70,7 @@ function page(l: Langue, titre: string, corps: string, robots = true): Response 
 }
 
 /** Coquille de l'application du joueur (LOT-1) : tout l'affichage est fait par public/app.js. */
-export const VERSION_APP = "l5-1";
+export const VERSION_APP = "mj-1";
 export function pageApp(l: Langue, status = 200): Response {
   const html = `<!doctype html><html lang="${l}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -91,7 +96,16 @@ const ETATS = ["vierge", "reclamee", "desactivee"];
 const opts = (liste: string[], choisi?: string) =>
   liste.map((v) => `<option value="${v}"${v === choisi ? " selected" : ""}>${v}</option>`).join("");
 
+export type VueAdmin = "direct" | "joueurs" | "preparation";
+
+/** Barre d'onglets de l'admin (en bas, à portée de pouce). */
+export const barreAdmin = (actif: VueAdmin | "photos") => `<nav class="barre-adm">${([
+  ["direct", "/admin", "🔴", "Direct"], ["joueurs", "/admin/joueurs", "🔍", "Joueurs"], ["photos", "/admin/photos", "📷", "Photos"], ["preparation", "/admin/preparation", "⚙️", "Préparation"],
+] as const).map(([id, href, e, l]) => `<a href="${href}"${id === actif ? ' aria-current="page"' : ""}><span>${e}</span>${l}</a>`).join("")}</nav>
+<script>document.body.classList.add("avec-barre")</script>`;
+
 export function pageAdmin(p: {
+  vue: VueAdmin; ficheJ?: FicheJoueur | null;
   email: string; role: "mj" | "lecteur"; comptes: Compte[]; lots: Lot[]; heures: unknown; parametres: unknown;
   message?: string; erreur?: string; etiquette?: EtiquetteVue | null; recherche?: string;
   joueurs: { personnages: number; scans: number; cartes: number };
@@ -127,7 +141,7 @@ ${lecture ? "" : `<p><a class="bouton sec" href="/admin/export.csv?format=petit"
 <div class="code">${e.code}</div><p class="muted mono">lot #${e.lot} · ${e.format} · créée ${esc(e.cree_le)}</p>
 ${lecture ? `<p class="mono">rôle : ${e.role} · état : ${e.etat}</p>` : `<div class="rangee"><div><label>Rôle</label><select name="role">${opts(ROLES, e.role)}</select></div>
 <div><label>État</label><select name="etat">${opts(ETATS, e.etat)}</select></div><div><button>Enregistrer</button></div></div>`}
-<p class="muted" style="font-size:13px">Changer le rôle ne change ni le code ni le QR (CA-001-4). <a class="ok" href="/${e.code}">Ouvrir la page</a></p></form>
+<p class="muted" style="font-size:13px">Changer le rôle ne change ni le code ni le QR (CA-001-4).</p></form>
 ${e.personnage_id ? `<div class="carte"><p style="margin:0"><b>${esc(e.pseudo)}</b> · faction ${esc(e.faction_id)} · ${e.nb_etiquettes} étiquette(s)</p>
 ${lecture ? "" : `<form method="post" action="/admin/pin" class="rangee" style="margin-top:12px"><input type="hidden" name="code" value="${e.code}">
 <div><label>Nouveau PIN (RG-019-7)</label><input name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></div><div style="flex:0 0 auto"><button>Réinitialiser le PIN</button></div></form>
@@ -135,21 +149,30 @@ ${lecture ? "" : `<form method="post" action="/admin/pin" class="rangee" style="
 <p style="margin:12px 0 4px" class="muted">Sanction ou mission (RG-020-11)</p>${actionsJoueur(e.personnage_id, e.pseudo ?? "")}${SCRIPT_MAINTENIR}`}</div>` : ""}`
     : p.recherche ? `<p class="err">Aucune étiquette ${esc(p.recherche)}.</p>` : "";
 
-  return page("fr", "Admin · Déjà vu !", `<span class="chip">Maître du jeu</span>
-<p class="muted mono" style="font-size:12px">${esc(p.email)} · ${lecture ? '<span class="err">lecture seule</span>' : "MJ"} · <a class="ok" href="/auth/deconnexion">déconnexion</a></p>
-${p.banc ? `<p><a class="bouton sec" href="/banc">🧪 Banc d'essai</a></p>` : ""}
-${p.message ? `<p class="ok">${esc(p.message)}</p>` : ""}${p.erreur ? `<p class="err">${esc(p.erreur)}</p>` : ""}
+  const entete = `<span class="chip">Maître du jeu</span>
+${p.message ? `<p class="ok">${esc(p.message)}</p>` : ""}${p.erreur ? `<p class="err">${esc(p.erreur)}</p>` : ""}`;
+  const partie = `<h2>Partie</h2><div class="grille"><div class="stat"><b>${p.joueurs.personnages}</b><span>personnages</span></div><div class="stat"><b>${p.joueurs.cartes}</b><span>cartes collectées</span></div><div class="stat"><b>${p.joueurs.scans}</b><span>scans</span></div></div>`;
+
+  const corps = p.vue === "direct" ? `${entete}
 ${p.suggestions ? blocSuggestions(p.suggestions, lecture) : ""}
 ${p.direct ? blocDirect(p.direct, lecture, p.eclair ?? null) : ""}
-${p.frise ? blocFrise(p.frise) : ""}
 ${p.mj ? blocMJ(p.mj, lecture) : ""}
-${p.roles ? blocRoles(p.roles, lecture) : ""}
+${partie}
+${p.frise ? blocFrise(p.frise) : ""}`
+
+  : p.vue === "joueurs" ? `${entete}
+<h2>Scanner une étiquette</h2>${SCANNER_ADMIN}
+<form method="get" action="/admin/joueurs" class="rangee" style="margin-top:12px"><div><input class="saisie" name="code" maxlength="6" value="${esc(p.recherche || "")}" autocapitalize="characters" placeholder="CODE"></div><div style="flex:0 0 auto"><button>Chercher</button></div></form>
+${p.ficheJ ? blocFiche(p.ficheJ) : ""}
+${fiche}
+${p.roles ? blocRoles(p.roles, lecture) : ""}`
+
+  : `${entete}
+<p class="muted mono" style="font-size:12px">${esc(p.email)} · ${lecture ? '<span class="err">lecture seule</span>' : "MJ"} · <a class="ok" href="/auth/deconnexion">déconnexion</a></p>
+${p.banc ? `<p><a class="bouton sec" href="/banc">🧪 Banc d'essai</a></p>` : ""}
 ${p.push ? blocPush(p.push, lecture) : ""}
 ${p.image ? blocRevelation(p.image, lecture) : ""}
 <h2>Étiquettes</h2><div class="grille">${stats}</div>
-<h2>Partie</h2><div class="grille"><div class="stat"><b>${p.joueurs.personnages}</b><span>personnages</span></div><div class="stat"><b>${p.joueurs.cartes}</b><span>cartes collectées</span></div><div class="stat"><b>${p.joueurs.scans}</b><span>scans</span></div></div>
-<p><a class="bouton sec" href="/admin/mur">🖼️ Mur « Déjà vu ! »</a></p>
-
 ${lecture ? "" : `<h2>Codes du jeu</h2>
 <form method="post" action="/admin/charger-jeu" class="carte"><p class="muted" style="font-size:13px;margin-top:0">Les codes imprimés sur papier (<span class="mono">donnees/etiquettes-jeu.csv</span>, livré avec le déploiement) : 890 étiquettes au même format, dont le costume du MJ (1 personnelle, 15 spéciales). Rejouable : n'ajoute que les codes absents.</p>
 <p style="margin:0"><button>Charger les codes du jeu</button></p></form>`}
@@ -160,43 +183,244 @@ ${lecture ? "" : `<h2>Générer (ADM-1)</h2>
 <div><label>Rôle</label><select name="role">${opts(ROLES)}</select></div></div>
 <p class="muted" style="font-size:13px">Costume du MJ : 1 « personnelle_mj » et 15 « speciale_mj » (10 légendaires, 5 pièges), en grand format.</p>
 <p style="margin:0"><button>Générer</button></p></form>`}
-
 <h2>Lots et export Niimbot</h2>${lots}
-
-<h2>Chercher une étiquette</h2>
-<form method="get" action="/admin" class="rangee"><div><input class="saisie" name="code" maxlength="6" value="${esc(p.recherche || "")}" autocapitalize="characters"></div><div style="flex:0 0 auto"><button>Chercher</button></div></form>
-${fiche}
-
 <h2>Heures (ADM-3)</h2>
 <form method="post" action="/admin/config" class="carte"><input type="hidden" name="cle" value="heures">
 <p class="muted" style="font-size:13px">Heure de Montréal, format AAAA-MM-JJTHH:MM.</p>
 <textarea name="valeur" style="min-height:170px"${lecture ? " readonly" : ""}>${esc(JSON.stringify(p.heures, null, 2))}</textarea>${lecture ? "" : `<p style="margin:12px 0 0"><button>Enregistrer les heures</button></p>`}</form>
-
 <h2>Paramètres (ADM-2)</h2>
 <form method="post" action="/admin/config" class="carte"><input type="hidden" name="cle" value="parametres">
 <textarea name="valeur" style="min-height:300px"${lecture ? " readonly" : ""}>${esc(JSON.stringify(p.parametres, null, 2))}</textarea>${lecture ? "" : `<p style="margin:12px 0 0"><button>Enregistrer les paramètres</button></p>`}</form>
 ${lecture ? "" : `<h2>Zone dangereuse</h2>
 <form method="post" action="/admin/partie-zero" class="carte"><p style="margin-top:0">Efface tous les personnages, scans, collections et badges ; les étiquettes réclamées redeviennent vierges. À utiliser après les tests, avant la fête.</p>
-<label>Tape ZERO pour confirmer</label><input name="confirmation" autocomplete="off" required><p style="margin:12px 0 0"><button>Remettre la partie à zéro</button></p></form>`}
-<footer>LOT-1 · panneau provisoire</footer>`, false);
+<label>Tape ZERO pour confirmer</label><input name="confirmation" autocomplete="off" required><p style="margin:12px 0 0"><button>Remettre la partie à zéro</button></p></form>`}`;
+
+  return page("fr", "Admin · Déjà vu !", corps + barreAdmin(p.vue), false);
 }
 
-/** Mur « Déjà vu ! » côté MJ (RG-017-6) : photos brutes pour la modération, bouton pour masquer ou réafficher. */
-export function pageMurAdmin(m: Awaited<ReturnType<typeof murAdmin>>, lecture: boolean, message?: string) {
-  const tuiles = m.photos.map((f) => `<figure class="ph${f.masquee ? " masquee" : ""}"><img src="${esc(f.image)}" alt="" loading="lazy">
-<figcaption>${esc(f.pseudo ?? "?")} · ${heureMtl(f.le)}</figcaption>
-${lecture ? "" : `<form method="post" action="/admin/mur/masquer"><input type="hidden" name="id" value="${f.id}"><input type="hidden" name="masquee" value="${f.masquee ? 0 : 1}">
-<button class="${f.masquee ? "" : "bouton sec"}">${f.masquee ? "Réafficher" : "Masquer"}</button></form>`}</figure>`).join("");
-  const dernier = m.photos.length ? m.photos[m.photos.length - 1].id : 0;
-  return page("fr", "Mur · Déjà vu !", `<span class="chip">Maître du jeu</span><p><a class="ok" href="/admin">← Admin</a></p>
-<h1 style="font-size:40px">Mur</h1>
-<p class="muted">${m.total} photo${m.total > 1 ? "s" : ""}, dont ${m.masquees} masquée${m.masquees > 1 ? "s" : ""}. Les joueurs les voient déformées ; ici elles sont brutes, pour la modération.</p>
-${message ? `<p class="ok">${esc(message)}</p>` : ""}
-<style>.mur{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.ph{margin:0;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px}
-.ph img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;display:block}.ph figcaption{font-family:var(--mono);font-size:11px;color:var(--muted);margin:6px 0}
-.ph.masquee img{opacity:.25}.ph button{width:100%;padding:8px}</style>
-${m.photos.length ? `<div class="mur">${tuiles}</div>` : '<p class="muted">Aucune photo pour l\'instant.</p>'}
-${m.suite ? `<p><a class="bouton sec" href="/admin/mur?avant=${dernier}">Plus anciennes</a></p>` : ""}`, false);
+/** Photos de scan côté MJ (RG-017-6) : grille de toutes les photos ; toucher une vignette ouvre le plein écran, où l'on swipe.
+ *  Appui long de 2 s (grille ou plein écran) : la photo est écartée du mur et de la révélation (cadre rouge) ; encore 2 s : rétablie.
+ *  « Vue joueurs » applique l'effet déformant du mur ; sinon photos brutes, pour la modération. */
+export function pageGalerie(m: Awaited<ReturnType<typeof murAdmin>>, lecture: boolean) {
+  const donnees = JSON.stringify({ ...m, photos: m.photos.map((f) => ({ ...f, heure: heureMtl(f.le) })) }).replace(/</g, "\\u003c");
+  return page("fr", "Photos · Déjà vu !", `<style>
+main{max-width:none;padding:0}
+.g-haut{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--bg);border-bottom:1px solid var(--line)}
+.g-haut a{color:var(--green);text-decoration:none;font-weight:700}.g-compte{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:center;flex:1}
+.bascule{background:var(--bg3);color:var(--fg);border:1.5px solid var(--line);padding:8px 12px;font-size:14px;border-radius:999px}
+.bascule[aria-pressed=true]{background:var(--pink);color:var(--ink);border-color:var(--pink)}
+.aide{color:var(--muted);font-size:14px;margin:12px 16px}
+.grille-ph{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 16px 40px}
+@media (min-width:700px){.grille-ph{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
+.ph{position:relative;aspect-ratio:3/4;border-radius:10px;overflow:hidden;outline:4px solid transparent;outline-offset:-4px;background:var(--bg3);-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.ph img,.plein-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.ph .fantome,.plein-img .fantome{display:none}
+.ph::after{content:"";position:absolute;inset:0;border-radius:10px;border:4px solid transparent;z-index:3;pointer-events:none}.ph.ecartee::after{border-color:#ff2a2a}.ph.ecartee img{opacity:.45}
+.ph .jauge,.plein-img .jauge{position:absolute;left:0;bottom:0;height:5px;width:0;background:#ff2a2a;z-index:2}
+.appui .jauge{width:100%;transition:width 2s linear}
+.plein{position:fixed;inset:0;z-index:30;background:var(--bg)}.plein[hidden]{display:none}
+.plein .g-haut{position:absolute;left:0;right:0}
+.galerie{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior:contain}
+.galerie::-webkit-scrollbar{display:none}
+.diapo{flex:0 0 100%;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:80px 16px 90px}
+.plein-img{position:relative;width:min(86vw,440px);aspect-ratio:3/4;max-height:64dvh;border-radius:14px;overflow:hidden;outline:5px solid transparent;outline-offset:4px;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.plein-img img{object-fit:contain;background:#000}
+.diapo.ecartee .plein-img{outline-color:#ff2a2a}.diapo.ecartee .plein-img img{opacity:.55}
+.etiq{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:center}.etiq b{color:#ff2a2a}
+.fermer{font-size:20px;background:var(--bg3);color:var(--fg);border:1.5px solid var(--line);width:44px;height:44px;padding:0;border-radius:50%}
+.g-bas{position:absolute;left:0;right:0;bottom:0;padding:12px 16px calc(14px + env(safe-area-inset-bottom));text-align:center;font-size:14px;color:var(--muted);background:linear-gradient(transparent,var(--bg) 40%)}
+/* Vue joueurs : même effet que le mur de l'app (dédoublement, décalage des couleurs) */
+.effet .ph img,.effet .plein-img img{filter:blur(1.5px) saturate(1.3) contrast(1.1)}
+.effet .ph .fantome,.effet .plein-img .fantome{display:block;mix-blend-mode:screen;opacity:.6}
+.effet .f1{transform:translate(8%,-3%) scale(1.04);filter:blur(1.5px) grayscale(1) sepia(1) hue-rotate(290deg) saturate(5)!important}
+.effet .f2{transform:translate(-7%,4%) scale(1.04);filter:blur(1.5px) grayscale(1) sepia(1) hue-rotate(80deg) saturate(5)!important;opacity:.45!important}
+.vide{color:var(--muted);padding:40px 24px;text-align:center}
+</style>
+<div class="g-haut"><b>📷 Photos</b><div class="g-compte" id="compte"></div><button class="bascule" id="bascule" aria-pressed="false">Vue joueurs</button></div>
+<p class="aide">${lecture ? "Lecture seule : touche une photo pour l'agrandir." : "Touche une photo pour l'agrandir et swiper. <b>Appui long 2 s</b> : écarter la photo du mur et de la révélation (cadre rouge). Encore 2 s : la rétablir."}</p>
+<div class="grille-ph" id="grille"></div>
+<div class="plein" id="plein" hidden><div class="g-haut"><button class="fermer" id="fermer" aria-label="Fermer">✕</button><div class="g-compte" id="compte-plein"></div><span style="width:44px"></span></div>
+<div class="galerie" id="galerie"></div><div class="g-bas">${lecture ? "Swipe pour parcourir." : "Swipe pour parcourir. <b>Appui long 2 s</b> : écarter ou rétablir."}</div></div>
+<script>
+(() => {
+  const D = ${donnees}, LECTURE = ${lecture ? "true" : "false"};
+  const $ = (id) => document.getElementById(id);
+  const grille = $("grille"), galerie = $("galerie"), plein = $("plein");
+  let photos = D.photos, suite = D.suite, total = D.total, ecartees = D.masquees, charge = false, courante = 0;
+  const esc = (x) => String(x).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const imgs = (src) => '<img alt="" src="' + src + '"><img alt="" class="fantome f1" src="' + src + '"><img alt="" class="fantome f2" src="' + src + '"><i class="jauge"></i>';
+  const ECARTEE = "Écartée du mur et de la révélation";
+  function maj() {
+    const e = ecartees + " écartée" + (ecartees > 1 ? "s" : "");
+    $("compte").textContent = total + " photo" + (total > 1 ? "s" : "") + " · " + e;
+    $("compte-plein").textContent = (courante + 1) + " / " + total + " · " + e;
+  }
+  function ajouter(liste) {
+    for (const f of liste) {
+      const i = photos.indexOf(f);
+      const v = document.createElement("div");
+      v.className = "ph" + (f.masquee ? " ecartee" : ""); v.dataset.id = f.id; v.innerHTML = imgs(f.image);
+      geste(v, f, () => ouvrir(i));
+      grille.appendChild(v);
+      const d = document.createElement("div");
+      d.className = "diapo" + (f.masquee ? " ecartee" : ""); d.dataset.id = f.id;
+      d.innerHTML = '<div class="plein-img">' + imgs(f.image) + '</div><div class="etiq">' + esc(f.pseudo || "?") + " · " + esc(f.heure) + "<br><b>" + (f.masquee ? ECARTEE : "") + "</b></div>";
+      geste(d.querySelector(".plein-img"), f, null);
+      galerie.appendChild(d);
+    }
+  }
+  if (!photos.length) grille.outerHTML = '<p class="vide">Aucune photo pour l\\'instant. Elles arrivent avec les scans faits dans l\\'app.</p>';
+  else ajouter(photos);
+  maj();
+
+  // Grille → plein écran, et retour à la même photo
+  function ouvrir(i) {
+    plein.hidden = false; document.body.style.overflow = "hidden";
+    galerie.scrollLeft = i * galerie.clientWidth; courante = i; maj();
+  }
+  $("fermer").onclick = () => {
+    plein.hidden = true; document.body.style.overflow = "";
+    const v = grille.children[courante]; if (v) v.scrollIntoView({ block: "center" });
+  };
+  galerie.addEventListener("scroll", () => {
+    courante = Math.round(galerie.scrollLeft / galerie.clientWidth); maj();
+    if (courante >= photos.length - 5) plus();
+  }, { passive: true });
+  addEventListener("scroll", () => { if (innerHeight + scrollY > document.body.scrollHeight - 600) plus(); }, { passive: true });
+  async function plus() {
+    if (!suite || charge || !photos.length) return;
+    charge = true;
+    try {
+      const r = await (await fetch("/admin/photos.json?avant=" + photos[photos.length - 1].id, { credentials: "same-origin" })).json();
+      photos = photos.concat(r.photos); suite = r.suite; ajouter(r.photos);
+    } catch {} finally { charge = false; }
+  }
+
+  // Toucher court : ouvrir (grille) ; appui long de 2 s : écarter ou rétablir (partout, sauf en lecture seule)
+  function geste(el, f, toucher) {
+    let minuterie = null, x0 = 0, y0 = 0, actif = false, long = false;
+    const annuler = () => { clearTimeout(minuterie); minuterie = null; el.classList.remove("appui"); };
+    el.addEventListener("contextmenu", (e) => e.preventDefault());
+    el.addEventListener("pointerdown", (e) => {
+      x0 = e.clientX; y0 = e.clientY; actif = true; long = false;
+      if (LECTURE) return;
+      el.classList.add("appui");
+      minuterie = setTimeout(() => { annuler(); long = true; basculer(f); }, 2000);
+    });
+    el.addEventListener("pointermove", (e) => { if (actif && Math.hypot(e.clientX - x0, e.clientY - y0) > 12) { actif = false; annuler(); } });
+    el.addEventListener("pointerup", () => { const court = actif && !long && minuterie; annuler(); if ((court || (LECTURE && actif)) && toucher) toucher(); actif = false; });
+    for (const t of ["pointercancel", "pointerleave"]) el.addEventListener(t, () => { actif = false; annuler(); });
+  }
+  async function basculer(f) {
+    const voulu = !f.masquee;
+    const corps = new FormData(); corps.set("id", f.id); corps.set("masquee", voulu ? "1" : "0");
+    try {
+      const r = await fetch("/admin/mur/masquer", { method: "POST", body: corps, credentials: "same-origin", headers: { "X-Galerie": "1" } });
+      if (!r.ok) throw 0;
+      f.masquee = voulu ? 1 : 0; ecartees += voulu ? 1 : -1;
+      document.querySelectorAll('[data-id="' + f.id + '"]').forEach((x) => x.classList.toggle("ecartee", voulu));
+      const b = galerie.querySelector('[data-id="' + f.id + '"] .etiq b'); if (b) b.textContent = voulu ? ECARTEE : "";
+      if (navigator.vibrate) navigator.vibrate(voulu ? [40, 60, 40] : 30);
+      maj();
+    } catch { alert("Échec : réseau ou session expirée. Recharge la page."); }
+  }
+
+  // Vue joueurs : l'effet du mur, mémorisé sur ce téléphone
+  const bascule = $("bascule");
+  const appliquer = (on) => { document.body.classList.toggle("effet", on); bascule.setAttribute("aria-pressed", on); try { localStorage.setItem("dv-admin-effet", on ? "1" : ""); } catch {} };
+  try { appliquer(localStorage.getItem("dv-admin-effet") === "1"); } catch {}
+  bascule.onclick = () => appliquer(!document.body.classList.contains("effet"));
+})();
+</script>${barreAdmin("photos")}`, false);
+}
+
+/** Scanner de l'admin : la caméra lit l'étiquette et ouvre la fiche du joueur (BarcodeDetector, sinon jsQR). */
+const SCANNER_ADMIN = `<div class="carte" id="sc-zone" style="padding:0;overflow:hidden">
+<button class="bouton" id="sc-ouvrir" type="button" style="width:100%;border-radius:0;padding:16px">📷 Ouvrir le scanner</button>
+<div id="sc-vue" hidden style="position:relative;background:#000;aspect-ratio:4/3">
+<video id="sc-video" playsinline muted autoplay style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>
+<div style="position:absolute;left:50%;top:50%;width:56%;aspect-ratio:1;transform:translate(-50%,-50%);border:3px solid var(--green);border-radius:16px;box-shadow:0 0 0 999px rgba(11,10,15,.45)"></div>
+<div style="position:absolute;left:10px;right:10px;bottom:10px;display:flex;gap:10px;justify-content:center">
+<button type="button" class="bouton sec" id="sc-lampe" hidden>🔦 Lampe</button><button type="button" class="bouton sec" id="sc-fermer">Fermer</button></div></div>
+<p class="muted" id="sc-note" style="font-size:13px;margin:8px 12px" hidden></p></div>
+<script>(() => {
+  const $ = (id) => document.getElementById(id);
+  let flux = null, fini = true, minuterie = null;
+  const code = (texte) => {
+    try { const u = new URL(String(texte).trim()); const h = u.host.toLowerCase();
+      if (h !== "p.uyt.re" && h !== location.host.toLowerCase()) return null;
+      const m = u.pathname.match(/^\\/([A-Za-z0-9]{4,6})\\/?$/); return m ? m[1].toUpperCase() : null; } catch { return null; }
+  };
+  const note = (t) => { $("sc-note").hidden = !t; $("sc-note").textContent = t || ""; };
+  function arreter() { fini = true; clearTimeout(minuterie); if (flux) flux.getTracks().forEach((p) => p.stop()); flux = null; $("sc-vue").hidden = true; $("sc-ouvrir").hidden = false; }
+  async function lecteur() {
+    if ("BarcodeDetector" in window) {
+      try { if ((await BarcodeDetector.getSupportedFormats()).includes("qr_code")) { const d = new BarcodeDetector({ formats: ["qr_code"] }); return async (v) => { const r = await d.detect(v); return r.length ? r[0].rawValue : null; }; } } catch {}
+    }
+    if (!window.jsQR) await new Promise((ok, non) => { const s = document.createElement("script"); s.src = "/vendor/jsqr-1.4.0.min.js"; s.onload = ok; s.onerror = non; document.head.appendChild(s); });
+    const cv = document.createElement("canvas"), cx = cv.getContext("2d", { willReadFrequently: true });
+    return (v) => { const w = v.videoWidth, h = v.videoHeight; if (!w) return null; const k = Math.min(1, 640 / Math.max(w, h));
+      cv.width = Math.round(w * k); cv.height = Math.round(h * k); cx.drawImage(v, 0, 0, cv.width, cv.height);
+      const r = window.jsQR(cx.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height, { inversionAttempts: "dontInvert" }); return r ? r.data : null; };
+  }
+  async function ouvrir() {
+    note("");
+    try { flux = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "environment" } } }); }
+    catch (e) { note(e && e.name === "NotAllowedError" ? "Caméra refusée : autorise-la dans les réglages du site." : "Pas de caméra disponible ici : tape le code."); return; }
+    fini = false; $("sc-ouvrir").hidden = true; $("sc-vue").hidden = false;
+    const v = $("sc-video"); v.srcObject = flux; await v.play().catch(() => {});
+    setTimeout(() => { const piste = flux && flux.getVideoTracks()[0], caps = piste && piste.getCapabilities ? piste.getCapabilities() : {};
+      if (!caps.torch) return; let on = false; $("sc-lampe").hidden = false;
+      $("sc-lampe").onclick = async () => { try { await piste.applyConstraints({ advanced: [{ torch: !on }] }); on = !on; } catch {} }; }, 300);
+    let lire; try { lire = await lecteur(); } catch { arreter(); note("Lecteur de QR indisponible : tape le code."); return; }
+    const boucle = async () => {
+      if (fini) return;
+      let t = null; try { if (v.readyState >= 2) t = await lire(v); } catch {}
+      const c = t && code(t);
+      if (c) { if (navigator.vibrate) navigator.vibrate(30); arreter(); location.href = "/admin/joueurs?code=" + encodeURIComponent(c); return; }
+      if (t) note("Ce QR n'est pas une étiquette du jeu.");
+      minuterie = setTimeout(boucle, 120);
+    };
+    boucle();
+  }
+  $("sc-ouvrir").onclick = ouvrir; $("sc-fermer").onclick = arreter;
+  addEventListener("pagehide", arreter);
+})();</script>`;
+
+const FACTIONS_LIB: Record<string, string> = { ordre: "Ordre", chaos: "Chaos", friperie: "Friperie", influence: "Influenceurs", necro: "Nécromanciens" };
+const RESULTATS_LIB: Record<string, string> = { nouvelle_carte: "nouvelle carte", deja_vu: "déjà vu", deja_vu_repete: "déjà vu (trop tôt)", creation: "création", soi_meme: "soi-même", special: "étiquette spéciale", special_mj: "spéciale (MJ)", legendaire: "légendaire", piege: "piège", bloque: "bloqué", suspendu: "suspendu", pause: "pause du MJ" };
+const SANCTIONS_LIB = ["", "Avertissement", "Retour en caisse", "Article défectueux", "Rappel de produit", "Interdit de magasin"];
+
+/** Fiche complète d'un joueur pour le MJ : identité, jeu, secrets, modération. */
+function blocFiche(f: FicheJoueur) {
+  const h = (iso: string | null) => (iso ? heureMtl(iso) : "—");
+  const ligne = (k: string, v: string) => `<tr><th>${k}</th><td>${v}</td></tr>`;
+  const roles: string[] = [];
+  if (f.groupe) roles.push(`${f.groupe.type === "triples" ? "Triplé" : "Jumeau"} ${f.groupe.reuni ? '<span class="ok">· groupe réuni</span>' : ""} : ${f.groupe.membres.map((m) => `${esc(m.pseudo)} ${m.retrouve ? "✅" : "⏳"}`).join(", ")}`);
+  if (f.chat_noir_le) roles.push(`🐈‍⬛ Chat noir depuis ${h(f.chat_noir_le)}`);
+  if (f.corruption) roles.push(f.corruption.actif ? `🦠 Corrompu (${esc(f.corruption.cause)}) jusqu'à ${h(f.corruption.fin)}` : `Ancienne corruption (${esc(f.corruption.cause)})${f.corruption.immun_jusqu_a ? `, immunisé jusqu'à ${h(f.corruption.immun_jusqu_a)}` : ""}`);
+  const etat = f.suspendu ? '<span class="err">⛔ suspendu</span>' : f.bloque_jusqu_a ? `<span class="err">bloqué jusqu'à ${h(f.bloque_jusqu_a)} (${esc(f.bloque_cause ?? "?")})</span>` : '<span class="ok">actif</span>';
+  return `<div class="carte" id="fiche-joueur">
+<p style="margin:0;font-family:var(--display);font-size:24px;line-height:1.1">${esc(f.pseudo)}${f.est_mj ? ' <span class="chip">MJ</span>' : ""}</p>
+<p class="muted mono" style="font-size:12px;margin:6px 0 0">${esc(f.type)} · ${esc(f.couleur)} · ${esc(f.classe)} · ${esc(f.attributs.join(", ") || "sans attribut")} · ${esc(f.langue)} · créé ${h(f.cree_le)}</p>
+<table style="margin-top:10px">
+${ligne("État", etat)}
+${ligne("Étiquettes", f.etiquettes.map((e) => `<a class="ok mono" href="/admin/joueurs?code=${e.code}">${e.code}</a> ${esc(FACTIONS_LIB[e.faction ?? ""] ?? e.faction ?? "")}${e.role !== "normale" ? ` (${esc(e.role)})` : ""}`).join(" · "))}
+${ligne("Collection", `${f.stats.cartes} cartes · scanné par ${f.stats.scanne_par} · ${f.stats.deja_vus} déjà vus · ${f.stats.scans} scans`)}
+${ligne("Points", f.stats.points.map((x) => `${esc(FACTIONS_LIB[x.faction] ?? x.faction)} ${x.points}`).join(" · ") || "—")}
+${ligne("Mémoire", `🧠 ${f.souvenirs}`)}
+${ligne("Médailles", f.badges.length ? f.badges.map((b) => esc(b.badge)).join(", ") : "—")}
+${ligne("Secrets", roles.join("<br>") || "—")}
+${ligne("Effets", f.effets.map((e) => `${esc(e.effet)}${e.fin ? ` → ${h(e.fin)}` : ""}${e.reste != null ? ` (${e.reste})` : ""}`).join(", ") || "—")}
+${ligne("Sanctions", f.sanctions.map((x) => `${SANCTIONS_LIB[x.niveau] ?? x.niveau} ${h(x.le)}${x.annulee ? " (annulée)" : ""}`).join("<br>") || "—")}
+${ligne("Missions", f.missions.map((m) => `${esc(m.code)} ${esc(m.etat)} ${h(m.debut)}`).join("<br>") || "—")}
+${ligne("Duels", `${f.duels.joues} joués · ${f.duels.gagnes} gagnés`)}
+${ligne("Photos", `accord ${f.photos_ok ? "✅" : "❌"} · ${f.photos.prises} prises · ${f.photos.de_lui} de son étiquette · ${f.photos.ecartees} écartées · <a class="ok" href="/admin/photos">galerie</a>`)}
+${ligne("Téléphones", `${f.appareils.n} · vu ${h(f.appareils.vu_le)} · push ${f.appareils.push ? "✅" : "❌"}`)}
+</table>
+<p style="margin:12px 0 4px" class="muted">Derniers scans</p>
+<table>${f.derniers.map((d) => `<tr><td class="mono">${h(d.le)}</td><td>${esc(RESULTATS_LIB[d.resultat] ?? d.resultat)}</td><td>${esc(d.pseudo ?? "")}</td></tr>`).join("") || '<tr><td class="muted">Aucun scan.</td></tr>'}</table>
+</div>`;
 }
 
 type EtatDirect = Awaited<ReturnType<typeof etatDirect>>;
@@ -361,7 +585,7 @@ ${lecture ? "" : `<form method="post" action="/admin/mj/rouvrir"><button>Rouvrir
 <p class="muted" style="font-size:13px">Pendant la pause, toutes tes étiquettes bloquent 2 min le scanner de qui les scanne (RG-020-5).</p>`}`;
   const de = m.dernierExemplaire;
   const codes = m.codes.map((x) => `<tr><td class="mono">${esc(x.code)}</td><td>${x.effet.startsWith("T") ? "🪤" : "✦"} ${esc(x.effet)} · ${esc(NOMS_EFFETS[x.effet])}</td><td>${m.obtenus[x.effet] ?? 0}</td></tr>`).join("");
-  const clients = m.clients.map((c) => `<details class="carte" style="padding:10px 12px;margin:6px 0"><summary style="cursor:pointer">
+  const clients = m.clients.slice(0, 12).map((c) => `<details class="carte" style="padding:10px 12px;margin:6px 0"><summary style="cursor:pointer">
 <span class="mono">${heureCourte(c.le)}</span> · ${EMOJI_TYPE[c.type] ?? "❔"} <b>${esc(c.pseudo)}</b>${c.suspendu ? ' <span class="err">suspendu</span>' : ""} · <span class="mono">${esc(c.code)}</span>
 <span class="muted">${c.role === "personnelle_mj" ? "ta carte" : esc(c.effet ? `${c.effet} ${NOMS_EFFETS[c.effet] ?? ""}` : c.resultat)}</span></summary>
 ${lecture ? "" : `<div style="margin-top:10px">${actionsJoueur(c.id, c.pseudo)}</div>`}</details>`).join("");
@@ -376,7 +600,7 @@ ${x.code === "M-7" ? `<select name="recompense"><option value="points">+20 point
 <h3>Légendaires et pièges</h3>
 <p class="muted" style="font-size:13px">Prochain mélange à ${heureCourte(m.prochainMelange)}. Dernier exemplaire (L-7) : ${de.disponible ? '<span class="ok">en rayon</span>' : '<span class="err">rupture de stock</span>'}${de.prochaine ? ` · prochaine remise à ${heureCourte(de.prochaine)}` : ""}.</p>
 ${codes ? `<table><tr><th>Étiquette</th><th>Effet en ce moment</th><th>Obtenu</th></tr>${codes}</table>` : '<p class="muted">Aucune étiquette spéciale (rôle « speciale_mj »).</p>'}
-<h3>Derniers clients (30 min)</h3>
+<h3>Derniers clients (30 min)${m.clients.length > 12 ? ` · 12 sur ${m.clients.length}` : ""}</h3>
 ${clients || '<p class="muted">Personne n\'a scanné tes étiquettes récemment.</p>'}
 ${missions ? `<h3>Missions en cours</h3><table><tr><th>Joueur</th><th>Mission</th><th>Fin</th><th></th></tr>${missions}</table>` : ""}
 ${sanctions ? `<h3>Sanctions</h3><table><tr><th>Heure</th><th>Joueur</th><th>Niveau</th><th></th></tr>${sanctions}</table>` : ""}

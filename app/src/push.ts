@@ -26,9 +26,9 @@ const ABONNEMENTS_PAR_PERSO = 5;
 const iso = (t: number) => new Date(t).toISOString();
 
 /** Notifications personnelles poussées ; les autres (corrompu, retrouvailles…) se vivent face à face. */
-export const TYPES_PERSO = ["jumeau", "chat_noir", "sanction", "sanction_annulee", "mission", "mission_reussie", "mission_echouee", "mission_annulee", "suggestion", "eclair_reussie"];
+export const TYPES_PERSO = ["jumeau", "chat_noir", "sanction", "sanction_annulee", "mission", "mission_reussie", "mission_echouee", "mission_annulee", "suggestion", "eclair_reussie", "duel"];
 // Suggestions au MJ : déjà espacées de 15 min par suivi.ts
-const PRIORITAIRES = ["jumeau", "chat_noir", "suggestion"];
+const PRIORITAIRES = ["jumeau", "chat_noir", "suggestion", "duel"];
 const TYPES_EVT = ["message", "palier", "mission"];
 
 // Services de push connus : le serveur ne contacte jamais une autre adresse (pas de SSRF).
@@ -184,6 +184,7 @@ export function texte(e: Element, l: string): Notification | null {
     case "mission_echouee": return { titre: en ? "Time's up" : "Temps écoulé", texte: en ? "The GM isn't mad. Not too mad." : "Le MJ ne t'en veut pas. Pas trop.", tag: "mission" };
     case "suggestion": return { titre: "🎛️ Suggestion de réglage", texte: String(d.texte || ""), tag: "suggestion", url: "/admin#suggestions" };
     case "eclair_reussie": return { titre: en ? "⚡ Flash mission accomplished" : "⚡ Mission éclair réussie", texte: en ? `+${d.points} points for your faction.` : `+${d.points} points pour ta faction.`, tag: "eclair" };
+    case "duel": return { titre: en ? "⚔️ Duel!" : "⚔️ Duel !", texte: en ? `${d.de} challenges you. 60 s to accept: open the app.` : `${d.de} te défie. 60 s pour accepter : ouvre l'app.`, tag: "duel" };
     case "mission_annulee": return { titre: en ? "Mission cancelled" : "Mission annulée", texte: en ? "The GM called it off." : "Le MJ l'a annulée.", tag: "mission" };
   }
   return null;

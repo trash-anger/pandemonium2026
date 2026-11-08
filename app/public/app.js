@@ -16,7 +16,7 @@
   const SUFFIXE = /^T\d$/.test(window.name) ? "-" + window.name : "";
   const CLE = { jeton: "dv-appareil" + SUFFIXE, langue: "dv-langue" + SUFFIXE, moi: "dv-moi" + SUFFIXE, brouillon: "dv-brouillon" + SUFFIXE,
     collection: "dv-collection" + SUFFIXE, file: "dv-file" + SUFFIXE, ecran: "dv-ecran" + SUFFIXE, evts: "dv-evenements" + SUFFIXE,
-    camera: "dv-camera" + SUFFIXE }; // LOT-5 : « photos » ou « sans », choisi à l'activation de la caméra (RG-017-4)
+    camera: "dv-camera" + SUFFIXE }; // LOT-5 : explication de la caméra déjà vue (le consentement aux photos est photos_ok)
   const lire = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
   const ecrire = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} };
   const lireJson = (k) => { try { return JSON.parse(lire(k) || "null"); } catch { return null; } };
@@ -162,7 +162,7 @@
       suivant: "Suivant →", carteTitre: "Ta carte",
       pseudoModifiable: "Tu pourras le changer depuis ta fiche.",
       faction: "Faction", classe: "Classe",
-      photos: "J'accepte que mes photos de scan apparaissent à la révélation.",
+      photos: "Acceptes-tu qu'une photo de l'étiquette soit prise lors du scan ?",
       pinTitre: "Ton code PIN (4 chiffres)",
       pinAide: "Il te servira à retrouver ton personnage sur un autre navigateur. Note-le dans ta tête.",
       creer: "Créer mon personnage", tirage: "On fouille les bacs de soldes…",
@@ -205,17 +205,15 @@
         intelligence: "Intelligence", patience: "Patience (au téléphone)", perception: "Perception (des bonnes affaires)", dexterite: "Dextérité" },
       ouvrirScanner: "📷 Ouvrir le scanner", camTitre: "Le scanner a besoin de ta caméra",
       camAide: "Elle sert à lire les QR. Cadre l'étiquette, pas la personne : on ne doit pas la reconnaître.",
-      camMurAide: "Chaque scan peut aussi envoyer une petite photo floue au mur « Déjà vu ! », la mosaïque de la soirée. Rien ne part sans ton accord.",
-      camAvec: "Activer, avec photos pour le mur", camSans: "Activer, sans photo",
+      camActiver: "Activer la caméra",
       consigne: "Cadre l'étiquette, pas le visage", lampe: "🔦 Lampe", fermer: "Fermer",
       pasDeLampe: "Pas de lampe ici : demande à quelqu'un d'éclairer l'étiquette avec son téléphone.",
       etranger: "Cet article ne vient pas de notre collection.",
       camRefusee: "Caméra refusée. Pour la réactiver : touche le cadenas à côté de l'adresse (ou les réglages de l'app), puis Caméra → Autoriser. En attendant, entre le code imprimé sous le QR.",
       camIndispo: "Pas de caméra disponible ici. Entre le code imprimé sous le QR.",
-      murLien: "🖼️ Le mur « Déjà vu ! »", murTitre: "Déjà vu !", murAide: "Les photos des scans faits dans l'app, floues et déformées. Un visage reconnaissable ? Dis-le au MJ.",
-      murVide: "Le mur est vide. Scanne avec le scanner de l'app pour le remplir.", murPlus: "Plus anciennes", murN: (n) => `${n} photo${n > 1 ? "s" : ""}`,
+      murLien: "🖼️ Le mur « Déjà vu ! »", murTitre: "Déjà vu !", murAide: "Les photos de tes scans, et celles prises en scannant ton étiquette. Floues et déformées. Un visage reconnaissable ? Dis-le au MJ.",
+      murVide: "Rien pour l'instant. Les photos arrivent avec les scans faits dans l'app, les tiens et ceux de ton étiquette.", murPlus: "Plus anciennes", murN: (n) => `${n} photo${n > 1 ? "s" : ""}`,
       murSans: "Le mur est réservé aux joueurs. Va trouver le MJ pour avoir ton étiquette.",
-      photosMur: "Envoyer une photo floue au mur à chaque scan fait dans l'app.",
       // Résultats
       nouvelle: "Nouvelle pièce ajoutée", collectionN: (n) => `Ta collection : ${n} pièce${n > 1 ? "s" : ""}.`,
       cmpTitre: "Face à face", cmpToi: "Toi", cmpLignes: ["Pièces", "Déjà vus", "Médailles"],
@@ -356,7 +354,7 @@
       suivant: "Next →", carteTitre: "Your card",
       pseudoModifiable: "You can change it from your profile.",
       faction: "Faction", classe: "Class",
-      photos: "I agree that my scan photos may appear at the reveal.",
+      photos: "Do you agree that a photo of the tag may be taken when you scan?",
       pinTitre: "Your PIN (4 digits)",
       pinAide: "You'll use it to get your character back in another browser. Keep it in your head.",
       creer: "Create my character", tirage: "Digging through the bargain bins…",
@@ -397,17 +395,15 @@
         intelligence: "Intelligence", patience: "Patience (on hold)", perception: "Perception (of bargains)", dexterite: "Dexterity" },
       ouvrirScanner: "📷 Open the scanner", camTitre: "The scanner needs your camera",
       camAide: "It reads QR codes. Frame the tag, not the person: they must not be recognisable.",
-      camMurAide: "Each scan can also send a small blurry photo to the « Déjà vu ! » wall, the night's mosaic. Nothing leaves without your consent.",
-      camAvec: "Turn on, with photos for the wall", camSans: "Turn on, no photos",
+      camActiver: "Turn on the camera",
       consigne: "Frame the tag, not the face", lampe: "🔦 Torch", fermer: "Close",
       pasDeLampe: "No torch here: ask someone to light the tag with their phone.",
       etranger: "This item isn't from our collection.",
       camRefusee: "Camera blocked. To allow it: tap the padlock next to the address (or the app settings), then Camera → Allow. Meanwhile, enter the code printed under the QR.",
       camIndispo: "No camera available here. Enter the code printed under the QR.",
-      murLien: "🖼️ The « Déjà vu ! » wall", murTitre: "Déjà vu !", murAide: "Photos from scans made in the app, blurred and distorted. See a recognisable face? Tell the GM.",
-      murVide: "The wall is empty. Scan with the app's scanner to fill it.", murPlus: "Older", murN: (n) => `${n} photo${n === 1 ? "" : "s"}`,
+      murLien: "🖼️ The « Déjà vu ! » wall", murTitre: "Déjà vu !", murAide: "Photos from your scans, and those taken when someone scanned your tag. Blurred and distorted. See a recognisable face? Tell the GM.",
+      murVide: "Nothing yet. Photos come with scans made in the app: yours, and those of your tag.", murPlus: "Older", murN: (n) => `${n} photo${n === 1 ? "" : "s"}`,
       murSans: "The wall is for players. Find the GM to get your tag.",
-      photosMur: "Send a blurry photo to the wall with each scan made in the app.",
       nouvelle: "New item added", collectionN: (n) => `Your collection: ${n} item${n === 1 ? "" : "s"}.`,
       cmpTitre: "Face to face", cmpToi: "You", cmpLignes: ["Items", "Déjà vus", "Medals"],
       communs: (n) => n ? `You've both already seen the same ${n} ${n > 1 ? "people" : "person"}.` : "No mutual acquaintances… yet.",
@@ -810,15 +806,13 @@
     const choix = lire(CLE.camera);
     const zone = !cameraPossible() ? `<p class="muted">${t.camIndispo}</p>`
       : choix ? ""
-      : `<div class="boite"><b>${t.camTitre}</b><p>${t.camAide}</p><p class="muted petit">${t.camMurAide}</p>
-          <button class="bouton" id="b-cam-avec">${t.camAvec}</button><button class="bouton sec" id="b-cam-sans">${t.camSans}</button></div>`;
+      : `<div class="boite"><b>${t.camTitre}</b><p>${t.camAide}</p><button class="bouton" id="b-cam-ok">${t.camActiver}</button></div>`;
     rendre(`<h2>${t.saisieTitre}</h2><div id="viseur-zone">${zone}</div><p class="muted">${t.saisieAide}</p>${formulaireCode()}
       ${etat.moi ? `<a class="bouton sec" href="/mur" data-nav>${t.murLien}</a>` : ""}`, { onglet: etat.moi ? "scan" : null });
     brancherCode();
     if (!cameraPossible()) { setTimeout(() => { const i = $("#code"); i && i.focus(); }, 50); return; }
     if (choix) return ouvrirCamera(); // CA-002-1 : caméra déjà autorisée, le scanner s'ouvre directement
-    $("#b-cam-avec").onclick = () => { ecrire(CLE.camera, "photos"); ouvrirCamera(); };
-    $("#b-cam-sans").onclick = () => { ecrire(CLE.camera, "sans"); ouvrirCamera(); };
+    $("#b-cam-ok").onclick = () => { ecrire(CLE.camera, "vu"); ouvrirCamera(); };
   }
   function boutonCamera(note = "") {
     const zone = $("#viseur-zone"); if (!zone) return;
@@ -912,8 +906,8 @@
   }
   function qrDetecte(c, code) {
     photoEnAttente = null;
-    // RG-017-1 et 4 : photo seulement pour un joueur qui y a consenti ; sinon rien ne quitte le téléphone (CA-017-2)
-    if (lire(CLE.camera) === "photos" && etat.moi && etat.moi.personnage) {
+    // RG-017-1 et 4 : photo seulement si le joueur a accepté (case de la création ou de Moi) ; sinon rien ne quitte le téléphone (CA-017-2)
+    if (etat.moi && etat.moi.personnage && etat.moi.personnage.photos_ok) {
       try { const image = capturer(c.video); if (image) photoEnAttente = { code, image }; } catch {}
     }
     arreterCamera();
@@ -2369,7 +2363,6 @@
       <h3>${t.classe}</h3>${dr.classe ? `<select id="classe">${Object.keys(CLASSES).map((k) => `<option value="${k}" ${k === pe.classe ? "selected" : ""}>${esc(classeLib(k))}</option>`).join("")}</select><p class="petit muted">${t.classeAlerte}</p>` : `<p class="muted">🔒 ${t.classeFigee}</p>`}
       <h3>${t.costumeTitre}</h3>${dr.costume ? `<button class="bouton sec" id="b-costume">${t.modifierCostume}</button>` : `<p class="muted">🔒 ${t.costumeFige}</p>`}
       <h3>${t.confidentialite}</h3><label class="case"><input type="checkbox" id="c-photos" ${pe.photos_ok ? "checked" : ""}><span>${t.photos}</span></label>
-      <label class="case"><input type="checkbox" id="c-mur" ${lire(CLE.camera) === "photos" ? "checked" : ""}><span>${t.photosMur}</span></label>
       <h3>${t.mesEtiquettes}</h3><ul class="liste">${d.etiquettes.map((e) => `<li><span class="mono">${esc(e.code)}</span> · ${esc(factionLib(e.faction))}</li>`).join("")}</ul>
       <h3>${t.ongMedailles}</h3><a class="bouton sec" href="/medailles" data-nav style="margin-top:0">🏅 ${t.voirMedailles(compteMedailles())}</a>
       <p class="petit muted">🔢 ${t.pinRappel}</p>
@@ -2387,7 +2380,6 @@
     const fp = $("#f-pseudo"); if (fp) fp.onsubmit = (e) => { e.preventDefault(); envoyer({ pseudo: $("#pseudo").value }); };
     const cl = $("#classe"); if (cl) cl.onchange = () => envoyer({ classe: cl.value });
     $("#c-photos").onchange = (e) => envoyer({ photos: e.target.checked });
-    $("#c-mur").onchange = (e) => ecrire(CLE.camera, e.target.checked ? "photos" : "sans");
     app.querySelectorAll("[data-l]").forEach((x) => (x.onclick = () => { L = x.dataset.l; t = T[L]; ecrire(CLE.langue, L); document.documentElement.lang = L; fiche(); }));
     const bc = $("#b-costume"); if (bc) bc.onclick = () => modifierCostume(pe, envoyer);
   }

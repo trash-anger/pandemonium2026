@@ -341,3 +341,5 @@ footer{margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--muted)
 .rev-photos .tuile{border-radius:12px}
 .rev-photos.fin{opacity:0}
 @media (min-width:700px){.rev-photos{grid-template-columns:repeat(3,minmax(0,1fr));max-width:900px}}
+/* Saisie d'un code donné par le MJ : repliée (les codes ne sont pas imprimés sous les QR) */
+.code-mj{margin:14px 0}.code-mj summary{cursor:pointer;padding:6px 0}.code-mj .boite{margin-top:8px}

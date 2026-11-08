@@ -943,6 +943,17 @@
     }
   });
   let suiviDuel = null;
+  /** Compte à rebours en temps réel (performance.now) : le serveur compte les 60 s en vraies secondes, même au banc accéléré. */
+  function compteDuel(resteMs) {
+    const fin = performance.now() + Math.max(0, resteMs || 0);
+    const tic = () => {
+      const el = document.getElementById("duel-compte"); if (!el) return;
+      const s = Math.max(0, Math.ceil((fin - performance.now()) / 1000));
+      el.textContent = `00:${String(s).padStart(2, "0")}`;
+      if (s > 0) setTimeout(tic, 250);
+    };
+    tic();
+  }
   async function ecranDuel(id) {
     clearTimeout(suiviDuel);
     if (!(await chargerMoi())) return aller("/", true);
@@ -962,11 +973,11 @@
       }, 1500);
     };
     if (d.etat === "attente" && d.moi === "a") {
-      rendre(`${enTete}<div class="boite"><p style="margin-top:0">${esc(t.duelAttente(autre.pseudo))}</p><div class="compte" data-fin="${d.expire_le}" data-fini="—"></div></div><p class="muted petit">${t.duelEnjeu}</p>`, { onglet: "accueil" });
-      return relancer();
+      rendre(`${enTete}<div class="boite"><p style="margin-top:0">${esc(t.duelAttente(autre.pseudo))}</p><div class="compte" id="duel-compte"></div></div><p class="muted petit">${t.duelEnjeu}</p>`, { onglet: "accueil" });
+      compteDuel(d.reste_ms); return relancer();
     }
     if (d.etat === "attente") {
-      rendre(`${enTete}<div class="boite"><p style="margin-top:0"><b>${esc(t.duelRecu(autre.pseudo))}</b></p><div class="compte" data-fin="${d.expire_le}" data-fini="—"></div>
+      rendre(`${enTete}<div class="boite"><p style="margin-top:0"><b>${esc(t.duelRecu(autre.pseudo))}</b></p><div class="compte" id="duel-compte"></div>
         <p class="muted petit">${t.duelEnjeu}</p><button class="bouton" id="b-oui">${t.duelAccepter}</button><button class="bouton sec" id="b-non">${t.duelRefuser}</button></div>`, { onglet: "accueil" });
       const repondre = async (accepte) => {
         $("#b-oui").disabled = $("#b-non").disabled = true;
@@ -974,7 +985,7 @@
         ecranDuel(id);
       };
       $("#b-oui").onclick = () => repondre(true); $("#b-non").onclick = () => repondre(false);
-      return relancer(); // l'écran bascule seul à l'expiration
+      compteDuel(d.reste_ms); return relancer(); // l'écran bascule seul à l'expiration
     }
     if (d.etat === "expire") return rendre(`${enTete}<p>${esc(d.moi === "a" ? t.duelFui(autre.pseudo) : t.duelTropTard)}</p><a class="bouton" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
     if (d.etat === "refuse") return rendre(`${enTete}<p>${esc(d.moi === "a" ? t.duelRefuse(autre.pseudo) : t.duelTuDeclines)}</p><a class="bouton" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
@@ -1120,6 +1131,7 @@
         return rendre(`${ecranLegendaire(r)}<a class="bouton" href="/saisie" data-nav>${t.encore}</a><a class="bouton sec" href="/" data-nav>${t.accueil}</a>`, { onglet: "accueil" });
       case "suspendu": fixer(); return rendre(`<span class="chip">⛔</span><h1 class="moyen">${esc(M().sanctions[4].split(".")[0])}</h1><div class="boite alerte"><p>${M().suspendu}</p></div>`, { onglet: "accueil" });
       case "special": fixer(); vibrer(); return rendre(`<span class="chip or">${t.specialTitre}</span><h1 class="moyen">✦ ${esc(code)} ✦</h1><p>${t.special}</p>`, { onglet: o });
+      case "admin": history.replaceState(null, "", "/"); location.href = "/admin"; return; // étiquette clé du MJ
       case "creation": return creation(code, r.mj);
       case "a_toi": return aToi(code);
       case "spectateur": fixer(); return spectateur(r);
@@ -1495,7 +1507,8 @@
         html = `<small>🎯 ${m.messageMJ}</small><p>${d.offerte ? "" : m.missionAnnonce(d.fin ? minutesJusqua(d.fin) : 15) + "<br>"}<b>${esc(mm.titre)}</b> : ${esc(mm.condition)}</p>`;
       }
       if (n.type === "mission_reussie") html = `<small>🏷️ ${m.messageMJ}</small><p>${m.missionReussie}<br>${m.recompenses[d.recompense] || ""}</p>`;
-      if (n.type === "duel" && d.expire_le && Date.parse(d.expire_le) > Date.now() && location.pathname !== "/duel/" + d.id) {
+      // Défi : seulement s'il vient d'arriver (pas au premier relevé) ; l'écran du duel dit lui-même s'il a expiré
+      if (n.type === "duel" && apres !== null && location.pathname !== "/duel/" + d.id) {
         html = `<small>⚔️ ${t.duelTitre}</small><p><b>${esc(t.duelRecu(d.de))}</b></p><a class="bouton" href="/duel/${Number(d.id)}" data-nav data-fermer>${t.duelVoir}</a>`;
       }
       if (n.type === "eclair_reussie") html = `<small>⚡ ${t.eclairTitre}</small><p>${t.eclairReussie(d.points)}</p>`;
@@ -2382,6 +2395,21 @@
     $("#c-photos").onchange = (e) => envoyer({ photos: e.target.checked });
     app.querySelectorAll("[data-l]").forEach((x) => (x.onclick = () => { L = x.dataset.l; t = T[L]; ecrire(CLE.langue, L); document.documentElement.lang = L; fiche(); }));
     const bc = $("#b-costume"); if (bc) bc.onclick = () => modifierCostume(pe, envoyer);
+    if (pe.est_mj) entreeAdmin(app.querySelector("main > .carte"));
+  }
+  /** Entrée discrète de l'admin (personnage du MJ seulement) : appui long de 2 s sur sa carte. Rien de visible. */
+  function entreeAdmin(el) {
+    if (!el) return;
+    let minuterie = null, x0 = 0, y0 = 0;
+    const annuler = () => { clearTimeout(minuterie); minuterie = null; };
+    el.style.webkitTouchCallout = "none"; el.style.userSelect = "none";
+    el.addEventListener("contextmenu", (e) => e.preventDefault());
+    el.addEventListener("pointerdown", (e) => {
+      x0 = e.clientX; y0 = e.clientY;
+      minuterie = setTimeout(() => { vibrer([30, 40, 30]); location.href = "/admin"; }, 2000);
+    });
+    el.addEventListener("pointermove", (e) => { if (Math.hypot(e.clientX - x0, e.clientY - y0) > 12) annuler(); });
+    for (const t of ["pointerup", "pointercancel", "pointerleave"]) el.addEventListener(t, annuler);
   }
 
   // Grille des attributs : 12 d'office, 12 de plus derrière « Charger plus » (ouverte si l'un d'eux est coché)

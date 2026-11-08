@@ -9,11 +9,12 @@ import { csvNiimbot } from "./csv";
 import { etatRoles, relancerFoyer } from "./jumeaux";
 import { annulerMission, annulerSanction, confierMission, etatMJ, fermerPause, heureDuJoueur, heureGlobale, MISSIONS, ouvrirPause, RECOMPENSES_M7, reussirMission, sanctionner } from "./mj";
 import { construireInstantane, ecrireImage, lireImage, SANS_BORNE, validerImage } from "./revelation";
-import { langue, pageAdmin, pageApp, pageConnexion, pageGalerie, type Compte, type EtiquetteVue, type Lot } from "./pages";
+import { langue, pageAdmin, type VueAdmin, pageApp, pageConnexion, pageGalerie, type Compte, type EtiquetteVue, type Lot } from "./pages";
 import { definirPin, routeApi } from "./jeu";
 import { localVersIso } from "./temps";
 import { avecAgent, devActif, routeDev, TABLES_PARTIE } from "./dev";
 import { avecPhotos, masquerPhoto, murAdmin, photosRevelation } from "./mur";
+import { ficheJoueur } from "./fiche";
 import { bancEnvironnement, bancProd, peutOuvrirBanc } from "./mode";
 import { etatPush, pushTest, routeLotInterne, tickPush } from "./push";
 import { frise, suggestionsEnCours, tickSuggestions, traiterSuggestion } from "./suivi";
@@ -121,8 +122,16 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     // Protection CSRF : les formulaires viennent forcément de notre origine
     if (req.headers.get("Origin") !== url.origin) return new Response("Origine refusée", { status: 403 });
     const f = await req.formData();
-    const retour = (q: Record<string, string>) =>
-      Response.redirect(`${url.origin}/admin?${new URLSearchParams(q)}`, 303);
+    // Après une action : retour sur la vue d'où vient le formulaire (et sa fiche joueur), avec le message
+    const retour = (q: Record<string, string>) => {
+      let ref: URL | null = null;
+      try { ref = new URL(req.headers.get("Referer") || ""); } catch { /* pas de Referer */ }
+      const ok = ref && ref.origin === url.origin && /^\/admin(\/(joueurs|preparation))?$/.test(ref.pathname);
+      const dest = new URL(ok ? ref!.pathname : "/admin", url.origin);
+      if (ok) for (const [k, v] of ref!.searchParams) if (k !== "message" && k !== "erreur") dest.searchParams.set(k, v);
+      for (const [k, v] of Object.entries(q)) dest.searchParams.set(k, v);
+      return Response.redirect(dest.toString(), 303);
+    };
 
     if (url.pathname === "/admin/mur/masquer") {
       // Galerie des photos (appui long) : réponse JSON ; sinon retour à la galerie
@@ -385,11 +394,12 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
     });
   }
 
-  if (url.pathname !== "/admin") return new Response("Introuvable", { status: 404 });
-  const comptes = (await env.DB.prepare("SELECT format, role, etat, COUNT(*) AS n FROM etiquettes WHERE banc = 0 GROUP BY format, role, etat").all<Compte>()).results;
-  const lots = (await env.DB.prepare("SELECT lot, format, role, COUNT(*) AS n, MIN(cree_le) AS cree_le, MAX(banc) AS banc FROM etiquettes GROUP BY lot, format, role ORDER BY lot DESC").all<Lot>()).results;
+  // Vues de l'admin (barre d'onglets) : chacune ne charge que ce qu'elle affiche
+  const vues: Record<string, VueAdmin> = { "/admin": "direct", "/admin/joueurs": "joueurs", "/admin/preparation": "preparation" };
+  const vue = vues[url.pathname];
+  if (!vue) return new Response("Introuvable", { status: 404 });
   const recherche = url.searchParams.get("code") || "";
-  const code = recherche ? normaliserCode(recherche) : null;
+  const code = vue === "joueurs" && recherche ? normaliserCode(recherche) : null;
   const etiquette = code
     ? await env.DB.prepare(
         `SELECT e.code, e.format, e.role, e.etat, e.lot, e.cree_le, e.personnage_id, e.faction_id, p.pseudo,
@@ -397,23 +407,29 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
          FROM etiquettes e LEFT JOIN personnages p ON p.id = e.personnage_id WHERE e.code = ?`,
       ).bind(code).first<EtiquetteVue>()
     : null;
+  const prep = vue === "preparation", direct = vue === "direct";
   return pageAdmin({
-    email, role: u.role, comptes, lots, etiquette, recherche, banc: peutOuvrirBanc(env, u.role),
-    joueurs: {
-      personnages: (await env.DB.prepare("SELECT COUNT(*) AS n FROM personnages").first<{ n: number }>())?.n ?? 0,
-      scans: (await env.DB.prepare("SELECT COUNT(*) AS n FROM scans").first<{ n: number }>())?.n ?? 0,
-      cartes: (await env.DB.prepare("SELECT COUNT(*) AS n FROM collection").first<{ n: number }>())?.n ?? 0,
-    },
-    heures: await lireConfig(env.DB, "heures"),
-    parametres: await lireParametres(env.DB),
-    direct: await etatDirect(env, Date.now()),
-    eclair: await bilanEclair(env.DB, Date.now()),
-    image: await lireImage(env.DB),
-    mj: await etatMJ(env),
-    roles: await etatRoles(env, await heureGlobale(env)),
-    push: await etatPush(env),
-    frise: await frise(env, await heureGlobale(env)),
-    suggestions: await suggestionsEnCours(env.DB),
+    vue, email, role: u.role, recherche, banc: peutOuvrirBanc(env, u.role), etiquette,
+    ficheJ: etiquette?.personnage_id ? await ficheJoueur(env.DB, etiquette.personnage_id) : null,
+    comptes: prep ? (await env.DB.prepare("SELECT format, role, etat, COUNT(*) AS n FROM etiquettes WHERE banc = 0 GROUP BY format, role, etat").all<Compte>()).results : [],
+    lots: prep ? (await env.DB.prepare("SELECT lot, format, role, COUNT(*) AS n, MIN(cree_le) AS cree_le, MAX(banc) AS banc FROM etiquettes GROUP BY lot, format, role ORDER BY lot DESC").all<Lot>()).results : [],
+    joueurs: direct
+      ? {
+          personnages: (await env.DB.prepare("SELECT COUNT(*) AS n FROM personnages").first<{ n: number }>())?.n ?? 0,
+          scans: (await env.DB.prepare("SELECT COUNT(*) AS n FROM scans").first<{ n: number }>())?.n ?? 0,
+          cartes: (await env.DB.prepare("SELECT COUNT(*) AS n FROM collection").first<{ n: number }>())?.n ?? 0,
+        }
+      : { personnages: 0, scans: 0, cartes: 0 },
+    heures: prep ? await lireConfig(env.DB, "heures") : null,
+    parametres: prep ? await lireParametres(env.DB) : null,
+    direct: direct ? await etatDirect(env, Date.now()) : undefined,
+    eclair: direct ? await bilanEclair(env.DB, Date.now()) : undefined,
+    image: prep ? await lireImage(env.DB) : undefined,
+    mj: direct ? await etatMJ(env) : undefined,
+    roles: vue === "joueurs" ? await etatRoles(env, await heureGlobale(env)) : undefined,
+    push: prep ? await etatPush(env) : undefined,
+    frise: direct ? await frise(env, await heureGlobale(env)) : undefined,
+    suggestions: direct ? await suggestionsEnCours(env.DB) : undefined,
     message: url.searchParams.get("message") || undefined,
     erreur: url.searchParams.get("erreur") || undefined,
   });

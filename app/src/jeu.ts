@@ -1,7 +1,7 @@
 // API du jeu. LOT-1 : scan, création du personnage, étiquettes multiples, collection, réintégration par PIN.
 // LOT-2 : faux souvenirs, jauge de mémoire, réactions, temps d'écran.
 // Specs : FEAT-002 à FEAT-006, FEAT-014, FEAT-019. Le serveur est la source de vérité (DEC-052).
-import { signer, verifier } from "./auth";
+import { signer, utilisateurConnecte, verifier, type EnvAuth } from "./auth";
 import { ATTRIBUTS, auHasard, CLASSES, COULEURS, FACTIONS, genererPseudo, TYPES, tirerFaction, type Langue } from "./catalogue";
 import { normaliserCode } from "./codes";
 import { baremeDe, lireParametres, type Heures } from "./config";
@@ -357,7 +357,7 @@ export async function routeApi(req: Request, env: EnvJeu, url: URL): Promise<Res
     if (p === "/api/duel" && req.method === "GET") {
       const me = await personnageDe(req, env, t);
       if (!me) return erreur("sans_personnage", 401);
-      const d = await lireDuel(env, me.id, url.searchParams.get("id"), t);
+      const d = await lireDuel(env, me.id, url.searchParams.get("id"));
       return d ? json(d) : erreur("introuvable", 404);
     }
     if (p === "/api/mur" && req.method === "GET") {
@@ -443,7 +443,13 @@ async function scan(req: Request, env: EnvJeu, t: number, c: Record<string, unkn
   };
 
   if (e.etat === "desactivee") return json({ type: "retiree", code: e.code });
-  if (iso < h.debut) return json({ type: "bientot", code: e.code, debut: h.debut });
+  // Étiquette clé : l'étiquette personnelle du MJ, scannée sur un téléphone connecté à l'admin, ouvre l'admin
+  if (e.role === "personnelle_mj" && e.etat === "reclamee" && (await utilisateurConnecte(req, env as unknown as EnvAuth))) {
+    return json({ type: "admin", code: e.code });
+  }
+  // Le MJ peut créer son personnage et entrer dans l'app avant l'ouverture (avec son étiquette personnelle)
+  const mjAvant = e.role === "personnelle_mj" && (e.etat === "vierge" || (!!me && me.id === e.personnage_id));
+  if (iso < h.debut && !mjAvant) return json({ type: "bientot", code: e.code, debut: h.debut });
   if (iso >= h.fin) return json({ type: "ferme", code: e.code });
   // ADM-18 niveau 5 « Interdit de magasin » : le personnage ne scanne plus
   if (me?.suspendu) return enregistrer("suspendu", { type: "suspendu", code: e.code });
@@ -594,7 +600,7 @@ async function creer(req: Request, env: EnvJeu, t: number, c: Record<string, unk
   if (!e) return erreur("inconnue", 404);
   if (e.etat !== "vierge" || e.role === "speciale_mj") return erreur("deja_reclamee", 409);
   const h = await heuresIso(env.DB), iso = new Date(t).toISOString();
-  if (iso < h.debut || iso >= h.fin) return erreur("hors_horaires", 409);
+  if ((iso < h.debut && e.role !== "personnelle_mj") || iso >= h.fin) return erreur("hors_horaires", 409); // le MJ peut créer avant
   if (await personnageDe(req, env, t)) return erreur("deja_un_personnage", 409);
 
   const id = aleatoire(12), sel = aleatoire(12);

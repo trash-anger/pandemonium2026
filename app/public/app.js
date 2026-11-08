@@ -115,12 +115,13 @@
     fr: {
       soldes: "Ouverture des soldes", sousTitre: "Tu as déjà vécu cette soirée.",
       saisir: "Entre le code imprimé sous le QR", voir: "Voir l'étiquette",
-      accueilAide: "Tu as une étiquette ? Scanne son QR avec l'appareil photo de ton téléphone.",
+      accueilAide: "Tu as une étiquette ? Scanne son QR : ici, ou avec l'appareil photo de ton téléphone.", accueilScan: "📷 Scanner mon étiquette",
+      codeMJ: "Le maître du jeu t'a donné un code ?",
       accueilSans: "Pas d'étiquette ? Va trouver le maître du jeu.",
       reveil: "Réveil dans", jour: "j", lecture: "Lecture de l'étiquette…",
       attente: "Elle se réveillera samedi 7 novembre à 21 h. Garde-la sur toi : à l'ouverture, scanne-la pour créer ton personnage.",
       ouvert: "C'est ouvert. Rescanne ton étiquette.",
-      inconnue: "Cette étiquette n'existe pas dans cette timeline.", inconnueAide: "Vérifie le code : il n'utilise jamais 0, O, 1, I ni L.",
+      inconnue: "Cette étiquette n'existe pas dans cette timeline.", inconnueAide: "Rescanne le QR de l'étiquette, bien à plat et éclairé.",
       retiree: "Article retiré de la vente. Va voir le maître du jeu.",
       ferme: "Le magasin est fermé. Les soldes sont terminées… ou pas tout à fait : reviens demain.",
       reseau: "Le réseau fait des siennes.", reessayer: "Réessayer", accueil: "Accueil",
@@ -190,7 +191,7 @@
       scanner: "Scanner", maCarte: "Ma carte", maCollection: "Ma collection", cartes: (n) => `${n} carte${n > 1 ? "s" : ""}`,
       cdBloque: "Scanner débloqué dans", cdRevelation: "Révélation dans", cdFin: "Fermeture dans",
       saisieTitre: "Scanner une étiquette",
-      saisieAide: "Cadre le QR d'une étiquette, ou entre le code imprimé dessous.",
+      saisieAide: "Cadre le QR d'une étiquette.",
       duelDefier: "⚔️ Défier en duel", duelTitre: "Duel", duelEpreuve: "Épreuve",
       duelAttente: (p) => `Défi lancé. ${p} a 60 s pour accepter : dis-lui d'ouvrir l'app.`,
       duelRecu: (p) => `${p} te défie en duel !`, duelVoir: "⚔️ Voir le défi", duelAccepter: "⚔️ J'accepte", duelRefuser: "Je décline",
@@ -209,8 +210,8 @@
       consigne: "Cadre l'étiquette, pas le visage", lampe: "🔦 Lampe", fermer: "Fermer",
       pasDeLampe: "Pas de lampe ici : demande à quelqu'un d'éclairer l'étiquette avec son téléphone.",
       etranger: "Cet article ne vient pas de notre collection.",
-      camRefusee: "Caméra refusée. Pour la réactiver : touche le cadenas à côté de l'adresse (ou les réglages de l'app), puis Caméra → Autoriser. En attendant, entre le code imprimé sous le QR.",
-      camIndispo: "Pas de caméra disponible ici. Entre le code imprimé sous le QR.",
+      camRefusee: "Caméra refusée. Pour la réactiver : touche le cadenas à côté de l'adresse (ou les réglages de l'app), puis Caméra → Autoriser. En attendant, scanne avec l'appareil photo de ton téléphone.",
+      camIndispo: "Pas de caméra disponible ici. Scanne le QR avec l'appareil photo de ton téléphone.",
       murLien: "🖼️ Le mur « Déjà vu ! »", murTitre: "Déjà vu !", murAide: "Les photos de tes scans, et celles prises en scannant ton étiquette. Floues et déformées. Un visage reconnaissable ? Dis-le au MJ.",
       murVide: "Rien pour l'instant. Les photos arrivent avec les scans faits dans l'app, les tiens et ceux de ton étiquette.", murPlus: "Plus anciennes", murN: (n) => `${n} photo${n > 1 ? "s" : ""}`,
       murSans: "Le mur est réservé aux joueurs. Va trouver le MJ pour avoir ton étiquette.",
@@ -308,12 +309,13 @@
     en: {
       soldes: "Sale now on", sousTitre: "You've already lived this night.",
       saisir: "Enter the code printed under the QR", voir: "See the tag",
-      accueilAide: "Got a tag? Scan its QR with your phone's camera.",
+      accueilAide: "Got a tag? Scan its QR: here, or with your phone's camera.", accueilScan: "📷 Scan my tag",
+      codeMJ: "Did the game master give you a code?",
       accueilSans: "No tag? Go find the game master.",
       reveil: "Waking up in", jour: "d", lecture: "Reading the tag…",
       attente: "It wakes up Saturday, November 7 at 9 p.m. Keep it on you: when the game opens, scan it to create your character.",
       ouvert: "We're open. Scan your tag again.",
-      inconnue: "This tag doesn't exist in this timeline.", inconnueAide: "Check the code: it never uses 0, O, 1, I or L.",
+      inconnue: "This tag doesn't exist in this timeline.", inconnueAide: "Scan the tag's QR again, flat and well lit.",
       retiree: "Item withdrawn from sale. Go see the game master.",
       ferme: "The store is closed. The sale is over… or not quite: come back tomorrow.",
       reseau: "The network is acting up.", reessayer: "Try again", accueil: "Home",
@@ -380,7 +382,7 @@
       scanner: "Scan", maCarte: "My card", maCollection: "My collection", cartes: (n) => `${n} card${n === 1 ? "" : "s"}`,
       cdBloque: "Scanner unlocks in", cdRevelation: "Reveal in", cdFin: "Closing in",
       saisieTitre: "Scan a tag",
-      saisieAide: "Frame a tag's QR, or enter the code printed under it.",
+      saisieAide: "Frame a tag's QR.",
       duelDefier: "⚔️ Challenge to a duel", duelTitre: "Duel", duelEpreuve: "Trial",
       duelAttente: (p) => `Challenge sent. ${p} has 60 s to accept: tell them to open the app.`,
       duelRecu: (p) => `${p} challenges you to a duel!`, duelVoir: "⚔️ See the challenge", duelAccepter: "⚔️ I accept", duelRefuser: "I decline",
@@ -399,8 +401,8 @@
       consigne: "Frame the tag, not the face", lampe: "🔦 Torch", fermer: "Close",
       pasDeLampe: "No torch here: ask someone to light the tag with their phone.",
       etranger: "This item isn't from our collection.",
-      camRefusee: "Camera blocked. To allow it: tap the padlock next to the address (or the app settings), then Camera → Allow. Meanwhile, enter the code printed under the QR.",
-      camIndispo: "No camera available here. Enter the code printed under the QR.",
+      camRefusee: "Camera blocked. To allow it: tap the padlock next to the address (or the app settings), then Camera → Allow. Meanwhile, scan with your phone's camera.",
+      camIndispo: "No camera available here. Scan the QR with your phone's camera.",
       murLien: "🖼️ The « Déjà vu ! » wall", murTitre: "Déjà vu !", murAide: "Photos from your scans, and those taken when someone scanned your tag. Blurred and distorted. See a recognisable face? Tell the GM.",
       murVide: "Nothing yet. Photos come with scans made in the app: yours, and those of your tag.", murPlus: "Older", murN: (n) => `${n} photo${n === 1 ? "" : "s"}`,
       murSans: "The wall is for players. Find the GM to get your tag.",
@@ -624,10 +626,11 @@
     })));
   }
   const heureCourte = (iso) => new Date(iso).toLocaleTimeString(L === "en" ? "en-CA" : "fr-CA", { hour: "2-digit", minute: "2-digit" });
-  const formulaireCode = (valeur = "") => `<form class="boite" id="f-code" autocomplete="off">
+  // Les codes ne sont pas imprimés sous les QR : la saisie reste repliée, pour un code donné par le MJ
+  const formulaireCode = (valeur = "") => `<details class="code-mj"${valeur ? " open" : ""}><summary class="muted petit">${t.codeMJ}</summary><form class="boite" id="f-code" autocomplete="off">
       <label class="mono petit muted" for="code">${t.saisir}</label>
       <input type="text" class="saisie" id="code" name="code" maxlength="6" autocapitalize="characters" spellcheck="false" value="${esc(valeur)}" required style="margin-top:8px">
-      <button class="bouton">${t.voir}</button></form>`;
+      <button class="bouton">${t.voir}</button></form></details>`;
   function brancherCode() {
     const f = $("#f-code"); if (!f) return;
     f.onsubmit = (ev) => {
@@ -701,8 +704,11 @@
       const avant = h && Date.now() < Date.parse(h.debut);
       rendre(`<span class="chip">${t.soldes}</span><h1>DÉJÀ<br>VU&nbsp;!</h1><p class="muted">${t.sousTitre}</p>
         ${avant ? `<div class="boite"><p class="mono petit muted" style="margin:0 0 4px">${t.reveil}</p><div class="compte" data-fin="${h.debut}" data-fini="${esc(t.ouvert)}"></div></div>` : ""}
-        <p>${t.accueilAide}</p>${formulaireCode()}<p class="muted petit">${t.accueilSans}</p><footer>${t.pied}</footer>`);
+        <div class="boite"><p style="margin-top:0">${t.accueilAide}</p><button class="bouton" id="b-scan-accueil">${t.accueilScan}</button></div>
+        ${formulaireCode()}<p class="muted petit">${t.accueilSans}</p><footer>${t.pied}</footer>`);
       brancherCode();
+      // Ce bouton vaut accord pour la caméra : le scanner s'ouvre directement
+      $("#b-scan-accueil").onclick = () => { if (cameraPossible()) ecrire(CLE.camera, "vu"); aller("/saisie"); };
       return;
     }
     dessinerAccueil();
@@ -1035,7 +1041,7 @@
   }
 
   function inconnue(code) {
-    rendre(`<span class="chip">404</span><h1>DÉJÀ<br>VU&nbsp;?</h1><p>${t.inconnue}</p><p class="muted">${t.inconnueAide}</p>${formulaireCode(code)}`, { onglet: etat.moi ? "scan" : null });
+    rendre(`<span class="chip">404</span><h1>DÉJÀ<br>VU&nbsp;?</h1><p>${t.inconnue}</p><p class="muted">${t.inconnueAide}</p><a class="bouton" href="/saisie" data-nav>${t.ouvrirScanner}</a>${formulaireCode()}`, { onglet: etat.moi ? "scan" : null });
     brancherCode();
   }
 

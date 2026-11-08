@@ -9,12 +9,14 @@ import { csvNiimbot } from "./csv";
 import { etatRoles, relancerFoyer } from "./jumeaux";
 import { annulerMission, annulerSanction, confierMission, etatMJ, fermerPause, heureDuJoueur, heureGlobale, MISSIONS, ouvrirPause, RECOMPENSES_M7, reussirMission, sanctionner } from "./mj";
 import { construireInstantane, ecrireImage, lireImage, SANS_BORNE, validerImage } from "./revelation";
-import { langue, pageAdmin, type VueAdmin, pageApp, pageConnexion, pageGalerie, type Compte, type EtiquetteVue, type Lot } from "./pages";
+import { pageAdmin, pageAnalytics, type VueAdmin, pageConnexion, pageGalerie, type Compte, type EtiquetteVue, type Lot } from "./pages";
 import { definirPin, routeApi } from "./jeu";
 import { localVersIso } from "./temps";
 import { avecAgent, devActif, routeDev, TABLES_PARTIE } from "./dev";
 import { avecPhotos, masquerPhoto, murAdmin, photosRevelation } from "./mur";
 import { ficheJoueur } from "./fiche";
+import { HOTE_TEASER, pageFin, routeFin } from "./fin";
+import { csvAnalytics, PERIODES, tableauAnalytics, type Periode } from "./analytics";
 import { bancEnvironnement, bancProd, peutOuvrirBanc } from "./mode";
 import { etatPush, pushTest, routeLotInterne, tickPush } from "./push";
 import { frise, suggestionsEnCours, tickSuggestions, traiterSuggestion } from "./suivi";
@@ -66,29 +68,19 @@ async function servir(req: Request, env: Env, url: URL): Promise<Response> {
   {
     const chemin = url.pathname;
     try {
-      if (chemin === "/") {
-        const saisie = url.searchParams.get("code");
-        if (saisie !== null) {
-          const code = normaliserCode(saisie);
-          if (!code) return pageApp(langue(req), 404);
-          const q = new URLSearchParams({ s: "m" });
-          const l = url.searchParams.get("lang");
-          if (l === "fr" || l === "en") q.set("lang", l);
-          return Response.redirect(`${url.origin}/${code}?${q}`, 302);
-        }
-        return pageApp(langue(req));
+      // Après la fête : tout mène à la page de fin (dossier fin/), sur p.uyt.re comme sur l'ancien teaser.
+      // Seuls l'admin (connexion Google, sur p.uyt.re) et les routes de la page de fin restent actifs.
+      if (url.hostname === HOTE_TEASER && (chemin.startsWith("/admin") || chemin.startsWith("/auth/"))) {
+        return Response.redirect(`${env.PUBLIC_ORIGIN}${chemin}${url.search}`, 302);
       }
-      if (chemin.startsWith("/api/")) return routeApi(req, env, url);
-      if (["/collection", "/moi", "/saisie", "/mur", "/tuto", "/badges", "/medailles", "/revelation"].includes(chemin)) return pageApp(langue(req));
-      if (/^\/duel\/\d{1,9}$/.test(chemin)) return pageApp(langue(req));
       if (chemin === "/auth/connexion") return debutConnexion(env);
       if (chemin === "/auth/retour") return retourConnexion(req, env);
       if (chemin === "/auth/deconnexion") return deconnexion(env);
       if (chemin === "/admin" || chemin.startsWith("/admin/")) return admin(req, env, url);
-
-      const m = chemin.match(/^\/([^/]{4,6})\/?$/);
-      if (m) return etiquette(req, env, m[1]);
-      return pageApp(langue(req), 404);
+      const fin = await routeFin(req, env, url);
+      if (fin) return fin;
+      if (chemin.startsWith("/api/")) return Response.json({ erreur: "fin", message: "La partie est terminée." }, { status: 410 });
+      return pageFin();
     } catch (e) {
       console.error(e);
       return new Response("Erreur interne", { status: 500 });
@@ -96,25 +88,12 @@ async function servir(req: Request, env: Env, url: URL): Promise<Response> {
   }
 }
 
-async function etiquette(req: Request, env: Env, brut: string): Promise<Response> {
-  // La page de l'étiquette est l'application : elle traite le scan via /api/scan.
-  let code: string | null = null;
-  try { code = normaliserCode(decodeURIComponent(brut)); } catch { /* encodage invalide */ }
-  if (!code) return pageApp(langue(req), 404);
-  if (code !== brut) {
-    const u = new URL(req.url);
-    return Response.redirect(`${u.origin}/${code}${u.search}`, 301);
-  }
-  const e = await env.DB.prepare("SELECT 1 AS x FROM etiquettes WHERE code = ?").bind(code).first();
-  return pageApp(langue(req), e ? 200 : 404);
-}
-
 async function admin(req: Request, env: Env, url: URL): Promise<Response> {
   const u = await utilisateurConnecte(req, env);
   if (!u) return url.pathname === "/admin" ? pageConnexion(url.searchParams.has("connexion")) : new Response("Non autorisé", { status: 401 });
   const email = u.email;
   // Lecture seule : ni modification, ni export des codes (qui permettraient de réclamer des étiquettes)
-  if (u.role !== "mj" && (req.method !== "GET" || url.pathname === "/admin/export.csv")) {
+  if (u.role !== "mj" && (req.method !== "GET" || (url.pathname === "/admin/export.csv" || url.pathname === "/admin/analytics.csv"))) {
     return new Response("Lecture seule : action réservée au maître du jeu.", { status: 403 });
   }
 
@@ -385,6 +364,15 @@ async function admin(req: Request, env: Env, url: URL): Promise<Response> {
   }
 
   // Galerie des photos de scan (RG-017-6) ; l'ancienne adresse du mur y mène aussi
+  if (url.pathname === "/admin/analytics") {
+    const p = url.searchParams.get("p");
+    return pageAnalytics(await tableauAnalytics(env.DB, p && p in PERIODES ? (p as Periode) : "tout"));
+  }
+  if (url.pathname === "/admin/analytics.csv") {
+    return new Response(await csvAnalytics(env.DB), {
+      headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="analytics-deja-vu.csv"', "Cache-Control": "no-store" },
+    });
+  }
   if (url.pathname === "/admin/mur") return Response.redirect(`${url.origin}/admin/photos`, 302);
   if (url.pathname === "/admin/photos") return pageGalerie(await murAdmin(env.DB, undefined, 40), u.role !== "mj");
   if (url.pathname === "/admin/photos.json") {

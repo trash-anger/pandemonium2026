@@ -14,3 +14,7 @@ declare module "qrcode/lib/core/qrcode" {
 declare module "qrcode/lib/renderer/svg-tag" {
   export function render(qr: unknown, options?: { margin?: number; color?: { dark?: string; light?: string } }): string;
 }
+declare module "*.png" {
+  const octets: ArrayBuffer;
+  export default octets;
+}

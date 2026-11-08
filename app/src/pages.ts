@@ -8,6 +8,7 @@ import type { etatRoles } from "./jumeaux";
 import type { frise, suggestionsEnCours } from "./suivi";
 import type { murAdmin } from "./mur";
 import type { FicheJoueur } from "./fiche";
+import { PERIODES, type Ligne, type Periode, type Tableau, type Visite, SOURCES } from "./analytics";
 
 export type Langue = "fr" | "en";
 
@@ -29,7 +30,7 @@ const CSS = `
 body{min-height:100dvh;background:radial-gradient(ellipse at 20% 0%,#3a1426 0%,var(--bg) 60%) fixed}
 body::after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px)}
 main{max-width:560px;margin:0 auto;padding:28px 18px 48px}
-.barre-adm{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(5,1fr);background:rgba(21,19,28,.97);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.barre-adm{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(6,1fr);background:rgba(21,19,28,.97);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
 .barre-adm a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 8px;min-height:58px;color:var(--muted);text-decoration:none;font-family:var(--mono);font-size:10px;letter-spacing:.02em}
 .barre-adm a span{font-size:21px}.barre-adm a[aria-current=page]{color:var(--fg);box-shadow:inset 0 3px 0 var(--pink)}
 body.avec-barre main{padding-bottom:110px}
@@ -99,8 +100,9 @@ const opts = (liste: string[], choisi?: string) =>
 export type VueAdmin = "direct" | "joueurs" | "preparation";
 
 /** Barre d'onglets de l'admin (en bas, à portée de pouce). */
-export const barreAdmin = (actif: VueAdmin | "photos") => `<nav class="barre-adm">${([
-  ["direct", "/admin", "🔴", "Direct"], ["joueurs", "/admin/joueurs", "🔍", "Joueurs"], ["photos", "/admin/photos", "📷", "Photos"], ["preparation", "/admin/preparation", "⚙️", "Prépa"], ["jeu", "/", "🎮", "Jeu"],
+export const barreAdmin = (actif: VueAdmin | "photos" | "stats") => `<nav class="barre-adm">${([
+  ["direct", "/admin", "🔴", "Direct"], ["joueurs", "/admin/joueurs", "🔍", "Joueurs"], ["photos", "/admin/photos", "📷", "Photos"], ["preparation", "/admin/preparation", "⚙️", "Prépa"],
+  ["stats", "/admin/analytics", "📈", "Stats"], ["page", "/", "🌐", "Page"],
 ] as const).map(([id, href, e, l]) => `<a href="${href}"${id === actif ? ' aria-current="page"' : ""}><span>${e}</span>${l}</a>`).join("")}</nav>
 <script>document.body.classList.add("avec-barre")</script>`;
 
@@ -704,4 +706,86 @@ ${lecture ? "" : `<form method="post" action="/admin/contagion" class="rangee">
 <div><label>Corruption (min)</label><input name="corruption_min" inputmode="numeric" value="${r.corruption_min}"></div>
 <div style="flex:0 0 auto"><button>Appliquer</button></div></form>
 <form method="post" action="/admin/contagion/foyer" onsubmit="return confirm('Corrompre 3 joueurs sains au hasard ?')"><p><button class="bouton sec">🦠 Relancer un foyer</button></p></form>`}`;
+}
+
+// ---------- Analytics de la page de fin (admin → 📈 Stats) ----------
+const ANALYTICS_CSS = `<style>
+main{max-width:1040px}
+.periodes{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 4px}.periodes a{font:12px var(--mono);letter-spacing:.06em;color:var(--muted);text-decoration:none;border:1.5px solid var(--line);border-radius:999px;padding:8px 12px}
+.periodes a[aria-current]{color:var(--fg);border-color:var(--pink)}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+.kpi .stat b{font-size:28px;font-variant-numeric:tabular-nums}.kpi .stat small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.courbe{display:block;width:100%;height:auto;max-height:260px;overflow:visible}.courbe .axe{font:10px var(--mono);fill:var(--muted)}.courbe .grille{stroke:var(--line);stroke-width:1}
+.courbe .b{fill:var(--green)}.courbe .zone{fill:transparent}.courbe g:hover .b{fill:var(--fg)}
+.repart{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.repart .carte h3{margin:0 0 8px;font-size:15px}
+.barres{width:100%;border-collapse:collapse}.barres td{border:0;padding:5px 4px;font-size:14px;vertical-align:middle}
+.barres td.cle{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.barres td.n{text-align:right;font:13px var(--mono);white-space:nowrap;color:var(--fg)}
+.barres td.p{text-align:right;font:12px var(--mono);color:var(--muted);width:52px;white-space:nowrap}
+.barres .jauge{height:8px;border-radius:4px;background:var(--bg3);min-width:60px}.barres .jauge i{display:block;height:100%;border-radius:4px;background:var(--green)}
+.vide{color:var(--muted);font-size:14px;margin:0}
+</style>`;
+
+const pct = (n: number, total: number) => (total ? `${Math.round((n / total) * 100)} %` : "—");
+const duree = (ms: number) => (ms < 60_000 ? `${Math.round(ms / 1000)} s` : `${Math.floor(ms / 60_000)} min ${String(Math.round((ms % 60_000) / 1000)).padStart(2, "0")}`);
+
+function barres(titre: string, lignes: Ligne[], total: number, lien?: (cle: string) => string) {
+  const max = Math.max(1, ...lignes.map((l) => l.n));
+  return `<div class="carte"><h3>${esc(titre)}</h3>${lignes.length ? `<table class="barres">${lignes.map((l) => `<tr>
+<td class="cle" title="${esc(l.cle)}">${lien ? `<a class="ok mono" href="${lien(l.cle)}">${esc(l.cle)}</a>` : esc(l.cle)}</td>
+<td style="width:40%"><div class="jauge"><i style="width:${Math.max(2, (l.n / max) * 100)}%"></i></div></td><td class="n">${l.n}</td><td class="p">${pct(l.n, total)}</td></tr>`).join("")}</table>`
+    : '<p class="vide">Rien pour l\'instant.</p>'}</div>`;
+}
+
+/** Colonnes : vues par heure ou par jour (une seule série ; visiteurs uniques dans l'infobulle). */
+function courbe(c: Tableau["courbe"]) {
+  const pts = c.points, W = 640, H = 180, G = 30, B = 22, n = Math.max(1, pts.length);
+  const max = Math.max(1, ...pts.map((p) => p.vues)), pas = (W - G) / n, larg = Math.max(1, Math.min(18, pas - 2));
+  const y = (v: number) => H - B - (v / max) * (H - B - 10);
+  const graduations = [0, Math.ceil(max / 2), max].filter((v, i, a) => a.indexOf(v) === i);
+  const etiquette = (k: string) => (c.parJour ? k.slice(8, 10) + "/" + k.slice(5, 7) : k.slice(11, 13) + " h");
+  const chaque = Math.max(1, Math.ceil(n / 8));
+  return `<svg class="courbe" viewBox="0 0 ${W} ${H}" role="img" aria-label="Vues ${c.parJour ? "par jour" : "par heure"}">
+${graduations.map((v) => `<line class="grille" x1="${G}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/><text class="axe" x="${G - 6}" y="${y(v) + 3}" text-anchor="end">${v}</text>`).join("")}
+${pts.map((p, i) => {
+    const x = G + i * pas + (pas - larg) / 2, h = H - B - y(p.vues);
+    return `<g><title>${esc(c.parJour ? p.cle : p.cle.replace(" ", " · ") + " h")} : ${p.vues} vue${p.vues > 1 ? "s" : ""}, ${p.visiteurs} visiteur${p.visiteurs > 1 ? "s" : ""}</title>
+<rect class="zone" x="${G + i * pas}" y="0" width="${pas}" height="${H - B}"/>${p.vues ? `<rect class="b" x="${x.toFixed(1)}" y="${y(p.vues).toFixed(1)}" width="${larg.toFixed(1)}" height="${h.toFixed(1)}" rx="${Math.min(2, larg / 2)}"/>` : ""}
+${i % chaque === 0 ? `<text class="axe" x="${(G + i * pas + pas / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${etiquette(p.cle)}</text>` : ""}</g>`;
+  }).join("")}
+</svg>`;
+}
+
+export function pageAnalytics(a: Tableau) {
+  const v = a.vues;
+  const ligne = (x: Visite) => `<tr><td class="mono">${esc(new Date(x.le).toLocaleString("fr-CA", { timeZone: "America/Toronto", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }))}</td>
+<td>${esc(SOURCES[x.source] ?? x.source)}${x.code ? ` <span class="mono">${esc(x.code)}</span>` : ""}${x.referent ? ` <span class="muted">${esc(x.referent)}</span>` : ""}</td>
+<td>${esc([x.ville, x.pays].filter(Boolean).join(", ") || "—")}</td><td>${esc(x.appareil ?? "")} · ${esc(x.navigateur ?? "")}</td><td class="mono">${duree(x.duree_ms)}</td></tr>`;
+  const corps = `${ANALYTICS_CSS}<span class="chip">Page de fin</span>
+<h2 style="margin-top:18px">Analytics</h2>
+<p class="muted" style="font-size:14px;margin:0">Visites de <a class="ok" href="/">la page « 242 nouvelles amitiés »</a> (p.uyt.re et pandemonium2026.uyt.re). Sans cookie ; tes propres visites, connecté à l'admin, ne comptent pas.</p>
+<nav class="periodes">${(Object.keys(PERIODES) as Periode[]).map((p) => `<a href="/admin/analytics?p=${p}"${p === a.periode ? ' aria-current="page"' : ""}>${PERIODES[p].lib}</a>`).join("")}</nav>
+<div class="kpi">
+<div class="stat"><b>${v}</b><span>vues</span></div>
+<div class="stat"><b>${a.visiteurs}</b><span>visiteurs uniques</span><small>par jour, sans cookie</small></div>
+<div class="stat"><b>${v ? duree(a.dureeMediane) : "—"}</b><span>temps médian</span></div>
+<div class="stat"><b>${v ? Math.round(a.engagement * 100) + " %" : "—"}</b><span>engagement</span><small>visites avec un clic</small></div>
+<div class="stat"><b>${a.partages}</b><span>partages</span><small>envoyés ou liens copiés</small></div>
+<div class="stat"><b>${a.facebook}</b><span>clics Facebook</span><small>${pct(a.facebook, v)} des vues</small></div>
+</div>
+<h3 style="margin-top:26px">Vues ${a.courbe.parJour ? "par jour" : "par heure"} <span class="muted" style="font-weight:400;font-size:13px">· heure de Montréal</span></h3>
+<div class="carte" style="padding:12px 10px 6px">${v ? courbe(a.courbe) : '<p class="vide">Aucune visite sur cette période.</p>'}</div>
+<h3 style="margin-top:26px">Provenance</h3>
+<div class="repart">${barres("Sources", a.sources, v)}${barres("Étiquettes scannées", a.etiquettes, v, (c) => `/admin/joueurs?code=${encodeURIComponent(c)}`)}
+${barres("Sites d'origine", a.referents, v)}${barres("Campagnes (utm)", a.campagnes, v)}${barres("Domaine", a.domaines, v)}</div>
+<h3 style="margin-top:26px">Géographie et appareils</h3>
+<div class="repart">${barres("Pays", a.pays, v)}${barres("Villes", a.villes, v)}${barres("Appareils", a.appareils, v)}${barres("Navigateurs", a.navigateurs, v)}
+${barres("Systèmes", a.os, v)}${barres("Langues", a.langues, v)}${barres("Ouverture", a.app, v)}</div>
+<h3 style="margin-top:26px">Engagement</h3>
+<div class="repart">${barres("Temps passé (page visible)", a.durees, v)}${barres("Clics", a.clics, v)}
+<div class="carte"><h3>Défilement</h3><p style="margin:0;font-size:26px;font-weight:700">${v ? a.defilementMoyen + " %" : "—"}</p><p class="vide">en moyenne ; la page tient presque toujours dans l'écran</p></div></div>
+<h3 style="margin-top:26px">Dernières visites</h3>
+<div style="overflow-x:auto">${a.dernieres.length ? `<table><tr><th>Quand</th><th>Provenance</th><th>Lieu</th><th>Appareil</th><th>Durée</th></tr>${a.dernieres.map(ligne).join("")}</table>` : '<p class="vide">Aucune.</p>'}</div>
+<p class="muted" style="font-size:13px;margin-top:18px">${a.robots} visite${a.robots > 1 ? "s" : ""} de robots écartée${a.robots > 1 ? "s" : ""}. <a class="ok" href="/admin/analytics.csv">Exporter toutes les visites (CSV)</a></p>`;
+  return page("fr", "Analytics · Déjà vu !", corps + barreAdmin("stats"), false);
 }

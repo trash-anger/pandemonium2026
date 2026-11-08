@@ -221,6 +221,9 @@ describe("sanctions graduées (ADM-18)", () => {
 });
 
 describe("missions personnelles (ADM-19)", () => {
+  // Les missions partent de l'heure réelle : on la fige à T0, sinon la date du jour (après la fête) les fait démarrer après les scans
+  beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(T0); });
+  afterEach(() => vi.useRealTimers());
   it("M-1 : 3 nouvelles personnes en 10 min → +20 points et badge Employé du mois ; une seule mission à la fois", async () => {
     const a = await joueur(), [b, c, d] = [await joueur("chaos"), await joueur("chaos"), await joueur("chaos")];
     await api("/api/moi", undefined, a.jeton);

@@ -2,6 +2,9 @@
 // (RG-010-6, RG-010-9). À l'acceptation, le serveur tire l'épreuve et les d20, modifiés par la classe et le costume
 // (RG-010-7). Enjeu (RG-010-8, choix du 7 nov.) : +10 points de faction au gagnant, rien n'est retiré au perdant.
 // Un duel accepté par heure entre deux mêmes personnes (RG-010-10).
+// Les délais du duel (60 s, 5 min, 1 h) se comptent en temps réel du serveur, pas sur l'horloge du jeu : deux
+// personnes face à face ont besoin de 60 vraies secondes, même quand le banc accélère la soirée. `t` (l'heure du
+// jeu) date seulement les points et les notifications.
 import { hasard } from "./catalogue";
 import { ajouterPoints, type EnvDirect } from "./direct";
 import { notifier } from "./mj";
@@ -54,20 +57,20 @@ const publique = (p: Perso) => ({ id: p.id, pseudo: p.pseudo, type: p.type, coul
 export type Refus = "cible" | "pas_scanne" | "deja_en_cours" | "occupe" | "trop_tot" | "refus_recent";
 
 /** A défie B. B doit être dans la collection de A (« après avoir scanné B »). */
-export async function defier(env: EnvDirect, aId: string, bId: unknown, t: number): Promise<{ id: number; expire_le: string } | { erreur: Refus }> {
+export async function defier(env: EnvDirect, aId: string, bId: unknown, t: number, reel = Date.now()): Promise<{ id: number; expire_le: string } | { erreur: Refus }> {
   if (typeof bId !== "string" || bId === aId) return { erreur: "cible" };
   const [a, b] = [await lirePerso(env.DB, aId), await lirePerso(env.DB, bId)];
   if (!a || !b || a.est_mj || b.est_mj || b.suspendu || a.suspendu) return { erreur: "cible" };
   const vu = await env.DB.prepare("SELECT 1 AS x FROM collection WHERE possesseur_id = ? AND personnage_id = ?").bind(aId, bId).first();
   if (!vu) return { erreur: "pas_scanne" };
-  const maintenant = iso(t);
+  const maintenant = iso(reel);
   // Un défi en attente à la fois, de chaque côté
   if (await env.DB.prepare("SELECT 1 AS x FROM duels WHERE a_id = ? AND etat = 'attente' AND expire_le > ?").bind(aId, maintenant).first()) return { erreur: "deja_en_cours" };
   if (await env.DB.prepare("SELECT 1 AS x FROM duels WHERE (a_id = ?1 OR b_id = ?1) AND etat = 'attente' AND expire_le > ?2").bind(bId, maintenant).first()) return { erreur: "occupe" };
   const paire = "((a_id = ?1 AND b_id = ?2) OR (a_id = ?2 AND b_id = ?1))";
-  if (await env.DB.prepare(`SELECT 1 AS x FROM duels WHERE ${paire} AND etat = 'accepte' AND resolu_le > ?3`).bind(aId, bId, iso(t - HEURE)).first()) return { erreur: "trop_tot" };
-  if (await env.DB.prepare("SELECT 1 AS x FROM duels WHERE a_id = ? AND b_id = ? AND etat = 'refuse' AND resolu_le > ?").bind(aId, bId, iso(t - REFUS_PAUSE)).first()) return { erreur: "refus_recent" };
-  const expire = iso(t + DUEL_DELAI_S * 1000);
+  if (await env.DB.prepare(`SELECT 1 AS x FROM duels WHERE ${paire} AND etat = 'accepte' AND resolu_le > ?3`).bind(aId, bId, iso(reel - HEURE)).first()) return { erreur: "trop_tot" };
+  if (await env.DB.prepare("SELECT 1 AS x FROM duels WHERE a_id = ? AND b_id = ? AND etat = 'refuse' AND resolu_le > ?").bind(aId, bId, iso(reel - REFUS_PAUSE)).first()) return { erreur: "refus_recent" };
+  const expire = iso(reel + DUEL_DELAI_S * 1000);
   const r = await env.DB.prepare("INSERT INTO duels (a_id, b_id, etat, cree_le, expire_le) VALUES (?, ?, 'attente', ?, ?) RETURNING id")
     .bind(aId, bId, maintenant, expire).first<{ id: number }>();
   await notifier(env.DB, bId, "duel", { id: r!.id, de: a.pseudo, type: a.type, couleur: a.couleur, expire_le: expire }, t);
@@ -77,13 +80,13 @@ export async function defier(env: EnvDirect, aId: string, bId: unknown, t: numbe
 interface LigneDuel { id: number; a_id: string; b_id: string; etat: string; cree_le: string; expire_le: string; resolu_le: string | null; resultat: string | null }
 
 /** B répond. Accepter tire les dés et verse l'enjeu, une seule fois. */
-export async function repondre(env: EnvDirect, bId: string, id: unknown, accepte: boolean, t: number) {
+export async function repondre(env: EnvDirect, bId: string, id: unknown, accepte: boolean, t: number, reel = Date.now()) {
   const d = await env.DB.prepare("SELECT * FROM duels WHERE id = ?").bind(Number(id)).first<LigneDuel>();
   if (!d || d.b_id !== bId) return { erreur: "introuvable" as const };
   if (d.etat !== "attente") return { erreur: "deja_repondu" as const };
-  if (d.expire_le <= iso(t)) return { erreur: "expire" as const };
+  if (d.expire_le <= iso(reel)) return { erreur: "expire" as const };
   if (!accepte) {
-    const r = await env.DB.prepare("UPDATE duels SET etat = 'refuse', resolu_le = ? WHERE id = ? AND etat = 'attente'").bind(iso(t), d.id).run();
+    const r = await env.DB.prepare("UPDATE duels SET etat = 'refuse', resolu_le = ? WHERE id = ? AND etat = 'attente'").bind(iso(reel), d.id).run();
     if (r.meta.changes) await notifier(env.DB, d.a_id, "duel_refuse", { id: d.id }, t);
     return { ok: true };
   }
@@ -100,21 +103,22 @@ export async function repondre(env: EnvDirect, bId: string, id: unknown, accepte
   const resultat = { epreuve, a: ja, b: jb, gagnant, points: gagnant ? DUEL_POINTS : 0 };
   // Garde contre une double acceptation : seule la première écriture verse l'enjeu
   const r = await env.DB.prepare("UPDATE duels SET etat = 'accepte', resolu_le = ?, resultat = ? WHERE id = ? AND etat = 'attente'")
-    .bind(iso(t), JSON.stringify(resultat), d.id).run();
+    .bind(iso(reel), JSON.stringify(resultat), d.id).run();
   if (!r.meta.changes) return { erreur: "deja_repondu" as const };
   if (gagnant) await ajouterPoints(env, gagnant, DUEL_POINTS, "duel", t);
   return { ok: true };
 }
 
 /** État d'un duel, pour A ou B. */
-export async function lireDuel(env: EnvDirect, moiId: string, id: unknown, t: number) {
+export async function lireDuel(env: EnvDirect, moiId: string, id: unknown, reel = Date.now()) {
   const d = await env.DB.prepare("SELECT * FROM duels WHERE id = ?").bind(Number(id)).first<LigneDuel>();
   if (!d || (d.a_id !== moiId && d.b_id !== moiId)) return null;
   const [a, b] = [await lirePerso(env.DB, d.a_id), await lirePerso(env.DB, d.b_id)];
   if (!a || !b) return null;
-  const etat = d.etat === "attente" && d.expire_le <= iso(t) ? "expire" : d.etat;
+  const etat = d.etat === "attente" && d.expire_le <= iso(reel) ? "expire" : d.etat;
   return {
-    id: d.id, etat, expire_le: d.expire_le, moi: d.a_id === moiId ? "a" : "b",
+    // reste_ms : le téléphone compte à rebours sur sa propre horloge, qui peut être simulée (banc)
+    id: d.id, etat, expire_le: d.expire_le, reste_ms: etat === "attente" ? Date.parse(d.expire_le) - reel : 0, moi: d.a_id === moiId ? "a" : "b",
     a: publique(a), b: publique(b), resultat: etat === "accepte" && d.resultat ? JSON.parse(d.resultat) : null,
   };
 }

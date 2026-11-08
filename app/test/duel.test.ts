@@ -1,5 +1,5 @@
 // Duel D&D (FEAT-010 §10.3) : consentement des deux joueurs, expiration, jets, enjeu, limite par heure.
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routeApi } from "../src/jeu";
 import { d1Memoire } from "./d1-memoire";
 import { ALPHABET } from "../src/codes";
@@ -13,8 +13,11 @@ const MIN = 60_000;
 
 let env: { DB: ReturnType<typeof d1Memoire>; PUBLIC_ORIGIN: string; SESSION_SECRET: string; BANC_SESSION: boolean };
 let n = 0;
+/** Heure réelle imposée (banc accéléré) ; null : elle suit l'heure du jeu de chaque requête. */
+let reelFixe: number | null = null;
 
 async function api(chemin: string, corps?: object, jeton?: string, t = T0): Promise<Record<string, any>> {
+  if (reelFixe === null) vi.setSystemTime(t); // par défaut, l'heure réelle suit l'heure du jeu
   const req = new Request(ORIGINE + chemin, {
     method: corps ? "POST" : "GET",
     headers: { "Content-Type": "application/json", "X-Dev-Maintenant": String(t), ...(jeton ? { "X-Appareil": jeton } : {}) },
@@ -45,7 +48,9 @@ const repondre = (b: J, id: number, accepte: boolean, t = T0) => api("/api/duel/
 const duel = (qui: J, id: number, t = T0) => api(`/api/duel?id=${id}`, undefined, qui.jeton, t);
 const points = (qui: J) => (env.DB.sqlite.prepare("SELECT COALESCE(SUM(points), 0) AS p FROM points_faction WHERE personnage_id = ?").get(qui.id) as { p: number }).p;
 
+afterEach(() => { vi.useRealTimers(); reelFixe = null; });
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
   env = { DB: d1Memoire(), PUBLIC_ORIGIN: ORIGINE, SESSION_SECRET: "secret-de-test", BANC_SESSION: true };
 });
 
@@ -105,6 +110,23 @@ describe("duel D&D (FEAT-010 §10.3)", () => {
     await repondre(b, d2.id, true, T0 + 6 * MIN + 1000);
     expect((await defier(b, a, T0 + 30 * MIN)).erreur).toBe("trop_tot");
     expect((await defier(b, a, T0 + 67 * MIN)).status).toBe(200);
+  });
+
+  it("banc accéléré : les 60 s se comptent en temps réel, pas sur l'horloge du jeu", async () => {
+    const a = await joueur(), b = await joueur();
+    await scan(a, b);
+    reelFixe = Date.UTC(2026, 10, 7, 23, 0); vi.setSystemTime(reelFixe);
+    const d = await defier(a, b, T0);
+    // 10 min de jeu plus tard (×120), mais 5 vraies secondes : le défi tient toujours
+    vi.setSystemTime(reelFixe + 5000);
+    expect((await duel(b, d.id, T0 + 10 * MIN)).etat).toBe("attente");
+    expect((await duel(b, d.id, T0 + 10 * MIN)).reste_ms).toBe(55_000);
+    expect((await repondre(b, d.id, true, T0 + 10 * MIN)).ok).toBe(true);
+    // Et l'inverse : 61 vraies secondes, même si le jeu n'a pas bougé
+    const c = await joueur(); await scan(a, c);
+    const d2 = await defier(a, c, T0);
+    vi.setSystemTime(reelFixe + 5000 + 61_000);
+    expect((await repondre(c, d2.id, true, T0)).erreur).toBe("expire");
   });
 
   it("une personne déjà défiée est occupée ; pas de duel avec soi-même", async () => {

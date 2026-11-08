@@ -29,8 +29,8 @@ const CSS = `
 body{min-height:100dvh;background:radial-gradient(ellipse at 20% 0%,#3a1426 0%,var(--bg) 60%) fixed}
 body::after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px)}
 main{max-width:560px;margin:0 auto;padding:28px 18px 48px}
-.barre-adm{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(21,19,28,.97);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-.barre-adm a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 8px;min-height:58px;color:var(--muted);text-decoration:none;font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+.barre-adm{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(5,1fr);background:rgba(21,19,28,.97);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.barre-adm a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 8px;min-height:58px;color:var(--muted);text-decoration:none;font-family:var(--mono);font-size:10px;letter-spacing:.02em}
 .barre-adm a span{font-size:21px}.barre-adm a[aria-current=page]{color:var(--fg);box-shadow:inset 0 3px 0 var(--pink)}
 body.avec-barre main{padding-bottom:110px}
 .chip{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--pink);border:1.5px solid var(--pink);padding:5px 9px}
@@ -70,7 +70,7 @@ function page(l: Langue, titre: string, corps: string, robots = true): Response 
 }
 
 /** Coquille de l'application du joueur (LOT-1) : tout l'affichage est fait par public/app.js. */
-export const VERSION_APP = "mj-2";
+export const VERSION_APP = "mj-3";
 export function pageApp(l: Langue, status = 200): Response {
   const html = `<!doctype html><html lang="${l}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -100,7 +100,7 @@ export type VueAdmin = "direct" | "joueurs" | "preparation";
 
 /** Barre d'onglets de l'admin (en bas, à portée de pouce). */
 export const barreAdmin = (actif: VueAdmin | "photos") => `<nav class="barre-adm">${([
-  ["direct", "/admin", "🔴", "Direct"], ["joueurs", "/admin/joueurs", "🔍", "Joueurs"], ["photos", "/admin/photos", "📷", "Photos"], ["preparation", "/admin/preparation", "⚙️", "Préparation"],
+  ["direct", "/admin", "🔴", "Direct"], ["joueurs", "/admin/joueurs", "🔍", "Joueurs"], ["photos", "/admin/photos", "📷", "Photos"], ["preparation", "/admin/preparation", "⚙️", "Prépa"], ["jeu", "/", "🎮", "Jeu"],
 ] as const).map(([id, href, e, l]) => `<a href="${href}"${id === actif ? ' aria-current="page"' : ""}><span>${e}</span>${l}</a>`).join("")}</nav>
 <script>document.body.classList.add("avec-barre")</script>`;
 

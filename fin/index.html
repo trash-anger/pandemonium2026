@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0a0f">
+<title>Déjà vu ! · 242 nouvelles amitiés !!!</title>
+<meta name="description" content="Une nuit de soldes à Pandémonium, des QR collés sur les costumes, des souvenirs jamais vécus : bilan, 242 nouvelles amitiés !!!">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://p.uyt.re/">
+<meta property="og:site_name" content="Déjà vu ! · Pandémonium">
+<meta property="og:title" content="Déjà vu ! · 242 nouvelles amitiés !!!">
+<meta property="og:description" content="Une nuit de soldes à Pandémonium, des QR collés sur les costumes, des souvenirs jamais vécus : bilan, 242 nouvelles amitiés !!!">
+<meta property="og:image" content="https://p.uyt.re/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DÉJÀ VU ! 242 nouvelles amitiés !!! sur une mosaïque d'étiquettes QR">
+<meta property="og:locale" content="fr_CA">
+<meta property="og:locale:alternate" content="en_CA">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Déjà vu ! · 242 nouvelles amitiés !!!">
+<meta name="twitter:description" content="Une nuit de soldes à Pandémonium : 242 nouvelles amitiés !!!">
+<meta name="twitter:image" content="https://p.uyt.re/og.png">
+<link rel="canonical" href="https://p.uyt.re/">
+<link rel="icon" href="/favicon.svg">
+<style>
+:root{--bg:#0b0a0f;--bg2:#15131c;--fg:#efe9df;--muted:#b7b0c3;--pink:#ff4f8b;--green:#3dff8a;--gold:#e8b84a;--line:#3a3445;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:"Arial Black","Helvetica Neue",Impact,system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-text-size-adjust:100%}
+body{min-height:100dvh;overflow-x:hidden}
+
+/* Mosaïque des étiquettes, en fond, sur tout l'écran */
+.mosaique{position:fixed;inset:-4px;display:grid;grid-template-columns:repeat(var(--col,3),1fr);gap:6px;padding:6px;align-content:start;z-index:0}
+.tuile{position:relative;margin:0;aspect-ratio:3/4;overflow:hidden;border-radius:10px;background:var(--bg2);isolation:isolate}
+.tuile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(1.5px) saturate(1.3) contrast(1.1)}
+.tuile .fantome{mix-blend-mode:screen;opacity:.6}
+.tuile .f1{transform:translate(8%,-3%) scale(1.04);filter:blur(1.5px) grayscale(1) sepia(1) hue-rotate(290deg) saturate(5)}
+.tuile .f2{transform:translate(-7%,4%) scale(1.04);filter:blur(1.5px) grayscale(1) sepia(1) hue-rotate(80deg) saturate(5);opacity:.45}
+.voile{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse 70% 60% at 50% 46%,rgba(11,10,15,.9) 0%,rgba(11,10,15,.74) 48%,rgba(11,10,15,.42) 100%)}
+.voile::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px)}
+
+/* Contenu */
+main{position:relative;z-index:2;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:calc(28px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));max-width:880px;margin:0 auto}
+.chip{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--pink);border:1.5px solid var(--pink);padding:6px 10px;background:rgba(11,10,15,.6)}
+h1{font-family:var(--display);font-size:clamp(60px,min(19vw,14.5vh),176px);line-height:.86;margin:clamp(14px,2.4vh,22px) 0 0;letter-spacing:-.02em;
+  text-shadow:-.035em 0 var(--pink),.035em 0 var(--green)}
+.nombre{font-family:var(--display);font-size:clamp(100px,min(36vw,23vh),300px);line-height:.85;margin:clamp(12px,min(4vw,3vh),34px) 0 0;color:var(--green);
+  letter-spacing:-.03em;text-shadow:-.03em 0 var(--pink),.03em 0 rgba(61,255,138,.35),0 0 60px rgba(61,255,138,.25);font-variant-numeric:tabular-nums}
+.amities{font-family:var(--display);font-size:clamp(26px,min(7.4vw,5.6vh),62px);line-height:1;margin:10px 0 0;text-transform:uppercase;letter-spacing:-.01em}
+.amities em{font-style:normal;color:var(--pink)}
+.sous{font-size:clamp(16px,2.2vw,19px);line-height:1.5;color:var(--muted);max-width:34em;margin:clamp(14px,2.4vh,22px) auto 0}
+.actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:clamp(18px,3vh,28px);width:100%}
+.bouton{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:14px 22px;border-radius:999px;font:700 17px var(--sans);
+  text-decoration:none;cursor:pointer;border:2px solid var(--pink);background:var(--pink);color:#18161d;flex:1 1 220px;max-width:320px}
+.bouton.sec{background:rgba(11,10,15,.7);color:var(--fg);border-color:var(--line)}
+.bouton:focus-visible{outline:3px solid var(--green);outline-offset:3px}
+@media (hover:hover){.bouton:hover{filter:brightness(1.08)}.bouton.sec:hover{border-color:var(--fg)}}
+footer{margin-top:clamp(18px,3.4vh,34px);font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+footer button{font:inherit;letter-spacing:inherit;color:var(--fg);background:none;border:0;border-bottom:1px solid var(--line);padding:4px 2px;cursor:pointer;margin-left:10px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;z-index:5;background:var(--fg);color:#18161d;
+  font-weight:700;padding:12px 18px;border-radius:999px;transition:.25s;pointer-events:none}
+.toast.vu{opacity:1;transform:translate(-50%,0)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+@media (min-width:700px){.mosaique{--col:5}}
+@media (min-width:1100px){.mosaique{--col:7}}
+@media (min-width:1600px){.mosaique{--col:9}}
+
+/* Glitch : courts sursauts, jamais plus de 3 par seconde (REQ-003) ; rien avec « réduire les animations » */
+@media (prefers-reduced-motion:no-preference){
+  h1{animation:gl 4.2s infinite steps(1)}
+  .nombre{animation:gl 5.3s 1.4s infinite steps(1)}
+  @keyframes gl{0%,93%{transform:none;filter:none}94%{transform:translateX(-4px) skewX(6deg);filter:hue-rotate(80deg)}96%{transform:translateX(3px) skewX(-3deg);filter:none}98%{transform:none}}
+  .tuile .f1{animation:derive 6s calc(var(--d) * -.5s) infinite steps(1)}
+  @keyframes derive{0%,90%{transform:translate(8%,-3%) scale(1.04)}92%{transform:translate(-4%,2%) scale(1.04)}95%{transform:translate(12%,-1%) scale(1.04)}}
+  .tuile.saut img:first-child{animation:saut .24s steps(1) 1}
+  @keyframes saut{0%{transform:translateX(-6%) skewX(8deg);filter:blur(1.5px) hue-rotate(120deg) saturate(2)}50%{transform:translateX(4%)}100%{transform:none}}
+  main>*{animation:monte .7s cubic-bezier(.2,.8,.2,1) both}
+  main>:nth-child(2){animation-delay:.08s}main>:nth-child(3){animation-delay:.2s}main>:nth-child(4){animation-delay:.32s}
+  main>:nth-child(5){animation-delay:.44s}main>:nth-child(6){animation-delay:.56s}main>:nth-child(7){animation-delay:.68s}
+  @keyframes monte{from{opacity:0;transform:translateY(16px)}}
+}
+
+/* Image Open Graph (1200×630) : ?og=1, capturée pour fin/og.png */
+html.og,html.og body{width:1200px;height:630px;overflow:hidden;min-height:0}
+html.og .mosaique{--col:8;inset:-30px}
+html.og .voile{background:radial-gradient(ellipse 62% 70% at 50% 50%,rgba(11,10,15,.93) 0%,rgba(11,10,15,.8) 55%,rgba(11,10,15,.5) 100%)}
+html.og main{min-height:630px;height:630px;max-width:1200px;padding:0}
+html.og h1{font-size:132px;margin-top:20px}html.og .nombre{font-size:200px;margin-top:14px}html.og .amities{font-size:50px;margin-top:4px}
+html.og .sous,html.og .actions,html.og footer{display:none}
+html.og *{animation:none!important}
+</style>
+</head>
+<body>
+<div class="mosaique" aria-hidden="true"></div>
+<div class="voile" aria-hidden="true"></div>
+<main>
+  <span class="chip" data-t="chip">Soldes terminées</span>
+  <h1>DÉJÀ<br>VU&nbsp;!</h1>
+  <p class="nombre" aria-hidden="true"><span id="n">242</span></p>
+  <p class="amities"><span class="sr" data-t="sr">242</span><span data-t="amities">nouvelles amitiés <em>!!!</em></span></p>
+  <p class="sous" data-t="sous">Une nuit de soldes à Pandémonium, des QR collés sur les costumes et des souvenirs qu'on n'a jamais vécus. Merci d'avoir joué.</p>
+  <div class="actions">
+    <button class="bouton" id="partager" type="button" data-t="partager">Partager</button>
+    <a class="bouton sec" id="pandemonium" href="https://www.facebook.com/profile.php?id=61581470469912" target="_blank" rel="noopener" data-t="pandemonium">Pandémonium sur Facebook</a>
+  </div>
+  <footer><span data-t="pied">Pandémonium · Montréal · 7 novembre 2026</span><button type="button" id="langue" lang="en">English</button></footer>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function () {
+  "use strict";
+  var NOMBRE = 242;
+  var T = {
+    fr: { chip: "Soldes terminées", sr: "242", amities: "nouvelles amitiés <em>!!!</em>",
+      sous: "Une nuit de soldes à Pandémonium, des QR collés sur les costumes et des souvenirs qu'on n'a jamais vécus. Merci d'avoir joué.",
+      partager: "Partager", pandemonium: "Pandémonium sur Facebook", pied: "Pandémonium · Montréal · 7 novembre 2026", autre: "English", autreL: "en",
+      titre: "Déjà vu ! · 242 nouvelles amitiés !!!", texte: "Déjà vu ! à Pandémonium : 242 nouvelles amitiés !!!", copie: "Lien copié !" },
+    en: { chip: "Sale ended", sr: "242", amities: "new friendships <em>!!!</em>",
+      sous: "One night of sales at Pandémonium, QR codes stuck on costumes, and memories nobody ever lived. Thanks for playing.",
+      partager: "Share", pandemonium: "Pandémonium on Facebook", pied: "Pandémonium · Montréal · November 7, 2026", autre: "Français", autreL: "fr",
+      titre: "Déjà vu ! · 242 new friendships!!!", texte: "Déjà vu ! at Pandémonium: 242 new friendships!!!", copie: "Link copied!" }
+  };
+  var q = new URLSearchParams(location.search);
+  var og = q.has("og");
+  var calme = matchMedia("(prefers-reduced-motion: reduce)").matches || og;
+  if (og) document.documentElement.classList.add("og");
+  var L = q.get("lang") === "en" || q.get("lang") === "fr" ? q.get("lang") : /^fr\b/i.test(navigator.language || "fr") ? "fr" : "en";
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ---------- Textes ----------
+  function langue(l) {
+    L = l; var t = T[l];
+    document.documentElement.lang = l; document.title = t.titre;
+    document.querySelectorAll("[data-t]").forEach(function (el) { el.innerHTML = t[el.getAttribute("data-t")]; });
+    $("langue").textContent = t.autre; $("langue").lang = t.autreL;
+  }
+  langue(L);
+  $("langue").onclick = function () { langue(L === "fr" ? "en" : "fr"); clic("langue"); };
+
+  // ---------- 242, compté depuis 0 ----------
+  if (!calme) {
+    var n = $("n"), t0 = null;
+    n.textContent = "0";
+    var pas = function (t) {
+      if (t0 === null) t0 = t;
+      var k = Math.min(1, (t - t0 - 500) / 1600); if (k < 0) k = 0;
+      n.textContent = String(Math.round(NOMBRE * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) requestAnimationFrame(pas);
+    };
+    requestAnimationFrame(pas);
+  }
+
+  // ---------- Mosaïque : photos de la révélation, sinon étiquettes générées ----------
+  var mosaique = document.querySelector(".mosaique");
+  function etiquetteGeneree(graine) {
+    // Un faux QR aux couleurs de la soirée (aucune photo publiée en dehors de celles autorisées)
+    var c = document.createElement("canvas"), m = 25, k = 9; c.width = 240; c.height = 320;
+    var x = c.getContext("2d"), r = graine * 9301 + 49297;
+    var hasard = function () { r = (r * 9301 + 49297) % 233280; return r / 233280; };
+    var fonds = ["#f1ece2", "#ffd6e5", "#d8ffe6", "#f5e7c6"], encres = ["#18161d", "#3a1426", "#0f2f1e"];
+    x.fillStyle = "#1e1a27"; x.fillRect(0, 0, 240, 320);
+    x.save(); x.translate(120, 160); x.rotate((hasard() - .5) * .5); x.translate(-110, -110);
+    x.fillStyle = fonds[graine % fonds.length]; x.fillRect(-10, -10, m * k - 5, m * k + 26);
+    x.fillStyle = encres[graine % encres.length];
+    var finder = function (a, b) { x.fillRect(a * k, b * k, 7 * k, 7 * k);
+      x.fillStyle = fonds[graine % fonds.length]; x.fillRect((a + 1) * k, (b + 1) * k, 5 * k, 5 * k);
+      x.fillStyle = encres[graine % encres.length]; x.fillRect((a + 2) * k, (b + 2) * k, 3 * k, 3 * k); };
+    for (var i = 0; i < 23; i++) for (var j = 0; j < 23; j++) {
+      var coin = (i < 8 && j < 8) || (i > 14 && j < 8) || (i < 8 && j > 14);
+      if (!coin && hasard() > .52) x.fillRect(i * k, j * k, k, k);
+    }
+    finder(0, 0); finder(16, 0); finder(0, 16);
+    x.restore();
+    return c.toDataURL("image/jpeg", .7);
+  }
+  var images = [], tuiles = [];
+  function remplir() {
+    var col = parseInt(getComputedStyle(mosaique).getPropertyValue("--col"), 10) || 3;
+    var largeur = (innerWidth + 8) / col, lignes = Math.ceil((innerHeight + 8) / (largeur * 4 / 3)) + 1;
+    var voulu = col * lignes;
+    while (tuiles.length < voulu) {
+      var f = document.createElement("figure"); f.className = "tuile"; f.style.setProperty("--d", String(tuiles.length % 12));
+      f.innerHTML = '<img alt=""><img alt="" class="fantome f1"><img alt="" class="fantome f2">';
+      mosaique.appendChild(f); tuiles.push(f); poser(f);
+    }
+    while (tuiles.length > voulu) mosaique.removeChild(tuiles.pop());
+  }
+  var k = 0;
+  function poser(f) {
+    if (!images.length) return;
+    var src = images[(k++) % images.length];
+    f.querySelectorAll("img").forEach(function (i) { i.src = src; });
+  }
+  function melanger(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+  function demarrer(photos) {
+    var gen = []; for (var i = 0; i < 14; i++) gen.push(etiquetteGeneree(i + 1));
+    // Toujours de quoi faire défiler : les photos d'abord, complétées par des étiquettes générées
+    images = melanger(photos.length >= 12 ? photos.slice() : photos.concat(gen));
+    tuiles.forEach(poser); remplir();
+    if (calme) return;
+    // Une vignette change toutes les 160 ms : beaucoup de mouvement, jamais un flash plein écran
+    setInterval(function () {
+      if (document.hidden || !tuiles.length) return;
+      var f = tuiles[Math.floor(Math.random() * tuiles.length)];
+      poser(f); f.classList.remove("saut"); void f.offsetWidth; f.classList.add("saut");
+    }, 160);
+  }
+  remplir();
+  addEventListener("resize", function () { clearTimeout(remplir.t); remplir.t = setTimeout(remplir, 150); });
+  if (og) demarrer([]);
+  else fetch("/fin/photos.json").then(function (r) { return r.ok ? r.json() : { photos: [] }; })
+    .then(function (d) { demarrer((d && d.photos) || []); }, function () { demarrer([]); });
+
+  // ---------- Partager ----------
+  var toastT;
+  function toast(m) { var t = $("toast"); t.textContent = m; t.classList.add("vu"); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove("vu"); }, 2200); }
+  $("partager").onclick = function () {
+    var t = T[L], url = "https://p.uyt.re/";
+    clic("partage");
+    if (navigator.share) {
+      navigator.share({ title: t.titre, text: t.texte, url: url }).then(function () { clic("partage_ok"); }, function () {});
+      return;
+    }
+    var fini = function () { toast(t.copie); clic("copie"); };
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(fini, function () { prompt("", url); });
+    else prompt("", url);
+  };
+  $("pandemonium").addEventListener("click", function () { clic("pandemonium"); });
+
+  // ---------- Ancienne app installée : on retire son service worker et ses caches ----------
+  if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); }).catch(function () {});
+  if (window.caches) caches.keys().then(function (ks) { ks.forEach(function (x) { caches.delete(x); }); }).catch(function () {});
+
+  // ---------- Analytics : sans cookie, rien si « ne pas suivre » ----------
+  var suivi = !og && location.protocol.indexOf("http") === 0 && navigator.doNotTrack !== "1" && !navigator.globalPrivacyControl;
+  var id = null, attente = [], visible = !document.hidden, debut = performance.now(), cumul = 0;
+  var defil = document.documentElement.scrollHeight <= innerHeight + 2 ? 100 : 0; // tout tient à l'écran : tout est vu
+  function envoyer(chemin, corps) {
+    var s = JSON.stringify(corps);
+    if (navigator.sendBeacon && navigator.sendBeacon(chemin, new Blob([s], { type: "text/plain" }))) return;
+    fetch(chemin, { method: "POST", body: s, keepalive: true }).catch(function () {});
+  }
+  function clic(type) { if (!suivi) return; if (id) envoyer("/fin/e", { id: id, type: type }); else attente.push(type); }
+  function temps() { return cumul + (visible ? performance.now() - debut : 0); }
+  function bilan() { if (id) envoyer("/fin/f", { id: id, duree: Math.round(temps()), defilement: defil }); }
+  if (suivi) {
+    var app = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+    fetch("/fin/v", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+      chemin: location.pathname, recherche: location.search, referent: document.referrer, langue: navigator.language,
+      app: app, ecran: screen.width + "x" + screen.height
+    }) }).then(function (r) { return r.json(); }).then(function (d) {
+      id = d && d.id; if (!id) { suivi = false; return; }
+      attente.forEach(clic); attente = [];
+    }).catch(function () {});
+    addEventListener("scroll", function () {
+      var h = document.documentElement.scrollHeight - innerHeight;
+      defil = Math.max(defil, h > 0 ? Math.round(scrollY / h * 100) : 100);
+    }, { passive: true });
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) { cumul += performance.now() - debut; visible = false; bilan(); }
+      else { debut = performance.now(); visible = true; }
+    });
+    addEventListener("pagehide", bilan);
+    setInterval(function () { if (visible) bilan(); }, 20000);
+  }
+})();
+</script>
+</body>
+</html>

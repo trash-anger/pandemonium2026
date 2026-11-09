@@ -8,8 +8,9 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": { "directory": "public" },
   // Codes des étiquettes du jeu (donnees/etiquettes-jeu.csv) : importés comme texte
-  "rules": [{ "type": "Text", "globs": ["**/*.csv"], "fallthrough": true }],
-  "routes": [{ "pattern": "p.uyt.re", "custom_domain": true }],
+  "rules": [{ "type": "Text", "globs": ["**/*.csv"], "fallthrough": true }, { "type": "Data", "globs": ["**/*.png"], "fallthrough": true }],
+  // Après la fête, l'ancien teaser pointe aussi ici (page de fin, dossier fin/)
+  "routes": [{ "pattern": "p.uyt.re", "custom_domain": true }, { "pattern": "pandemonium2026.uyt.re", "custom_domain": true }],
   "d1_databases": [
     {
       "binding": "DB",

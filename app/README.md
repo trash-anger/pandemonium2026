@@ -167,11 +167,15 @@ Les seuils de la jauge de souvenirs (départ, rescans par heure, seuil du flou) 
 - **Suggestions** : au plus une toutes les 15 min, le même signal pas avant 45 min. Le MJ reçoit un push « 🎛️ Suggestion de réglage » sur son personnage de MJ, qui ouvre l'admin ; il applique ou ignore en un toucher. Le serveur n'applique jamais rien tout seul.
 - **Banc** : `POST /__dev/suggestions` (`{ maintenant, effacer }`) évalue les signaux à l'heure du banc.
 
+## Après la fête : page de fin et analytics
+
+Tout le trafic de `p.uyt.re` et de `pandemonium2026.uyt.re` (deuxième domaine du Worker, à la place de l'ancien teaser) arrive sur la page de fin du dossier [`fin/`](../fin/README.md) : « DÉJÀ VU ! 242 nouvelles amitiés !!! » sur la mosaïque des photos de la révélation. L'admin reste sur `p.uyt.re/admin` (l'ancien teaser y renvoie) ; l'API du jeu répond `410`. Onglets de l'admin : 🔴 Direct, 🔍 Joueurs, 📷 Photos, ⚙️ Prépa, 📈 Stats (analytics de la page de fin, sans cookie, export CSV) et 🌐 Page. Migration `0014_fin_analytics.sql` (tables `visites`, `clics_fin`).
+
 ## Admin dans l'app et vues du MJ
 
 - **Entrer dans l'admin depuis l'app** : appui long de 2 s sur sa carte (onglet Moi), seulement pour le personnage du MJ ; ou scanner son étiquette personnelle (53DZ) sur un téléphone déjà connecté à l'admin (« étiquette clé »). L'app installée couvre `/admin` ; la connexion Google est celle de Chrome.
 - **Le MJ avant l'ouverture** : son étiquette personnelle permet de créer son personnage et d'entrer dans l'app avant l'heure de début ; toutes les autres étiquettes restent fermées.
-- **Vues de l'admin** (barre d'onglets en bas) : 🔴 Direct (suggestions, direct, missions éclair, costume du MJ, partie, frise), 🔍 Joueurs (scanner, recherche, fiche complète du joueur avec ses secrets, actions, jumeaux et chats noirs), 📷 Photos, ⚙️ Prépa (notifications, image de la révélation, étiquettes, codes, heures, paramètres, zone dangereuse, banc), et 🎮 Jeu pour revenir à son personnage dans l'app. Après une action, on revient sur la vue (et la fiche) d'où elle est partie.
+- **Vues de l'admin** (barre d'onglets en bas) : 🔴 Direct (suggestions, direct, missions éclair, costume du MJ, partie, frise), 🔍 Joueurs (scanner, recherche, fiche complète du joueur avec ses secrets, actions, jumeaux et chats noirs), 📷 Photos, ⚙️ Prépa (notifications, image de la révélation, étiquettes, codes, heures, paramètres, zone dangereuse, banc). Après une action, on revient sur la vue (et la fiche) d'où elle est partie.
 
 ## Scanner intégré et mur « Déjà vu ! » (LOT-5)
 

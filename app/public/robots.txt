@@ -1,2 +1,8 @@
+# Après la fête : la page de fin est publique (aperçus Facebook, Messenger, etc.) ; l'admin et les routes techniques restent fermés.
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /admin
+Disallow: /auth/
+Disallow: /api/
+Disallow: /fin/
+Allow: /fin/og.png
